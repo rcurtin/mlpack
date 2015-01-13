@@ -30,9 +30,18 @@ class LogisticFunction
    * @param x Input data.
    * @return f(x).
    */
-  static double fn(const double x)
+  template<typename eT>
+  static double fn(const eT x)
   {
-    return 1.0 /  (1.0 + arma::trunc_exp(-x));
+    if(x < arma::Math<eT>::log_max())
+    {
+      if (x > -arma::Math<eT>::log_max())
+        return 1.0 /  (1.0 + std::exp(-x));
+
+      return 0.0;
+    }
+
+    return 1.0;
   }
 
   /**
@@ -44,7 +53,8 @@ class LogisticFunction
   template<typename InputVecType, typename OutputVecType>
   static void fn(const InputVecType& x, OutputVecType& y)
   {
-    y = 1.0 / (1.0 + arma::trunc_exp(-x));
+    y = x;
+    y.transform( [](double x) { return fn(x); } );
   }
 
   /**

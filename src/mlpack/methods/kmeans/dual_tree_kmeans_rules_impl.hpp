@@ -93,7 +93,7 @@ inline force_inline double DualTreeKMeansRules<MetricType, TreeType>::BaseCase(
 
 template<typename MetricType, typename TreeType>
 double DualTreeKMeansRules<MetricType, TreeType>::Score(
-    const size_t queryIndex,
+    const size_t /* queryIndex */,
     TreeType& referenceNode)
 {
   // No pruning here, for now.
