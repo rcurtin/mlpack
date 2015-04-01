@@ -37,6 +37,7 @@ add_executable(mlpack_test
   nbc_test.cpp
   nca_test.cpp
   nmf_test.cpp
+  ordered_tree_test.cpp
   pca_test.cpp
   perceptron_test.cpp
   quic_svd_test.cpp

@@ -226,7 +226,8 @@ template<typename BoundType,
          typename MatType,
          typename SplitType>
 BinarySpaceTree<BoundType, StatisticType, MatType, SplitType>::BinarySpaceTree(
-    const BinarySpaceTree& other) :
+    const BinarySpaceTree& other,
+    const bool shallow) :
     left(NULL),
     right(NULL),
     parent(other.parent),
@@ -241,16 +242,24 @@ BinarySpaceTree<BoundType, StatisticType, MatType, SplitType>::BinarySpaceTree(
     dataset(other.dataset)
 {
   // Create left and right children (if any).
-  if (other.Left())
+  if (shallow)
   {
-    left = new BinarySpaceTree(*other.Left());
-    left->Parent() = this; // Set parent to this, not other tree.
+    left = other.Left();
+    right = other.Right();
   }
-
-  if (other.Right())
+  else
   {
-    right = new BinarySpaceTree(*other.Right());
-    right->Parent() = this; // Set parent to this, not other tree.
+    if (other.Left())
+    {
+      left = new BinarySpaceTree(*other.Left());
+      left->Parent() = this; // Set parent to this, not other tree.
+    }
+
+    if (other.Right())
+    {
+      right = new BinarySpaceTree(*other.Right());
+      right->Parent() = this; // Set parent to this, not other tree.
+    }
   }
 }
 

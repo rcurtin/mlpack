@@ -204,11 +204,14 @@ class BinarySpaceTree
 
   /**
    * Create a binary space tree by copying the other tree.  Be careful!  This
-   * can take a long time and use a lot of memory.
+   * can take a long time and use a lot of memory.  If 'shallow' is true, this
+   * performs a shallow copy, and won't initialize children or anything like
+   * this.
    *
    * @param other Tree to be replicated.
    */
-  BinarySpaceTree(const BinarySpaceTree& other);
+  BinarySpaceTree(const BinarySpaceTree& other,
+                  const bool shallow = false);
 
   /**
    * Deletes this node, deallocating the memory for the children and calling

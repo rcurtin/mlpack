@@ -28,6 +28,7 @@ set(SOURCES
   example_tree.hpp
   hrectbound.hpp
   hrectbound_impl.hpp
+  ordered_tree/ordered_tree.hpp
   rectangle_tree.hpp
   rectangle_tree/rectangle_tree.hpp
   rectangle_tree/rectangle_tree_impl.hpp
