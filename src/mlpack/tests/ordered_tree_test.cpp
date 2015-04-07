@@ -62,4 +62,53 @@ BOOST_AUTO_TEST_CASE(ReorderIntegrityTest)
   }
 }
 
+BOOST_AUTO_TEST_CASE(ContiguousMemoryCheck)
+{
+  typedef BinarySpaceTree<HRectBound<2>> TreeType;
+
+  // Create a dataset.
+  arma::mat data;
+  data.randu(10, 20000);
+
+  // Build the tree; reorder it.
+  TreeType bst(data);
+  OrderedTree<TreeType> ot(bst);
+
+  // Traverse the tree.
+  std::queue<TreeType*> treeQueue;
+  treeQueue.push(ot.NodeStorage());
+
+  // We'll look at two levels at a time.
+  while (!treeQueue.empty())
+  {
+    const TreeType* node = treeQueue.front();
+    treeQueue.pop();
+
+    if (node->NumChildren() == 2)
+    {
+      // Require the children are what's next in memory.
+      BOOST_REQUIRE_EQUAL(node + 1, node->Left());
+      BOOST_REQUIRE_EQUAL(node + 2, node->Right());
+
+      // Push the children's children into the queue, if they exist.
+      if (node->Left()->NumChildren() > 0)
+      {
+        // This is an... alright sanity check.  Maybe not perfect.
+        BOOST_REQUIRE_GT(node->Left()->Left(), node + 1);
+        BOOST_REQUIRE_GT(node->Left()->Right(), node + 1);
+        treeQueue.push(node->Left()->Left());
+        treeQueue.push(node->Left()->Right());
+      }
+
+      if (node->Right()->NumChildren() > 0)
+      {
+        BOOST_REQUIRE_GT(node->Right()->Left(), node + 2);
+        BOOST_REQUIRE_GT(node->Right()->Right(), node + 2);
+        treeQueue.push(node->Right()->Left());
+        treeQueue.push(node->Right()->Right());
+      }
+    }
+  }
+}
+
 BOOST_AUTO_TEST_SUITE_END();
