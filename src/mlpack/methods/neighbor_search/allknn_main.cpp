@@ -7,6 +7,7 @@
  */
 #include <mlpack/core.hpp>
 #include <mlpack/core/tree/cover_tree.hpp>
+#include <mlpack/core/tree/ordered_tree/ordered_tree.hpp>
 
 #include <string>
 #include <fstream>
@@ -61,6 +62,8 @@ PARAM_FLAG("r_tree", "If true, use an R-Tree to perform the search "
     "(experimental, may be slow.).", "T");
 PARAM_FLAG("random_basis", "Before tree-building, project the data onto a "
     "random orthogonal basis.", "R");
+PARAM_FLAG("ordered_tree", "When using a kd-tree, order the tree before "
+    "search.", "O");
 PARAM_INT("seed", "Random seed (if 0, std::time(NULL) is used).", "s", 0);
 
 int main(int argc, char *argv[])
@@ -189,12 +192,23 @@ int main(int argc, char *argv[])
       Log::Info << "Building reference tree..." << endl;
       Timer::Start("tree_building");
 
-      BinarySpaceTree<bound::HRectBound<2>,
-	  NeighborSearchStat<NearestNeighborSort> >
-	  refTree(referenceData, oldFromNewRefs, leafSize);
-      BinarySpaceTree<bound::HRectBound<2>,
-	  NeighborSearchStat<NearestNeighborSort> >*
-	  queryTree = NULL; // Empty for now.
+      typedef BinarySpaceTree<bound::HRectBound<2>,
+          NeighborSearchStat<NearestNeighborSort>> TreeType;
+
+      TreeType* refTree = new TreeType(referenceData, oldFromNewRefs, leafSize);
+      OrderedTree<TreeType>* otRef = NULL;
+      OrderedTree<TreeType>* otQuery = NULL;
+
+      if (CLI::HasParam("ordered_tree"))
+      {
+        Log::Info << "Reordering tree.\n";
+        TreeType* oldRefTree = refTree;
+        otRef = new OrderedTree<TreeType>(*oldRefTree);
+        delete oldRefTree;
+        refTree = otRef->NodeStorage();
+      }
+
+      TreeType* queryTree = NULL; // Empty for now.
 
       Timer::Stop("tree_building");
 
@@ -216,21 +230,28 @@ int main(int argc, char *argv[])
 	{
 	  Timer::Start("tree_building");
 
-	  queryTree = new BinarySpaceTree<bound::HRectBound<2>,
-	      NeighborSearchStat<NearestNeighborSort> >(queryData,
-	      oldFromNewQueries, leafSize);
+	  queryTree = new TreeType(queryData, oldFromNewQueries, leafSize);
+
+          if (CLI::HasParam("ordered_tree"))
+          {
+            Log::Info << "Reordering tree.\n";
+            TreeType* oldQueryTree = queryTree;
+            otQuery = new OrderedTree<TreeType>(*oldQueryTree);
+            delete oldQueryTree;
+            queryTree = otQuery->NodeStorage();
+          }
 
 	  Timer::Stop("tree_building");
 	}
 
-	allknn = new AllkNN(&refTree, queryTree, referenceData, queryData,
+	allknn = new AllkNN(refTree, queryTree, referenceData, queryData,
 	    singleMode);
 
 	Log::Info << "Tree built." << endl;
       }
       else
       {
-	allknn = new AllkNN(&refTree, referenceData, singleMode);
+	allknn = new AllkNN(refTree, referenceData, singleMode);
 
 	Log::Info << "Trees built." << endl;
       }
@@ -260,6 +281,11 @@ int main(int argc, char *argv[])
       // Clean up.
       if (queryTree)
 	delete queryTree;
+
+      if (otRef)
+        delete otRef;
+      if (otQuery)
+        delete otQuery;
 
       delete allknn;
     } else { // R tree.
