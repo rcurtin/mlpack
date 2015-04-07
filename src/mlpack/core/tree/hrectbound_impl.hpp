@@ -38,6 +38,18 @@ inline HRectBound<Power, TakeRoot>::HRectBound(const size_t dimension) :
     minWidth(0)
 { /* Nothing to do. */ }
 
+/**
+ * Initialize to the specified dimensionality, using the memory we've been
+ * given.
+ */
+template<int Power, bool TakeRoot>
+inline HRectBound<Power, TakeRoot>::HRectBound(const size_t dimension,
+                                               math::Range* memory) :
+    dim(dimension),
+    bounds(memory),
+    minWidth(0)
+{ }
+
 /***
  * Copy constructor necessary to prevent memory leaks.
  */
@@ -84,7 +96,7 @@ inline HRectBound<Power, TakeRoot>& HRectBound<Power, TakeRoot>::operator=(
 template<int Power, bool TakeRoot>
 inline HRectBound<Power, TakeRoot>::~HRectBound()
 {
-  if (bounds)
+  if (dimension > 0 && bounds)
     delete[] bounds;
 }
 

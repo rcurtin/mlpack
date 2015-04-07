@@ -43,12 +43,29 @@ class HRectBound
    */
   HRectBound(const size_t dimension);
 
+  /**
+   * Initialize to the specified dimensionality, and use the given memory.
+   * Warning: you are required to know what you are doing.  The destructor
+   * ~HRectBound() is going to try to free the memory.  If that's not a thing
+   * you want, make sure Dim() is set to 0 before the destructor is called,
+   * which will cause the destructor to not try to free the memory.
+   *
+   * The reason it is like this is that we don't want to hold an extra bool to
+   * indicate whether or not we need to free the memory, in order to keep the
+   * structure small.
+   *
+   * @param dimension Dimensionality of the bound.
+   * @param memory Pre-allocated memory to use (be careful!).
+   */
+  HRectBound(const size_t dimension, math::Range* memory);
+
   //! Copy constructor; necessary to prevent memory leaks.
   HRectBound(const HRectBound& other);
   //! Same as copy constructor; necessary to prevent memory leaks.
   HRectBound& operator=(const HRectBound& other);
 
-  //! Destructor: clean up memory.
+  //! Destructor: clean up memory, but only if the dimensionality (Dim()) is
+  //! greater than 0.
   ~HRectBound();
 
   /**
