@@ -87,8 +87,11 @@ BOOST_AUTO_TEST_CASE(ContiguousMemoryCheck)
     if (node->NumChildren() == 2)
     {
       // Require the children are what's next in memory.
-      BOOST_REQUIRE_EQUAL(node + 1, node->Left());
-      BOOST_REQUIRE_EQUAL(node + 2, node->Right());
+      char* nextLeft = ((char*) node) + sizeof(TreeType) +
+          sizeof(math::Range) * 10;
+      char* nextRight = nextLeft + sizeof(TreeType) + sizeof(math::Range) * 10;
+      BOOST_REQUIRE_EQUAL(nextLeft, (char*) node->Left());
+      BOOST_REQUIRE_EQUAL(nextRight, (char*) node->Right());
 
       // Push the children's children into the queue, if they exist.
       if (node->Left()->NumChildren() > 0)

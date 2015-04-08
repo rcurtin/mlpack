@@ -195,6 +195,11 @@ int main(int argc, char *argv[])
       typedef BinarySpaceTree<bound::HRectBound<2>,
           NeighborSearchStat<NearestNeighborSort>> TreeType;
 
+      Log::Info << "sizeof(BinarySpaceTree<>): " << sizeof(BinarySpaceTree<bound::HRectBound<2>>) << ".\n";
+      Log::Info << "sizeof(HRectBound<2>): " << sizeof(bound::HRectBound<2>) << ".\n";
+      Log::Info << "sizeof(NeighborSearchStat): " << sizeof(NeighborSearchStat<NearestNeighborSort>) << ".\n";
+      Log::Info << "sizeof(TreeType): " << sizeof(TreeType) << ".\n";
+
       TreeType* refTree = new TreeType(referenceData, oldFromNewRefs, leafSize);
       OrderedTree<TreeType>* otRef = NULL;
       OrderedTree<TreeType>* otQuery = NULL;

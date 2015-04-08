@@ -45,81 +45,101 @@ class OrderedTree
     // First, we need to count how many nodes we have in the tree.
     const size_t totalNodes = NumNodes(origTree);
 
-    // Get all of the memory that we'll need.
-    nodeStorage.reserve(totalNodes);
+    // Allocate the correct amount of memory.  We need enough space for each
+    // node, and also the bounds that it holds.  This is specialized to
+    // BinarySpaceTree<HRectBound<...>>.
+    treeMemory = new char[totalNodes * (sizeof(TreeType) +
+        (sizeof(math::Range) * origTree.Dataset().n_rows))];
 
     // Now, we'll have to perform a recursive procedure to get each node in the
     // right place.
-    LayoutInMemory(origTree);
+    char* memoryStart = treeMemory;
+    LayoutInMemory(origTree, memoryStart);
   }
 
   ~OrderedTree()
   {
-    // Hackish bullshit to prevent extra frees: set all children to NULL.
-    for (size_t i = 0; i < nodeStorage.size(); ++i)
-    {
-      nodeStorage[i].Left() = NULL;
-      nodeStorage[i].Right() = NULL;
-    }
-    nodeStorage.clear();
+    // Everything in the tree is owned by us, under the memory allocated with
+    // 'treeStorage'.  We can just delete it all.  Destructors won't be called
+    // (good!).
+    delete[] treeMemory;
   }
 
   TreeType* NodeStorage()
   {
-    return &nodeStorage[0];
+    return (TreeType*) treeMemory;
   }
 
  private:
+  TreeType* CopyNode(const TreeType& node, char*& destMemory)
+  {
+    // Use placement new to build the new TreeType in the right place.
+    TreeType* newNode = new(destMemory) TreeType(node, true); // Shallow copy.
+
+    // Now copy the bounds.
+    destMemory += sizeof(TreeType);
+    const size_t dim = node.Dataset().n_rows;
+    math::Range* newBounds = new(destMemory) math::Range[dim];
+    for (size_t i = 0; i < dim; ++i)
+    {
+      newBounds[i].Lo() = node.Bound().Bounds()[i].Lo();
+      newBounds[i].Hi() = node.Bound().Bounds()[i].Hi();
+    }
+    destMemory += sizeof(math::Range) * dim;
+
+    // Fix the bounds pointer.
+    newNode->Bound().Bounds() = newBounds;
+
+    return newNode;
+  }
+
   // Given a node, put it in the right place.
   void LayoutInMemory(const TreeType& node,
+                      char*& currentMemory,
                       TreeType* parent = NULL,
                       const bool leftChild = true)
   {
     // We'll consider this two levels at a time, then recurse into the children.
-    nodeStorage.emplace_back(node, true); // Shallow copy.
-    TreeType& newNode = nodeStorage.back();
-    newNode.Parent() = parent;
+    TreeType* newNode = CopyNode(node, currentMemory);
+    newNode->Parent() = parent;
 
     if (parent != NULL)
     {
       if (leftChild)
-        parent->Left() = &newNode;
+        parent->Left() = newNode;
       else
-        parent->Right() = &newNode;
+        parent->Right() = newNode;
     }
 
     // Now, we may have to set the two children.
     if (node.NumChildren() == 2)
     {
       // Copy the children to the right place.
-      // Shallow copies.
-      nodeStorage.emplace_back(*node.Left(), true);
-      TreeType& newLeft = nodeStorage.back();
-      nodeStorage.emplace_back(*node.Right(), true);
-      TreeType& newRight = nodeStorage.back();
+      TreeType* newLeft = CopyNode(*node.Left(), currentMemory);
+      TreeType* newRight = CopyNode(*node.Right(), currentMemory);
 
       // Update the links.
-      newNode.Left() = &newLeft;
-      newNode.Right() = &newRight;
-      newLeft.Parent() = &newNode;
-      newRight.Parent() = &newNode;
+      newNode->Left() = newLeft;
+      newNode->Right() = newRight;
+      newLeft->Parent() = newNode;
+      newRight->Parent() = newNode;
 
       // Now look at the children's children, and recurse if necessary.
       if (node.Left()->NumChildren() > 0)
       {
-        LayoutInMemory(*node.Left()->Left(), &newLeft, true);
-        LayoutInMemory(*node.Left()->Right(), &newLeft, false);
+        LayoutInMemory(*node.Left()->Left(), currentMemory, newLeft, true);
+        LayoutInMemory(*node.Left()->Right(), currentMemory, newLeft, false);
       }
       if (node.Right()->NumChildren() > 0)
       {
-        LayoutInMemory(*node.Right()->Left(), &newRight, true);
-        LayoutInMemory(*node.Right()->Right(), &newRight, false);
+        LayoutInMemory(*node.Right()->Left(), currentMemory, newRight, true);
+        LayoutInMemory(*node.Right()->Right(), currentMemory, newRight, false);
       }
     }
   }
 
   // Memory storage for the entire tree.
-  std::vector<TreeType> nodeStorage;
+  char* treeMemory;
 };
 
 } // namespace tree
