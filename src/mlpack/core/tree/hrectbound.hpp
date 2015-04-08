@@ -43,22 +43,6 @@ class HRectBound
    */
   HRectBound(const size_t dimension);
 
-  /**
-   * Initialize to the specified dimensionality, and use the given memory.
-   * Warning: you are required to know what you are doing.  The destructor
-   * ~HRectBound() is going to try to free the memory.  If that's not a thing
-   * you want, make sure Dim() is set to 0 before the destructor is called,
-   * which will cause the destructor to not try to free the memory.
-   *
-   * The reason it is like this is that we don't want to hold an extra bool to
-   * indicate whether or not we need to free the memory, in order to keep the
-   * structure small.
-   *
-   * @param dimension Dimensionality of the bound.
-   * @param memory Pre-allocated memory to use (be careful!).
-   */
-  HRectBound(const size_t dimension, math::Range* memory);
-
   //! Copy constructor; necessary to prevent memory leaks.
   HRectBound(const HRectBound& other);
   //! Same as copy constructor; necessary to prevent memory leaks.
@@ -82,6 +66,11 @@ class HRectBound
   math::Range& operator[](const size_t i) { return bounds[i]; }
   //! Modify the range for a particular dimension.  No bounds checking.
   const math::Range& operator[](const size_t i) const { return bounds[i]; }
+
+  //! Access the raw memory for the bounds.
+  const math::Range* Bounds() const { return bounds; };
+  //! Modify the raw memory for the bounds; be careful!
+  math::Range*& Bounds() { return bounds; }
 
   //! Get the minimum width of the bound.
   double MinWidth() const { return minWidth; }
