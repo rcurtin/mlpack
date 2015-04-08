@@ -48,8 +48,7 @@ class HRectBound
   //! Same as copy constructor; necessary to prevent memory leaks.
   HRectBound& operator=(const HRectBound& other);
 
-  //! Destructor: clean up memory, but only if the dimensionality (Dim()) is
-  //! greater than 0.
+  //! Destructor: clean up memory.
   ~HRectBound();
 
   /**

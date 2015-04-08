@@ -84,7 +84,7 @@ inline HRectBound<Power, TakeRoot>& HRectBound<Power, TakeRoot>::operator=(
 template<int Power, bool TakeRoot>
 inline HRectBound<Power, TakeRoot>::~HRectBound()
 {
-  if (dimension > 0 && bounds)
+  if (bounds)
     delete[] bounds;
 }
 
