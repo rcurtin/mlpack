@@ -20,6 +20,18 @@ DistributedBinaryTraversal::DistributedBinaryTraversal(RuleType& rule) :
   boost::mpi::communicator world;
 }
 
+template<typename RuleType>
+DistributedBinaryTraversal::DistributedBinaryTraversal(
+    boost::mpi::communicator& world) :
+    localRule(new RuleType),
+    rule(*localRule)
+{
+  // We are an MPI child.  We must receive and construct our own RuleType
+  // object, query tree, and reference tree.  Once we have done that, we kick
+  // off the usual recursion, and when we're done, we send the results back.
+
+}
+
 template<typename TreeType>
 void DistributedBinaryTraversal::Traverse(const size_t queryIndex,
                                           TreeType& referenceNode)

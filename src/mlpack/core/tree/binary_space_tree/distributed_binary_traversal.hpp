@@ -17,6 +17,7 @@ class DistributedBinaryTraversal
 {
  public:
   DistributedBinaryTraversal(RuleType& rule);
+  DistributedBinaryTraversal(boost::mpi::communicator& world);
 
   /**
    * Perform a single-tree traversal.
@@ -33,6 +34,8 @@ class DistributedBinaryTraversal
 
  private:
   RuleType& rule;
+
+  RuleType* localRule; // This is used if we are an MPI child.
 };
 
 } // namespace tree
