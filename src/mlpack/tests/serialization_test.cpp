@@ -685,4 +685,19 @@ BOOST_AUTO_TEST_CASE(BinarySpaceTreeOverwriteTest)
   CheckTrees(tree, xmlTree, textTree, binaryTree);
 }
 
+BOOST_AUTO_TEST_CASE(BinarySpaceTreeSubtreeTest)
+{
+  arma::mat data;
+  data.randu(3, 500);
+  BinarySpaceTree<HRectBound<2>> tree(data);
+
+  BinarySpaceTree<HRectBound<2>> xmlTree(tree);
+  BinarySpaceTree<HRectBound<2>> textTree(tree);
+  BinarySpaceTree<HRectBound<2>> binaryTree(tree);
+
+  SerializeObjectAll(*tree.Left(), xmlTree, textTree, binaryTree);
+
+  CheckTrees(*tree.Left(), xmlTree, textTree, binaryTree);
+}
+
 BOOST_AUTO_TEST_SUITE_END();
