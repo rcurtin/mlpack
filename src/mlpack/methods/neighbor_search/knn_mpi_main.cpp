@@ -21,8 +21,8 @@ int main(int argc, char** argv)
   // Convenience typedefs.
   typedef BinarySpaceTree<HRectBound<2>,
       NeighborSearchStat<NearestNeighborSort>> TreeType;
-  typedef NeighborSearchRules<NearestNeighborSort, EuclideanDistance, TreeType>
-      RuleType;
+  typedef NeighborSearch<NearestNeighborSort, EuclideanDistance, TreeType,
+      DistributedBinaryTraversal> KNNType;
 
   // If we are MPI master, we have to start the whole thing.
   boost::mpi::communicator world;
@@ -38,19 +38,16 @@ int main(int argc, char** argv)
     data::Load(queryFile, queryData, true);
     data::Load(referenceFile, referenceData, true);
 
-    TreeType queryTree(queryData);
-    TreeType referenceTree(referenceData);
-
-    NeighborSearchRules< ... > knn;
+    KNNType knn(referenceData);
 
     arma::Mat<size_t> neighbors;
     arma::mat distances;
-    knn.Search(k, neighbors, distances);
+    knn.Search(queryData, k, neighbors, distances);
   }
   else
   {
     // We are not the MPI master.  We have to wait for our assignment.  So,
     // create the child traversal object, and it all goes from there.
-    DistributedChildBinaryTraversal<RuleType> traversal(world);
+    DistributedBinaryTraversal<RuleType> traversal(world);
   }
 }
