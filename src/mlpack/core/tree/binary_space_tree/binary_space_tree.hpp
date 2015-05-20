@@ -7,7 +7,7 @@
 #define __MLPACK_CORE_TREE_BINARY_SPACE_TREE_BINARY_SPACE_TREE_HPP
 
 #include <mlpack/core.hpp>
-#include "mean_split.hpp"
+#include "midpoint_split.hpp"
 
 #include "../statistic.hpp"
 
@@ -40,7 +40,7 @@ namespace tree /** Trees and tree-building procedures. */ {
 template<typename BoundType,
          typename StatisticType = EmptyStatistic,
          typename MatType = arma::mat,
-         typename SplitType = MeanSplit<BoundType, MatType> >
+         typename SplitType = MidpointSplit<BoundType, MatType>>
 class BinarySpaceTree
 {
  private:
@@ -132,50 +132,54 @@ class BinarySpaceTree
                   const size_t maxLeafSize = 20);
 
   /**
-   * Construct this node as a child of the given parent, starting at column
-   * begin_in and using count_in points.  The ordering of that subset of points
-   * in the parent's data matrix will be modified!  This is used for recursive
-   * tree-building by the other constructors which don't specify point indices.
+   * Construct this node on a subset of the given matrix, starting at column
+   * begin and using count points.  The ordering of that subset of points
+   * will be modified!  This is used for recursive tree-building by the other
+   * constructors which don't specify point indices.
    *
-   * @param parent Parent of this node.  Its dataset will be modified!
+   * @param data Dataset to create tree from.  This will be modified!
    * @param begin Index of point to start tree construction with.
    * @param count Number of points to use to construct tree.
    * @param maxLeafSize Size of each leaf in the tree.
    */
-  BinarySpaceTree(BinarySpaceTree* parent,
+  BinarySpaceTree(MatType& data,
                   const size_t begin,
                   const size_t count,
+                  SplitType& splitter,
+                  BinarySpaceTree* parent = NULL,
                   const size_t maxLeafSize = 20);
 
   /**
-   * Construct this node as a child of the given parent, starting at column
+   * Construct this node on a subset of the given matrix, starting at column
    * begin_in and using count_in points.  The ordering of that subset of points
-   * in the parent's data matrix will be modified!  This is used for recursive
-   * tree-building by the other constructors which don't specify point indices.
+   * will be modified!  This is used for recursive tree-building by the other
+   * constructors which don't specify point indices.
    *
    * A mapping of the old point indices to the new point indices is filled, but
    * it is expected that the vector is already allocated with size greater than
    * or equal to (begin_in + count_in), and if that is not true, invalid memory
    * reads (and writes) will occur.
    *
-   * @param parent Parent of this node.  Its dataset will be modified!
+   * @param data Dataset to create tree from.  This will be modified!
    * @param begin Index of point to start tree construction with.
    * @param count Number of points to use to construct tree.
    * @param oldFromNew Vector which will be filled with the old positions for
    *     each new point.
    * @param maxLeafSize Size of each leaf in the tree.
    */
-  BinarySpaceTree(BinarySpaceTree* parent,
+  BinarySpaceTree(MatType& data,
                   const size_t begin,
                   const size_t count,
                   std::vector<size_t>& oldFromNew,
+                  SplitType& splitter,
+                  BinarySpaceTree* parent = NULL,
                   const size_t maxLeafSize = 20);
 
   /**
-   * Construct this node as a child of the given parent, starting at column
+   * Construct this node on a subset of the given matrix, starting at column
    * begin_in and using count_in points.  The ordering of that subset of points
-   * in the parent's data matrix will be modified!  This is used for recursive
-   * tree-building by the other constructors which don't specify point indices.
+   * will be modified!  This is used for recursive tree-building by the other
+   * constructors which don't specify point indices.
    *
    * A mapping of the old point indices to the new point indices is filled, as
    * well as a mapping of the new point indices to the old point indices.  It is
@@ -183,7 +187,7 @@ class BinarySpaceTree
    * equal to (begin_in + count_in), and if that is not true, invalid memory
    * reads (and writes) will occur.
    *
-   * @param parent Parent of this node.  Its dataset will be modified!
+   * @param data Dataset to create tree from.  This will be modified!
    * @param begin Index of point to start tree construction with.
    * @param count Number of points to use to construct tree.
    * @param oldFromNew Vector which will be filled with the old positions for
@@ -192,11 +196,13 @@ class BinarySpaceTree
    *     each old point.
    * @param maxLeafSize Size of each leaf in the tree.
    */
-  BinarySpaceTree(BinarySpaceTree* parent,
+  BinarySpaceTree(MatType& data,
                   const size_t begin,
                   const size_t count,
                   std::vector<size_t>& oldFromNew,
                   std::vector<size_t>& newFromOld,
+                  SplitType& splitter,
+                  BinarySpaceTree* parent = NULL,
                   const size_t maxLeafSize = 20);
 
   /**
@@ -445,7 +451,9 @@ class BinarySpaceTree
    *
    * @param maxLeafSize Maximum number of points held in a leaf.
    */
-  void SplitNode(const size_t maxLeafSize);
+  void SplitNode(MatType& data,
+                 const size_t maxLeafSize,
+                 SplitType& splitter);
 
   /**
    * Splits the current node, assigning its left and right children recursively.
@@ -455,8 +463,10 @@ class BinarySpaceTree
    * @param oldFromNew Vector holding permuted indices.
    * @param maxLeafSize Maximum number of points held in a leaf.
    */
-  void SplitNode(std::vector<size_t>& oldFromNew,
-                 const size_t maxLeafSize);
+  void SplitNode(MatType& data,
+                 std::vector<size_t>& oldFromNew,
+                 const size_t maxLeafSize,
+                 SplitType& splitter);
 
  protected:
   /**

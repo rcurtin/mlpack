@@ -175,4 +175,127 @@ BOOST_AUTO_TEST_CASE(RecommendationAccuracyTest)
   BOOST_REQUIRE_LT(failures, 100);
 }
 
+// Make sure that Predict() is returning reasonable results.
+BOOST_AUTO_TEST_CASE(CFPredictTest)
+{
+  // Load the GroupLens dataset; then, we will remove some values from it.
+  arma::mat dataset;
+  data::Load("GroupLens100k.csv", dataset);
+
+  // Save the columns we've removed.
+  arma::mat savedCols(3, 300); // Remove 300 5-star ratings.
+  size_t currentCol = 0;
+  for (size_t i = 0; i < dataset.n_cols; ++i)
+  {
+    if (currentCol == 300)
+      break;
+
+    if (dataset(2, i) > 4.5) // 5-star rating.
+    {
+      // Make sure we don't have this user yet.  This is a slow way to do this
+      // but I don't particularly care here because it's in the tests.
+      bool found = false;
+      for (size_t j = 0; j < currentCol; ++j)
+      {
+        if (savedCols(0, j) == dataset(0, i))
+        {
+          found = true;
+          break;
+        }
+      }
+
+      // If this user doesn't already exist in savedCols, add them.  Otherwise
+      // ignore this point.
+      if (!found)
+      {
+        savedCols.col(currentCol) = dataset.col(i);
+        dataset.shed_col(i);
+        ++currentCol;
+      }
+    }
+  }
+
+  // Now create the CF object.
+  CF<> c(dataset);
+
+  // Now, for each removed rating, make sure the prediction is... reasonably
+  // accurate.
+  double totalError = 0.0;
+  for (size_t i = 0; i < savedCols.n_cols; ++i)
+  {
+    const double prediction = c.Predict(savedCols(0, i), savedCols(1, i));
+
+    const double error = std::pow(prediction - savedCols(2, i), 2.0);
+    totalError += error;
+  }
+
+  totalError = std::sqrt(totalError) / savedCols.n_cols;
+
+  // The mean squared error should be less than one.
+  BOOST_REQUIRE_LT(totalError, 0.5);
+}
+
+// Do the same thing as the previous test, but ensure that the ratings we
+// predict with the batch Predict() are the same as the individual Predict()
+// calls.
+BOOST_AUTO_TEST_CASE(CFBatchPredictTest)
+{
+  // Load the GroupLens dataset; then, we will remove some values from it.
+  arma::mat dataset;
+  data::Load("GroupLens100k.csv", dataset);
+
+  // Save the columns we've removed.
+  arma::mat savedCols(3, 300); // Remove 300 5-star ratings.
+  size_t currentCol = 0;
+  for (size_t i = 0; i < dataset.n_cols; ++i)
+  {
+    if (currentCol == 300)
+      break;
+
+    if (dataset(2, i) > 4.5) // 5-star rating.
+    {
+      // Make sure we don't have this user yet.  This is a slow way to do this
+      // but I don't particularly care here because it's in the tests.
+      bool found = false;
+      for (size_t j = 0; j < currentCol; ++j)
+      {
+        if (savedCols(0, j) == dataset(0, i))
+        {
+          found = true;
+          break;
+        }
+      }
+
+      // If this user doesn't already exist in savedCols, add them.  Otherwise
+      // ignore this point.
+      if (!found)
+      {
+        savedCols.col(currentCol) = dataset.col(i);
+        dataset.shed_col(i);
+        ++currentCol;
+      }
+    }
+  }
+
+  // Now create the CF object.
+  CF<> c(dataset);
+
+  // Get predictions for all user/item pairs we held back.
+  arma::Mat<size_t> combinations(2, savedCols.n_cols);
+  for (size_t i = 0; i < savedCols.n_cols; ++i)
+  {
+    combinations(0, i) = size_t(savedCols(0, i));
+    combinations(1, i) = size_t(savedCols(1, i));
+  }
+
+  arma::vec predictions;
+  c.Predict(combinations, predictions);
+
+  for (size_t i = 0; i < combinations.n_cols; ++i)
+  {
+    const double prediction = c.Predict(combinations(0, i), combinations(1, i));
+    BOOST_REQUIRE_CLOSE(prediction, predictions[i], 1e-8);
+  }
+}
+
 BOOST_AUTO_TEST_SUITE_END();

@@ -33,6 +33,7 @@ add_executable(mlpack_test
   lsh_test.cpp
   math_test.cpp
   matrix_completion_test.cpp
+  mean_shift_test.cpp
   metric_test.cpp
   nbc_test.cpp
   nca_test.cpp

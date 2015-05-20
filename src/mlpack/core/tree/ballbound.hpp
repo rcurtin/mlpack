@@ -9,6 +9,7 @@
 
 #include <mlpack/core.hpp>
 #include <mlpack/core/metrics/lmetric.hpp>
+#include "bound_traits.hpp"
 
 namespace mlpack {
 namespace bound {
@@ -186,8 +187,16 @@ class BallBound
   std::string ToString() const;
 };
 
-}; // namespace bound
-}; // namespace mlpack
+//! A specialization of BoundTraits for this bound type.
+template<typename VecType, typename TMetricType>
+struct BoundTraits<BallBound<VecType, TMetricType>>
+{
+  //! These bounds are potentially loose in some dimensions.
+  const static bool HasTightBounds = false;
+};
+
+} // namespace bound
+} // namespace mlpack
 
 #include "ballbound_impl.hpp"
 

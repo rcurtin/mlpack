@@ -11,10 +11,13 @@ set(SOURCES
   binary_space_tree/dual_tree_traverser_impl.hpp
   binary_space_tree/mean_split.hpp
   binary_space_tree/mean_split_impl.hpp
+  binary_space_tree/midpoint_split.hpp
+  binary_space_tree/midpoint_split_impl.hpp
   binary_space_tree/single_tree_traverser.hpp
   binary_space_tree/single_tree_traverser_impl.hpp
   binary_space_tree/traits.hpp
   bounds.hpp
+  bound_traits.hpp
   cosine_tree/cosine_tree.hpp
   cosine_tree/cosine_tree.cpp
   cover_tree/cover_tree.hpp

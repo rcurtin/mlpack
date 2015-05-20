@@ -1,6 +1,7 @@
 /**
  * @file neuron_layer.hpp
  * @author Marcus Edel
+ * @author Shangtong Zhang
  *
  * Definition of the NeuronLayer class, which implements a standard network
  * layer.
@@ -26,15 +27,16 @@ namespace ann /** Artificial Neural Network. */ {
  *  - InputLayer
  *  - HiddenLayer
  *  - ReluLayer
+ *  - ConvLayer
+ *  - PoolingLayer
  *
  * @tparam ActivationFunction Activation function used for the embedding layer.
- * @tparam MatType Type of data (arma::mat or arma::sp_mat).
- * @tparam VecType Type of data (arma::colvec, arma::mat or arma::sp_mat).
+ * @tparam DataType Type of data (arma::colvec, arma::mat or arma::sp_mat,
+ * arma::cube).
  */
 template <
     class ActivationFunction = LogisticFunction,
-    typename MatType = arma::mat,
-    typename VecType = arma::colvec
+    typename DataType = arma::colvec
 >
 class NeuronLayer
 
@@ -46,9 +48,32 @@ class NeuronLayer
    * @param layerSize The number of neurons.
    */
   NeuronLayer(const size_t layerSize) :
-      inputActivations(arma::zeros<VecType>(layerSize)),
-      delta(arma::zeros<VecType>(layerSize)),
-      layerSize(layerSize)
+      inputActivations(arma::zeros<DataType>(layerSize)),
+      delta(arma::zeros<DataType>(layerSize)),
+      layerRows(layerSize),
+      layerSlices(1)
+  {
+    // Nothing to do here.
+  }
+
+  NeuronLayer(const size_t layerRows, const size_t layerCols) :
+      inputActivations(arma::zeros<DataType>(layerRows, layerCols)),
+      delta(arma::zeros<DataType>(layerRows, layerCols)),
+      layerRows(layerRows),
+      layerCols(layerCols),
+      layerSlices(1)
+  {
+    // Nothing to do here.
+  }
+
+  NeuronLayer(const size_t layerRows,
+              const size_t layerCols,
+              const size_t layerSlices) :
+      inputActivations(arma::zeros<DataType>(layerRows, layerCols, layerSlices)),
+      delta(arma::zeros<DataType>(layerRows, layerCols, layerSlices)),
+      layerRows(layerRows),
+      layerCols(layerCols),
+      layerSlices(layerSlices)
   {
     // Nothing to do here.
   }
@@ -61,7 +86,8 @@ class NeuronLayer
    * activity function.
    * @param outputActivation Data to store the resulting output activation.
    */
-  void FeedForward(const VecType& inputActivation, VecType& outputActivation)
+  void FeedForward(const DataType& inputActivation,
+                   DataType& outputActivation)
   {
     ActivationFunction::fn(inputActivation, outputActivation);
   }
@@ -76,45 +102,85 @@ class NeuronLayer
    * @param delta The calculating delta using the partial derivative of the
    * error with respect to a weight.
    */
-  void FeedBackward(const VecType& inputActivation,
-                    const VecType& error,
-                    VecType& delta)
+  void FeedBackward(const DataType& inputActivation,
+                    const DataType& error,
+                    DataType& delta)
   {
-    VecType derivative;
+    DataType derivative;
     ActivationFunction::deriv(inputActivation, derivative);
-
     delta = error % derivative;
   }
 
+  /**
+   * Ordinary feed backward pass of a neural network, calculating the function
+   * f(x) by propagating x backwards trough f. Using the results from the feed
+   * forward pass.
+   *
+   * @param inputActivation Input data used for calculating the function f(x).
+   * @param error The backpropagated error.
+   * @param delta The calculating delta using the partial derivative of the
+   * error with respect to a weight.
+   */
+  template<typename eT>
+  void FeedBackward(const arma::Cube<eT>& inputActivation,
+                    const arma::Mat<eT>& error,
+                    arma::Cube<eT>& delta)
+  {
+    DataType derivative;
+    ActivationFunction::deriv(inputActivation, derivative);
+    delta = arma::cube(error.memptr(), inputActivation.n_rows,
+        inputActivation.n_cols, inputActivation.n_slices) % derivative;
+  }
+
+
   //! Get the input activations.
-  VecType& InputActivation() const { return inputActivations; }
+  DataType& InputActivation() const { return inputActivations; }
   //  //! Modify the input activations.
-  VecType& InputActivation() { return inputActivations; }
+  DataType& InputActivation() { return inputActivations; }
 
   //! Get the detla.
-  VecType& Delta() const { return delta; }
- //  //! Modify the delta.
-  VecType& Delta() { return delta; }
+  DataType& Delta() const { return delta; }
+  //! Modify the delta.
+  DataType& Delta() { return delta; }
 
   //! Get input size.
-  size_t InputSize() const { return layerSize; }
-  //  //! Modify the delta.
-  size_t& InputSize() { return layerSize; }
+  size_t InputSize() const { return layerRows; }
+  //! Modify the delta.
+  size_t& InputSize() { return layerRows; }
 
   //! Get output size.
-  size_t OutputSize() const { return layerSize; }
+  size_t OutputSize() const { return layerRows; }
   //! Modify the output size.
-  size_t& OutputSize() { return layerSize; }
+  size_t& OutputSize() { return layerRows; }
+
+  //! Get the number of layer rows.
+  size_t LayerRows() const { return layerRows; }
+  //! Modify the number of layer rows.
+  size_t& LayerRows() { return layerRows; }
+
+  //! Get the number of layer columns.
+  size_t LayerCols() const { return layerCols; }
+  //! Modify the number of layer columns.
+  size_t& LayerCols() { return layerCols; }
+
+  //! Get the number of layer slices.
+  size_t LayerSlices() const { return layerSlices; }
 
  private:
   //! Locally-stored input activation object.
-  VecType inputActivations;
+  DataType inputActivations;
 
   //! Locally-stored delta object.
-  VecType delta;
+  DataType delta;
 
-  //! Locally-stored number of neurons.
-  size_t layerSize;
+  //! Locally-stored number of layer rows.
+  size_t layerRows;
+
+  //! Locally-stored number of layer cols.
+  size_t layerCols;
+
+  //! Locally-stored number of layer slices.
+  size_t layerSlices;
 }; // class NeuronLayer
 
 // Convenience typedefs.
@@ -124,20 +190,18 @@ class NeuronLayer
  */
 template <
     class ActivationFunction = LogisticFunction,
-    typename MatType = arma::mat,
-    typename VecType = arma::colvec
+    typename DataType = arma::colvec
 >
-using InputLayer = NeuronLayer<ActivationFunction, MatType, VecType>;
+using InputLayer = NeuronLayer<ActivationFunction, DataType>;
 
 /**
  * Standard Hidden-Layer using the logistic activation function.
  */
 template <
     class ActivationFunction = LogisticFunction,
-    typename MatType = arma::mat,
-    typename VecType = arma::colvec
+    typename DataType = arma::colvec
 >
-using HiddenLayer = NeuronLayer<ActivationFunction, MatType, VecType>;
+using HiddenLayer = NeuronLayer<ActivationFunction, DataType>;
 
 /**
  * Layer of rectified linear units (relu) using the rectifier activation
@@ -145,10 +209,27 @@ using HiddenLayer = NeuronLayer<ActivationFunction, MatType, VecType>;
  */
 template <
     class ActivationFunction = RectifierFunction,
-    typename MatType = arma::mat,
-    typename VecType = arma::colvec
+    typename DataType = arma::colvec
 >
-using ReluLayer = NeuronLayer<ActivationFunction, MatType, VecType>;
+using ReluLayer = NeuronLayer<ActivationFunction, DataType>;
+
+/**
+ * Convolution layer using the logistic activation function.
+ */
+template <
+    class ActivationFunction = LogisticFunction,
+    typename DataType = arma::cube
+>
+using ConvLayer = NeuronLayer<ActivationFunction, DataType>;
+
+/**
+ * Pooling layer using the logistic activation function.
+ */
+template <
+    class ActivationFunction = LogisticFunction,
+    typename DataType = arma::cube
+>
+using PoolingLayer = NeuronLayer<ActivationFunction, DataType>;
 
 
 }; // namespace ann

@@ -36,7 +36,7 @@ template <
     class GateActivationFunction = LogisticFunction,
     class StateActivationFunction = TanhFunction,
     class OutputActivationFunction = TanhFunction,
-    class WeightInitRule = NguyenWidrowInitialization<>,
+    class WeightInitRule = NguyenWidrowInitialization,
     typename OptimizerType = SteepestDescent<>,
     typename MatType = arma::mat,
     typename VecType = arma::colvec
@@ -313,6 +313,9 @@ class LSTMLayer
   size_t OutputSize() const { return layerSize; }
   //! Modify the output size.
   size_t& OutputSize() { return layerSize; }
+
+  //! Get the number of layer slices.
+  size_t LayerSlices() const { return 1; }
 
   //! Get the detla.
   VecType& Delta() const { return delta; }

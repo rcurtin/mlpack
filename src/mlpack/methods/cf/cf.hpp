@@ -31,9 +31,8 @@ namespace cf /** Collaborative filtering. */ {
  * Regularized SVD.
  */
 template<typename FactorizerType>
-class FactorizerTraits
+struct FactorizerTraits
 {
- public:
   /**
    * If true, then the passed data matrix is used for factorizer.Apply().
    * Otherwise, it is modified into a form suitable for factorization.
@@ -165,6 +164,29 @@ class CF
   void GetRecommendations(const size_t numRecs,
                           arma::Mat<size_t>& recommendations,
                           arma::Col<size_t>& users);
+
+  /**
+   * Predict the rating of an item by a particular user.
+   *
+   * @param user User to predict for.
+   * @param item Item to predict for.
+   */
+  double Predict(const size_t user, const size_t item) const;
+
+  /**
+   * Predict ratings for each user-item combination in the given coordinate list
+   * matrix.  The matrix 'combinations' should have two rows and number of
+   * columns equal to the number of desired predictions.  The first element of
+   * each column corresponds to the user index, and the second element of each
+   * column corresponds to the item index.  The output vector 'predictions' will
+   * have length equal to combinations.n_cols, and predictions[i] will be equal
+   * to the prediction for the user/item combination in combinations.col(i).
+   *
+   * @param combinations User/item combinations to predict.
+   * @param predictions Predicted ratings for each user/item combination.
+   */
+  void Predict(const arma::Mat<size_t>& combinations,
+               arma::vec& predictions) const;
 
   /**
    * Returns a string representation of this object.

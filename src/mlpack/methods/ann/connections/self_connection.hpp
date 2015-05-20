@@ -31,7 +31,7 @@ template<
     typename InputLayerType,
     typename OutputLayerType,
     typename OptimizerType,
-    class WeightInitRule = NguyenWidrowInitialization<>,
+    class WeightInitRule = NguyenWidrowInitialization,
     typename MatType = arma::mat,
     typename VecType = arma::colvec
 >
@@ -159,6 +159,7 @@ class ConnectionTraits<
  public:
   static const bool IsSelfConnection = true;
   static const bool IsFullselfConnection = false;
+  static const bool IsPoolingConnection = false;
 };
 
 }; // namespace ann

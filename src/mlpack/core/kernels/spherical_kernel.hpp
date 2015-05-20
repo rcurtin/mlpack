@@ -95,6 +95,9 @@ class SphericalKernel
   {
     return (t <= bandwidth) ? 1.0 : 0.0;
   }
+  double Gradient(double t) {
+    return t == bandwidth ? arma::datum::nan : 0.0;
+  }
 
   //! Serialize the object.
   template<typename Archive>
@@ -125,6 +128,8 @@ class KernelTraits<SphericalKernel>
  public:
   //! The spherical kernel is normalized: K(x, x) = 1 for all x.
   static const bool IsNormalized = true;
+  //! The spherical kernel doesn't include a squared distance.
+  static const bool UsesSquaredDistance = false;
 };
 
 }; // namespace kernel
