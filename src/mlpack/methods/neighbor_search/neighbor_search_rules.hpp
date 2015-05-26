@@ -101,6 +101,10 @@ class NeighborSearchRules
   //! Modify the traversal info.
   TraversalInfoType& TraversalInfo() { return traversalInfo; }
 
+  //! Serialize the object.  This does not serialize any of the references!
+  template<typename Archive>
+  void Serialize(Archive& ar, const unsigned int version);
+
  protected:
   //! The reference set.
   const typename TreeType::Mat& referenceSet;

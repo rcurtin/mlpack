@@ -29,6 +29,7 @@ NeighborSearchRules<SortPolicy, MetricType, TreeType>::NeighborSearchRules(
     sameSet(sameSet),
     lastQueryIndex(querySet.n_cols),
     lastReferenceIndex(referenceSet.n_cols),
+    lastBaseCase(0),
     baseCases(0),
     scores(0)
 {
@@ -307,6 +308,23 @@ inline double NeighborSearchRules<SortPolicy, MetricType, TreeType>::Rescore(
   const double bestDistance = CalculateBound(queryNode);
 
   return (SortPolicy::IsBetter(oldScore, bestDistance)) ? oldScore : DBL_MAX;
+}
+
+// Serialize the object; this does not serialize references!
+template<typename SortPolicy, typename MetricType, typename TreeType>
+template<typename Archive>
+void NeighborSearchRules<SortPolicy, MetricType, TreeType>::Serialize(
+    Archive& ar,
+    const unsigned int /* version */)
+{
+  // We aren't saving or loading references.
+  ar & data::CreateNVP(sameSet, "sameSet");
+  ar & data::CreateNVP(lastQueryIndex, "lastQueryIndex");
+  ar & data::CreateNVP(lastReferenceIndex, "lastReferenceIndex");
+  ar & data::CreateNVP(lastBaseCase, "lastBaseCase");
+  ar & data::CreateNVP(baseCases, "baseCases");
+  ar & data::CreateNVP(scores, "scores");
+  ar & data::CreateNVP(traversalInfo, "traversalInfo");
 }
 
 // Calculate the bound for a given query node in its current state and update
