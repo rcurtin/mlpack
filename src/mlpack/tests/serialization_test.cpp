@@ -21,6 +21,8 @@
 #include <mlpack/core/tree/hrectbound.hpp>
 #include <mlpack/core/metrics/mahalanobis_distance.hpp>
 #include <mlpack/core/tree/binary_space_tree.hpp>
+#include <mlpack/methods/neighbor_search/neighbor_search.hpp>
+#include <mlpack/methods/neighbor_search/neighbor_search_mpi_wrapper.hpp>
 
 using namespace mlpack;
 using namespace mlpack::distribution;
@@ -698,6 +700,149 @@ BOOST_AUTO_TEST_CASE(BinarySpaceTreeSubtreeTest)
   SerializeObjectAll(*tree.Left(), xmlTree, textTree, binaryTree);
 
   CheckTrees(*tree.Left(), xmlTree, textTree, binaryTree);
+}
+
+BOOST_AUTO_TEST_CASE(NeighborSearchMPIWrapperTest)
+{
+  // Create datasets and trees.
+  arma::mat querySet;
+  querySet.randu(5, 1000);
+  arma::mat referenceSet;
+  referenceSet.randu(5, 5000);
+
+  BinarySpaceTree<HRectBound<2>>* refTree =
+      new BinarySpaceTree<HRectBound<2>>(referenceSet);
+  BinarySpaceTree<HRectBound<2>>* queryTree =
+      new BinarySpaceTree<HRectBound<2>>(querySet);
+
+  // Create rules object.
+  using namespace mlpack::neighbor;
+  typedef NeighborSearchRules<NearestNeighborSort, EuclideanDistance,
+      BinarySpaceTree<HRectBound<2>>> RuleType;
+
+  arma::Mat<size_t> neighbors;
+  arma::mat distances;
+  EuclideanDistance metric;
+
+  RuleType* rules = new RuleType(referenceSet, querySet, neighbors, distances,
+      metric);
+  // Change a few things.
+  rules->TraversalInfo().LastBaseCase() = 5.0;
+  rules->TraversalInfo().LastQueryNode() = queryTree->Left();
+  rules->TraversalInfo().LastReferenceNode() = NULL;
+
+  // Now create the MPI wrapper.
+  typedef NeighborSearchMPIWrapper<NearestNeighborSort, EuclideanDistance,
+      BinarySpaceTree<HRectBound<2>>> MPIWrapperType;
+
+  MPIWrapperType wrapper(refTree, queryTree, rules, 1); // k = 1.
+
+  // Serialize the wrapper, and make sure we get the same thing back each time.
+  MPIWrapperType xmlWrapper, textWrapper, binaryWrapper;
+  SerializeObjectAll(wrapper, xmlWrapper, textWrapper, binaryWrapper);
+
+  // Check the trees.
+  CheckTrees(*wrapper.QueryTree(), *xmlWrapper.QueryTree(),
+        *textWrapper.QueryTree(), *binaryWrapper.QueryTree());
+  CheckTrees(*wrapper.ReferenceTree(), *xmlWrapper.ReferenceTree(),
+        *textWrapper.ReferenceTree(), *binaryWrapper.ReferenceTree());
+
+  // Check the size of the matrices.
+  BOOST_REQUIRE_EQUAL(wrapper.Neighbors().n_rows,
+      xmlWrapper.Neighbors().n_rows);
+  BOOST_REQUIRE_EQUAL(wrapper.Neighbors().n_rows,
+      textWrapper.Neighbors().n_rows);
+  BOOST_REQUIRE_EQUAL(wrapper.Neighbors().n_rows,
+      binaryWrapper.Neighbors().n_rows);
+  BOOST_REQUIRE_EQUAL(wrapper.Neighbors().n_cols,
+      xmlWrapper.Neighbors().n_cols);
+  BOOST_REQUIRE_EQUAL(wrapper.Neighbors().n_cols,
+      textWrapper.Neighbors().n_cols);
+  BOOST_REQUIRE_EQUAL(wrapper.Neighbors().n_cols,
+      binaryWrapper.Neighbors().n_cols);
+
+  BOOST_REQUIRE_EQUAL(wrapper.Distances().n_rows,
+      xmlWrapper.Distances().n_rows);
+  BOOST_REQUIRE_EQUAL(wrapper.Distances().n_rows,
+      textWrapper.Distances().n_rows);
+  BOOST_REQUIRE_EQUAL(wrapper.Distances().n_rows,
+      binaryWrapper.Distances().n_rows);
+  BOOST_REQUIRE_EQUAL(wrapper.Distances().n_cols,
+      xmlWrapper.Distances().n_cols);
+  BOOST_REQUIRE_EQUAL(wrapper.Distances().n_cols,
+      textWrapper.Distances().n_cols);
+  BOOST_REQUIRE_EQUAL(wrapper.Distances().n_cols,
+      binaryWrapper.Distances().n_cols);
+
+  for (size_t i = 0; i < wrapper.Distances().n_elem; ++i)
+  {
+    BOOST_REQUIRE_EQUAL(wrapper.Neighbors()[i], xmlWrapper.Neighbors()[i]);
+    BOOST_REQUIRE_EQUAL(wrapper.Neighbors()[i], textWrapper.Neighbors()[i]);
+    BOOST_REQUIRE_EQUAL(wrapper.Neighbors()[i], binaryWrapper.Neighbors()[i]);
+
+    if (wrapper.Distances()[i] <= 1e-5)
+    {
+      BOOST_REQUIRE_SMALL(xmlWrapper.Distances()[i], 1e-5);
+      BOOST_REQUIRE_SMALL(textWrapper.Distances()[i], 1e-5);
+      BOOST_REQUIRE_SMALL(binaryWrapper.Distances()[i], 1e-5);
+    }
+    else
+    {
+      BOOST_REQUIRE_CLOSE(wrapper.Distances()[i], xmlWrapper.Distances()[i],
+          1e-5);
+      BOOST_REQUIRE_CLOSE(wrapper.Distances()[i], textWrapper.Distances()[i],
+          1e-5);
+      BOOST_REQUIRE_CLOSE(wrapper.Distances()[i], binaryWrapper.Distances()[i],
+          1e-5);
+    }
+  }
+
+  // Lastly, check the rules.  Really we can kind of only check the traversal
+  // info.
+  BOOST_REQUIRE_CLOSE(wrapper.Rules()->TraversalInfo().LastScore(),
+      xmlWrapper.Rules()->TraversalInfo().LastScore(), 1e-5);
+  BOOST_REQUIRE_CLOSE(wrapper.Rules()->TraversalInfo().LastScore(),
+      textWrapper.Rules()->TraversalInfo().LastScore(), 1e-5);
+  BOOST_REQUIRE_CLOSE(wrapper.Rules()->TraversalInfo().LastScore(),
+      binaryWrapper.Rules()->TraversalInfo().LastScore(), 1e-5);
+  BOOST_REQUIRE_CLOSE(wrapper.Rules()->TraversalInfo().LastBaseCase(),
+      xmlWrapper.Rules()->TraversalInfo().LastBaseCase(), 1e-5);
+  BOOST_REQUIRE_CLOSE(wrapper.Rules()->TraversalInfo().LastBaseCase(),
+      textWrapper.Rules()->TraversalInfo().LastBaseCase(), 1e-5);
+  BOOST_REQUIRE_CLOSE(wrapper.Rules()->TraversalInfo().LastBaseCase(),
+      binaryWrapper.Rules()->TraversalInfo().LastBaseCase(), 1e-5);
+
+  if (wrapper.Rules()->TraversalInfo().LastQueryNode() != NULL)
+  {
+    CheckTrees(*wrapper.Rules()->TraversalInfo().LastQueryNode(),
+        *xmlWrapper.Rules()->TraversalInfo().LastQueryNode(),
+        *textWrapper.Rules()->TraversalInfo().LastQueryNode(),
+        *binaryWrapper.Rules()->TraversalInfo().LastQueryNode());
+  }
+  else
+  {
+    BOOST_REQUIRE(xmlWrapper.Rules()->TraversalInfo().LastQueryNode() == NULL);
+    BOOST_REQUIRE(textWrapper.Rules()->TraversalInfo().LastQueryNode() == NULL);
+    BOOST_REQUIRE(
+        binaryWrapper.Rules()->TraversalInfo().LastQueryNode() == NULL);
+  }
+
+  if (wrapper.Rules()->TraversalInfo().LastReferenceNode() != NULL)
+  {
+    CheckTrees(*wrapper.Rules()->TraversalInfo().LastReferenceNode(),
+        *xmlWrapper.Rules()->TraversalInfo().LastReferenceNode(),
+        *textWrapper.Rules()->TraversalInfo().LastReferenceNode(),
+        *binaryWrapper.Rules()->TraversalInfo().LastReferenceNode());
+  }
+  else
+  {
+    BOOST_REQUIRE(
+        xmlWrapper.Rules()->TraversalInfo().LastReferenceNode() == NULL);
+    BOOST_REQUIRE(
+        textWrapper.Rules()->TraversalInfo().LastReferenceNode() == NULL);
+    BOOST_REQUIRE(
+        binaryWrapper.Rules()->TraversalInfo().LastReferenceNode() == NULL);
+  }
 }
 
 BOOST_AUTO_TEST_SUITE_END();
