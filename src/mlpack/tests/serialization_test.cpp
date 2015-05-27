@@ -720,8 +720,10 @@ BOOST_AUTO_TEST_CASE(NeighborSearchMPIWrapperTest)
   typedef NeighborSearchRules<NearestNeighborSort, EuclideanDistance,
       BinarySpaceTree<HRectBound<2>>> RuleType;
 
-  arma::Mat<size_t> neighbors;
-  arma::mat distances;
+  arma::Mat<size_t> neighbors(1, querySet.n_cols);
+  arma::mat distances(1, querySet.n_cols);
+  neighbors.zeros();
+  distances.zeros();
   EuclideanDistance metric;
 
   RuleType* rules = new RuleType(referenceSet, querySet, neighbors, distances,
@@ -735,7 +737,7 @@ BOOST_AUTO_TEST_CASE(NeighborSearchMPIWrapperTest)
   typedef NeighborSearchMPIWrapper<NearestNeighborSort, EuclideanDistance,
       BinarySpaceTree<HRectBound<2>>> MPIWrapperType;
 
-  MPIWrapperType wrapper(refTree, queryTree, rules, 1); // k = 1.
+  MPIWrapperType wrapper(refTree, queryTree, rules); // k = 1.
 
   // Serialize the wrapper, and make sure we get the same thing back each time.
   MPIWrapperType xmlWrapper, textWrapper, binaryWrapper;

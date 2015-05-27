@@ -30,21 +30,19 @@ class NeighborSearchMPIWrapper
   NeighborSearchMPIWrapper(
       TreeType* referenceTree,
       TreeType* queryTree,
-      RuleType* rules,
-      const size_t k) :
+      RuleType* rules) :
       referenceTree(referenceTree),
       queryTree(queryTree),
       rules(rules),
-      neighbors(k, queryTree->Dataset().n_cols),
-      distances(k, queryTree->Dataset().n_cols)
+      neighbors(rules->Neighbors()),
+      distances(rules->Distances())
   {
     // Nothing left to do.
-    neighbors.zeros();
-    distances.zeros();
   }
 
   ~NeighborSearchMPIWrapper()
   {
+    // TODO: this needs to be better thought out.
     if (rules)
       delete rules;
     if (referenceTree)
