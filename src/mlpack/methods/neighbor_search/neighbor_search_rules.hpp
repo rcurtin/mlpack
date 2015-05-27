@@ -93,6 +93,16 @@ class NeighborSearchRules
   //! Modify the number of scores that have been performed.
   size_t& Scores() { return scores; }
 
+  //! Get the neighbors matrix.
+  const arma::Mat<size_t>& Neighbors() const { return neighbors; }
+  //! Modify the neighbors matrix.
+  arma::Mat<size_t>& Neighbors() { return neighbors; }
+
+  //! Get the distances matrix.
+  const arma::mat& Distances() const { return distances; }
+  //! Modify the distances matrix.
+  arma::mat& Distances() { return distances; }
+
   //! Convenience typedef.
   typedef NeighborSearchTraversalInfo<TreeType> TraversalInfoType;
 
