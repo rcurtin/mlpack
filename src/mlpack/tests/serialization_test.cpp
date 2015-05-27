@@ -710,10 +710,8 @@ BOOST_AUTO_TEST_CASE(NeighborSearchMPIWrapperTest)
   arma::mat referenceSet;
   referenceSet.randu(5, 5000);
 
-  BinarySpaceTree<HRectBound<2>>* refTree =
-      new BinarySpaceTree<HRectBound<2>>(referenceSet);
-  BinarySpaceTree<HRectBound<2>>* queryTree =
-      new BinarySpaceTree<HRectBound<2>>(querySet);
+  BinarySpaceTree<HRectBound<2>> refTree(referenceSet);
+  BinarySpaceTree<HRectBound<2>> queryTree(querySet);
 
   // Create rules object.
   using namespace mlpack::neighbor;
@@ -726,18 +724,17 @@ BOOST_AUTO_TEST_CASE(NeighborSearchMPIWrapperTest)
   distances.zeros();
   EuclideanDistance metric;
 
-  RuleType* rules = new RuleType(referenceSet, querySet, neighbors, distances,
-      metric);
+  RuleType rules(referenceSet, querySet, neighbors, distances, metric);
   // Change a few things.
-  rules->TraversalInfo().LastBaseCase() = 5.0;
-  rules->TraversalInfo().LastQueryNode() = queryTree->Left();
-  rules->TraversalInfo().LastReferenceNode() = NULL;
+  rules.TraversalInfo().LastBaseCase() = 5.0;
+  rules.TraversalInfo().LastQueryNode() = queryTree.Left();
+  rules.TraversalInfo().LastReferenceNode() = NULL;
 
   // Now create the MPI wrapper.
   typedef NeighborSearchMPIWrapper<NearestNeighborSort, EuclideanDistance,
       BinarySpaceTree<HRectBound<2>>> MPIWrapperType;
 
-  MPIWrapperType wrapper(refTree, queryTree, rules); // k = 1.
+  MPIWrapperType wrapper(&refTree, &queryTree, &rules); // k = 1.
 
   // Serialize the wrapper, and make sure we get the same thing back each time.
   MPIWrapperType xmlWrapper, textWrapper, binaryWrapper;
