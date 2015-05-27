@@ -24,7 +24,8 @@ class NeighborSearchMPIWrapper
   NeighborSearchMPIWrapper() :
       referenceTree(NULL),
       queryTree(NULL),
-      rules(NULL)
+      rules(NULL),
+      owner(false)
   { }
 
   NeighborSearchMPIWrapper(
@@ -35,25 +36,34 @@ class NeighborSearchMPIWrapper
       queryTree(queryTree),
       rules(rules),
       neighbors(rules->Neighbors()),
-      distances(rules->Distances())
+      distances(rules->Distances()),
+      owner(false)
   {
     // Nothing left to do.
   }
 
   ~NeighborSearchMPIWrapper()
   {
-    // TODO: this needs to be better thought out.
-    if (rules)
-      delete rules;
-    if (referenceTree)
-      delete referenceTree;
-    if (queryTree)
-      delete queryTree;
+    // Only delete the objects if we own them.
+    if (owner)
+    {
+      if (rules)
+        delete rules;
+      if (referenceTree)
+        delete referenceTree;
+      if (queryTree)
+        delete queryTree;
+    }
   }
 
   template<typename Archive>
   void Serialize(Archive& ar, const unsigned int /* version */)
   {
+    if (Archive::is_loading::value && referenceTree && owner)
+      delete referenceTree;
+    if (Archive::is_loading::value && queryTree && owner)
+      delete queryTree;
+
     ar & data::CreateNVP(referenceTree, "referenceTree");
     ar & data::CreateNVP(queryTree, "queryTree");
     ar & data::CreateNVP(neighbors, "neighbors");
@@ -62,10 +72,11 @@ class NeighborSearchMPIWrapper
 
     if (Archive::is_loading::value)
     {
-      if (rules)
+      if (rules && owner)
         delete rules;
 
       // Create the rules object and set the references correctly.
+      owner = true;
       rules = new NeighborSearchRules<SortPolicy, MetricType, TreeType>(
           referenceTree->Dataset(), queryTree->Dataset(), neighbors, distances,
           metric);
@@ -96,6 +107,7 @@ class NeighborSearchMPIWrapper
   arma::Mat<size_t> neighbors;
   arma::mat distances;
   MetricType metric;
+  bool owner;
 };
 
 } // namespace neighbor
