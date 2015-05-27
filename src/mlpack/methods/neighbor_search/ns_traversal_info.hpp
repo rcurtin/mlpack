@@ -53,6 +53,18 @@ class NeighborSearchTraversalInfo
   //! Modify the base case associated with the last node combination.
   double& LastBaseCase() { return lastBaseCase; }
 
+  //! Serialize the object.  Be careful: you should only serialize this inside
+  //! of an object where you are serializing the tree, too; otherwise, you are
+  //! responsible for deleting lastQueryNode and lastReferenceNode.
+  template<typename Archive>
+  void Serialize(Archive& ar, const unsigned int /* version */)
+  {
+    ar & data::CreateNVP(lastQueryNode, "lastQueryNode");
+    ar & data::CreateNVP(lastReferenceNode, "lastReferenceNode");
+    ar & data::CreateNVP(lastScore, "lastScore");
+    ar & data::CreateNVP(lastBaseCase, "lastBaseCase");
+  }
+
  private:
   //! The last query node.
   TreeType* lastQueryNode;
@@ -64,7 +76,7 @@ class NeighborSearchTraversalInfo
   double lastBaseCase;
 };
 
-}; // namespace neighbor
-}; // namespace mlpack
+} // namespace neighbor
+} // namespace mlpack
 
 #endif
