@@ -57,6 +57,12 @@ class NeighborSearchMPIWrapper
   }
 
   template<typename Archive>
+  void serialize(Archive& ar, const unsigned int version)
+  {
+    Serialize(ar, version);
+  }
+
+  template<typename Archive>
   void Serialize(Archive& ar, const unsigned int /* version */)
   {
     if (Archive::is_loading::value && referenceTree && owner)
