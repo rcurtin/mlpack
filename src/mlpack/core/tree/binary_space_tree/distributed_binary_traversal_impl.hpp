@@ -8,6 +8,8 @@
 #define __MLPACK_CORE_TREE_BINARY_SPACE_TREE_DISTRIBUTED_BINARY_TRAVERSAL_IMPL_HPP
 
 #include "distributed_binary_traversal.hpp"
+#include "../binary_space_tree.hpp"
+#include "dual_tree_traverser.hpp"
 #include <boost/mpi.hpp>
 
 namespace mlpack {
@@ -33,8 +35,18 @@ DistributedBinaryTraversal<RuleType>::DistributedBinaryTraversal() :
   typename RuleType::MPIWrapper wrapper;
   Log::Info << "Process " << world.rank() << " is waiting for a message.\n";
   world.recv(0, 0, wrapper);
+  Log::Info << "Process " << world.rank() << " has received a message.\n";
 
-  Log::Warn << "Received message!\n";
+  // We've now received our information.  Start the recursion.
+  this->rule = wrapper.Rules();
+  Traverse(*wrapper.QueryTree(), *wrapper.ReferenceTree());
+
+  // Now, we have to ship the neighbors and distances back to the master.
+  typename RuleType::MPIResultsWrapper resultsWrapper(rule->Neighbors(),
+                                                      rule->Distances());
+  Log::Info << "Process " << world.rank() << " is sending results.\n";
+  world.send(0, 0, resultsWrapper);
+  Log::Info << "Process " << world.rank() << " is finished.\n";
 }
 
 template<typename RuleType>
@@ -67,7 +79,7 @@ void DistributedBinaryTraversal<RuleType>::MasterTraverse(
 {
   // Okay, we are the MPI master.  We need to recurse for a handful of levels,
   // before we are able to ship off tasks.
-  if (level < std::ceil(std::log2(world.size() - 1)))
+  if (level < std::ceil(std::log2(world.size() - 1)) - 1)
   {
     // Perform unprioritized dual-tree recursion.
     const double score = rule->Score(queryNode, referenceNode);
@@ -106,25 +118,35 @@ void DistributedBinaryTraversal<RuleType>::MasterTraverse(
     // We are now ready to ship off tasks to children.  We have up to four
     // recursions we can perform here.  First, prepare the MPIWrapper object,
     // which is what we'll send.
+    Log::Info << "Preparing MPI wrapper.\n";
     typename RuleType::MPIWrapper wrapper(&referenceNode, &queryNode, rule);
-
+    Log::Info << "Get target id.\n";
     const size_t target = GetTarget(queryNode, referenceNode);
     Log::Info << "Sending trees to " << target << ".\n";
     world.send(target, 0, wrapper);
     Log::Info << "Message sent to " << target << "!\n";
-  }
 
-  // Now, we have to collect all result messages and do something with them.
-  // I'll get to that later.
+    // Wait for results?
+    typename RuleType::MPIResultsWrapper resultsWrapper;
+    world.recv(target, 0, resultsWrapper);
+    Log::Info << "Received results from " << target << ".\n";
+
+    // Look through the results and take them as necessary.
+    resultsWrapper.Merge(*rule);
+    Log::Info << "Results merged.\n";
+  }
 }
 
 template<typename RuleType>
 template<typename TreeType>
 void DistributedBinaryTraversal<RuleType>::ChildTraverse(
-    TreeType& /* queryNode */,
-    TreeType& /* referenceNode */)
+    TreeType& queryNode,
+    TreeType& referenceNode)
 {
+  // We'll just call out to the standard dual-tree traversal for a single node.
+  typename TreeType::template DualTreeTraverser<RuleType> traverser(*rule);
 
+  traverser.Traverse(queryNode, referenceNode);
 }
 
 template<typename RuleType>
@@ -162,6 +184,9 @@ size_t DistributedBinaryTraversal<RuleType>::GetTarget(
     // Append this index.
     index += (currentIndex << (level * 2));
     ++level;
+
+    currentQuery = currentQuery->Parent();
+    currentRef = currentRef->Parent();
   }
 
   return index + 1; // Index 0 is the root.

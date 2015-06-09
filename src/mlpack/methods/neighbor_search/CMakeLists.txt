@@ -41,4 +41,12 @@ target_link_libraries(allkfn
   mlpack
 )
 
+add_executable(knn_mpi
+  knn_mpi_main.cpp
+)
+target_link_libraries(knn_mpi
+  mlpack
+  ${MPI_CXX_LIBRARIES}
+)
+
 install(TARGETS allknn allkfn RUNTIME DESTINATION bin)

@@ -16,6 +16,8 @@ namespace neighbor {
 template<typename SortPolicy, typename MetricType, typename TreeType>
 class NeighborSearchMPIWrapper;
 
+class NeighborSearchMPIResultsWrapper;
+
 template<typename SortPolicy, typename MetricType, typename TreeType>
 class NeighborSearchRules
 {
@@ -120,6 +122,7 @@ class NeighborSearchRules
 
   typedef NeighborSearchMPIWrapper<SortPolicy, MetricType, TreeType>
       MPIWrapper;
+  typedef NeighborSearchMPIResultsWrapper MPIResultsWrapper;
 
  protected:
   //! The reference set.
