@@ -14,6 +14,9 @@ namespace mlpack {
 namespace neighbor {
 
 template<typename SortPolicy, typename MetricType, typename TreeType>
+class NeighborSearchMPIWrapper;
+
+template<typename SortPolicy, typename MetricType, typename TreeType>
 class NeighborSearchRules
 {
  public:
@@ -114,6 +117,9 @@ class NeighborSearchRules
   //! Serialize the object.  This does not serialize any of the references!
   template<typename Archive>
   void Serialize(Archive& ar, const unsigned int version);
+
+  typedef NeighborSearchMPIWrapper<SortPolicy, MetricType, TreeType>
+      MPIWrapper;
 
  protected:
   //! The reference set.

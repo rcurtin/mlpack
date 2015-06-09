@@ -9,6 +9,7 @@
 
 // In case it hasn't been included yet.
 #include "neighbor_search_rules.hpp"
+#include <mlpack/core/tree/tree_traits.hpp>
 
 namespace mlpack {
 namespace neighbor {
@@ -324,7 +325,28 @@ void NeighborSearchRules<SortPolicy, MetricType, TreeType>::Serialize(
   ar & data::CreateNVP(lastBaseCase, "lastBaseCase");
   ar & data::CreateNVP(baseCases, "baseCases");
   ar & data::CreateNVP(scores, "scores");
+
+  if ((Archive::is_saving::value) &&
+      (traversalInfo.LastQueryNode() == (TreeType*) this))
+  {
+    // We need to reset the last query and reference nodes to NULL, and then set
+    // the last score to a sentinel value so that we don't serialize a tree that
+    // doesn't exist.
+    traversalInfo.LastQueryNode() = NULL;
+    traversalInfo.LastReferenceNode() = NULL;
+    traversalInfo.LastScore() = -10.0; // This is entirely arbitrary.
+  }
+
   ar & data::CreateNVP(traversalInfo, "traversalInfo");
+
+  if ((Archive::is_loading::value) &&
+      (traversalInfo.LastQueryNode() == NULL) &&
+      (traversalInfo.LastScore() == -10.0))
+  {
+    // We need to set the last query and reference nodes to something invalid.
+    traversalInfo.LastQueryNode() = (TreeType*) this;
+    traversalInfo.LastReferenceNode() = (TreeType*) this;
+  }
 }
 
 // Calculate the bound for a given query node in its current state and update
