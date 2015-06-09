@@ -1,13 +1,15 @@
 /**
- * @file distributed_traversal.hpp
+ * @file distributed_binary_traversal.hpp
  * @author Ryan Curtin
  *
  * Use MPI to perform a distributed traversal.
  */
-#ifndef __MLPACK_CORE_TREE_BINARY_SPACE_TREE_DISTRIBUTED_TRAVERSAL_HPP
-#define __MLPACK_CORE_TREE_BINARY_SPACE_TREE_DISTRIBUTED_TRAVERSAL_HPP
+#ifndef __MLPACK_CORE_TREE_BINARY_SPACE_TREE_DISTRIBUTED_BINARY_TRAVERSAL_HPP
+#define __MLPACK_CORE_TREE_BINARY_SPACE_TREE_DISTRIBUTED_BINARY_TRAVERSAL_HPP
 
 #include <mlpack/core.hpp>
+#include <boost/mpi.hpp>
+#include <mlpack/methods/neighbor_search/neighbor_search_mpi_wrapper.hpp>
 
 namespace mlpack {
 namespace tree {
@@ -17,7 +19,7 @@ class DistributedBinaryTraversal
 {
  public:
   DistributedBinaryTraversal(RuleType& rule);
-  DistributedBinaryTraversal(boost::mpi::communicator& world);
+  DistributedBinaryTraversal();
 
   /**
    * Perform a single-tree traversal.
@@ -32,16 +34,27 @@ class DistributedBinaryTraversal
   template<typename TreeType>
   void Traverse(TreeType& queryNode, TreeType& referenceNode);
 
- private:
-  RuleType& rule;
+  template<typename TreeType>
+  void MasterTraverse(TreeType& queryNode,
+                      TreeType& referenceNode,
+                      const size_t level = 0);
 
-  RuleType* localRule; // This is used if we are an MPI child.
+  template<typename TreeType>
+  void ChildTraverse(TreeType& queryNode,
+                     TreeType& referenceNode);
+
+  template<typename TreeType>
+  size_t GetTarget(TreeType& queryNode, TreeType& referenceNode) const;
+
+ private:
+  RuleType* rule; // This is used if we are an MPI child.
+  boost::mpi::communicator world;
 };
 
 } // namespace tree
 } // namespace mlpack
 
 // Include implementation.
-#include "distributed_traversal.hpp"
+#include "distributed_binary_traversal_impl.hpp"
 
 #endif
