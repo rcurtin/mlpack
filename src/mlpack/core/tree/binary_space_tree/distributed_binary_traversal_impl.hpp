@@ -65,9 +65,30 @@ void DistributedBinaryTraversal<RuleType>::Traverse(TreeType& queryNode,
   // If we are the master, call the master traversal.  Otherwise, call the child
   // traversal.
   if (world.rank() == 0)
+  {
+    // Initialize the result request array.
+    resultRequests = new boost::mpi::request[world.size() - 1];
+    results = new typename RuleType::MPIResultsWrapper[world.size() - 1];
+    Log::Info << "Result requests length " << world.size() - 1 << ".\n";
+
+    // Start the traversal, and pass the work to the children.
     MasterTraverse(queryNode, referenceNode);
+
+    // Wait until we have all the results, then merge them in.
+    Log::Info << "Waiting on all results.\n";
+    boost::mpi::wait_all(resultRequests, resultRequests + world.size() - 1);
+
+    Log::Info << "Received all results; merging.\n";
+    for (int i = 0; i < world.size() - 1; ++i)
+      results[i].Merge(*rule);
+
+    delete[] resultRequests;
+    delete[] results;
+  }
   else
+  {
     ChildTraverse(queryNode, referenceNode);
+  }
 }
 
 template<typename RuleType>
@@ -126,14 +147,10 @@ void DistributedBinaryTraversal<RuleType>::MasterTraverse(
     world.send(target, 0, wrapper);
     Log::Info << "Message sent to " << target << "!\n";
 
-    // Wait for results?
-    typename RuleType::MPIResultsWrapper resultsWrapper;
-    world.recv(target, 0, resultsWrapper);
-    Log::Info << "Received results from " << target << ".\n";
-
-    // Look through the results and take them as necessary.
-    resultsWrapper.Merge(*rule);
-    Log::Info << "Results merged.\n";
+    // Wait for results.
+    for (size_t i = 0; i < 1000000; ++i) { }
+    resultRequests[target - 1] = world.irecv(target, 0, results[target - 1]);
+    Log::Info << "Called irecv() for target " << target << ".\n";
   }
 }
 

@@ -165,8 +165,6 @@ class NeighborSearchMPIResultsWrapper
       // Loop until the resulting vectors are merged properly.
       while (index + oldIndex < rules.Neighbors().n_rows)
       {
-        Log::Debug << "Compare distances " << distances(index, i) << ", " <<
-oldDistances(oldIndex) << ".\n";
         if (SortPolicy::IsBetter(distances(index, i), oldDistances(oldIndex)))
         {
           rules.Neighbors()(index + oldIndex, i) = neighbors(index, i);

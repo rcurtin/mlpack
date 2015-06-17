@@ -49,6 +49,11 @@ class DistributedBinaryTraversal
  private:
   RuleType* rule; // This is used if we are an MPI child.
   boost::mpi::communicator world;
+
+  // To wait for child requests, if we are the master.
+  boost::mpi::request* resultRequests;
+  // Child request results, if we are the master.
+  typename RuleType::MPIResultsWrapper* results;
 };
 
 } // namespace tree
