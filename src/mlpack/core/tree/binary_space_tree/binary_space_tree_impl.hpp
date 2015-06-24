@@ -533,6 +533,71 @@ inline size_t BinarySpaceTree<BoundType, StatisticType, MatType, SplitType>::
 }
 
 /**
+ * Return the number of descendant nodes of this node.
+ */
+template<typename BoundType,
+         typename StatisticType,
+         typename MatType,
+         typename SplitType>
+inline size_t BinarySpaceTree<BoundType, StatisticType, MatType, SplitType>::
+    NumDescendantNodes() const
+{
+  // The lack of caching here means this may be slow to calculate...
+  if (left && right)
+    return 2 + left->NumDescendantNodes() + right->NumDescendantNodes();
+  else if (left)
+    return 1 + left->NumDescendantNodes();
+  else if (right)
+    return 1 + right->NumDescendantNodes();
+  else
+    return 0;
+}
+
+/**
+ * Return a particular descendant node of this node.
+ */
+template<typename BoundType,
+         typename StatisticType,
+         typename MatType,
+         typename SplitType>
+inline BinarySpaceTree<BoundType, StatisticType, MatType, SplitType>&
+BinarySpaceTree<BoundType, StatisticType, MatType, SplitType>::DescendantNode(
+    const size_t index) const
+{
+  // I don't really like this strategy.  We're going to do a breadth-first
+  // traversal until we find the descendant we're looking for.  This could be
+  // disastrously slow...
+  std::queue<BinarySpaceTree*> queue;
+  size_t currentIndex = 0;
+
+  // Add first-level descendant nodes.
+  if (left)
+    queue.push(left);
+  if (right)
+    queue.push(right);
+
+  // Iterate over all descendants.
+  while (!queue.empty())
+  {
+    BinarySpaceTree* node = queue.front();
+    queue.pop();
+
+    if (currentIndex == index)
+      return *node;
+
+    if (node->Left())
+      queue.push(node->Left());
+    if (node->Right())
+      queue.push(node->Right());
+    ++currentIndex;
+  }
+
+  // If we get to here, then the user must have passed a bad argument.
+  throw std::invalid_argument("BinarySpaceTree::DescendantNode(): invalid "
+      "index");
+}
+
+/**
  * Return the index of a particular point contained in this node.
  */
 template<typename BoundType,

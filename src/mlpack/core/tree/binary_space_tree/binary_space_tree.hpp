@@ -351,12 +351,23 @@ class BinarySpaceTree
 
   /**
    * Return the index (with reference to the dataset) of a particular descendant
-   * of this node.  The index should be greater than zero but less than the
-   * number of descendants.
+   * of this node.  The index should be less than the number of descendants.
    *
    * @param index Index of the descendant.
    */
   size_t Descendant(const size_t index) const;
+
+  /**
+   * Return the number of descendant nodes (not descendant points) of this node.
+   * For a leaf, this is 0.
+   */
+  size_t NumDescendantNodes() const;
+
+  /**
+   * Return a particular descendant node of this node.  The index should be less
+   * than the number of descendant nodes.
+   */
+  BinarySpaceTree& DescendantNode(const size_t index) const;
 
   /**
    * Return the index (with reference to the dataset) of a particular point in
