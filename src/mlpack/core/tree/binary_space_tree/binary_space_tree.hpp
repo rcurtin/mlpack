@@ -489,6 +489,19 @@ class BinarySpaceTree
  public:
   /**
    * Serialize the tree.
+   *
+   * This function contains two extra parameters; the first, maxDepth, specifies
+   * how many levels of the tree should be serialized.  Its default, 0,
+   * indicates that all of the tree should be serialized.
+   */
+  template<typename Archive>
+  void Serialize(Archive& ar,
+                 const unsigned int version,
+                 const unsigned int maxDepth);
+
+  /**
+   * Serialize the tree.  This overload is necessary to match the exact
+   * signature required for boost::serialization by the serialization shim.
    */
   template<typename Archive>
   void Serialize(Archive& ar, const unsigned int version);
@@ -500,8 +513,8 @@ class BinarySpaceTree
 
 };
 
-}; // namespace tree
-}; // namespace mlpack
+} // namespace tree
+} // namespace mlpack
 
 // Include implementation.
 #include "binary_space_tree_impl.hpp"

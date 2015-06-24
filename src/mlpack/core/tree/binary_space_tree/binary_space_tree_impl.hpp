@@ -756,6 +756,23 @@ BinarySpaceTree<BoundType, StatisticType, MatType, SplitType>::
 }
 
 /**
+ * Serialize the tree.  This overload is necessary to make the SFINAE for
+ * boost::serialization work (we must match the signature that is requried
+ * exactly).
+ */
+template<typename BoundType,
+         typename StatisticType,
+         typename MatType,
+         typename SplitType>
+template<typename Archive>
+void BinarySpaceTree<BoundType, StatisticType, MatType, SplitType>::Serialize(
+    Archive& ar,
+    const unsigned int version)
+{
+  Serialize(ar, version, 0);
+}
+
+/**
  * Serialize the tree.
  */
 template<typename BoundType,
@@ -765,7 +782,8 @@ template<typename BoundType,
 template<typename Archive>
 void BinarySpaceTree<BoundType, StatisticType, MatType, SplitType>::Serialize(
     Archive& ar,
-    const unsigned int /* version */)
+    const unsigned int /* version */,
+    const unsigned int maxDepth)
 {
   using data::CreateNVP;
 
@@ -780,7 +798,9 @@ void BinarySpaceTree<BoundType, StatisticType, MatType, SplitType>::Serialize(
       delete dataset;
   }
 
-  ar & CreateNVP(parent, "parent");
+  // Note that we don't save the parent.  This is because we re-link the parent
+  // after we load the children.  This helps avoid duplications of the tree by
+  // boost::serialization.
   ar & CreateNVP(begin, "begin");
   ar & CreateNVP(count, "count");
   ar & CreateNVP(bound, "bound");
@@ -789,48 +809,54 @@ void BinarySpaceTree<BoundType, StatisticType, MatType, SplitType>::Serialize(
   ar & CreateNVP(furthestDescendantDistance, "furthestDescendantDistance");
   ar & CreateNVP(dataset, "dataset");
 
-  // Save children last; otherwise boost::serialization gets confused.
-  ar & CreateNVP(left, "left");
-  ar & CreateNVP(right, "right");
-
-  // Due to quirks of boost::serialization, if a tree is saved as an object and
-  // not a pointer, the first level of the tree will be duplicated on load.
-  // Therefore, if we are the root of the tree, then we need to make sure our
-  // children's parent links are correct, and delete the duplicated node if
-  // necessary.
-  if (Archive::is_loading::value)
+  // This is a hack to allow saving only certain levels of the tree: we will
+  // temporarily modify parentDistance (this member was chosen arbitrarily) to
+  // hold the number of levels remaining.  The child will check the parent's
+  // parentDistance member, to see if it should continue to recurse.
+  const double oldParentDistance = parentDistance;
+  if (Archive::is_saving::value)
   {
-    // Get parents of left and right children, or, NULL, if they don't exist.
-    BinarySpaceTree* leftParent = left ? left->Parent() : NULL;
-    BinarySpaceTree* rightParent = right ? right->Parent() : NULL;
+    // If we are the root, we must set the maximum depth.
+    if (parent == NULL)
+      parentDistance = double(maxDepth) - 1; // This can be negative.
+    else
+      parentDistance = parent->ParentDistance() - 1;
 
-    // Reassign parent links if necessary.
-    if (left && left->Parent() != this)
+    BinarySpaceTree* oldLeft;
+    BinarySpaceTree* oldRight;
+    if (std::abs(parentDistance) < 1e-10) // Tolerance for floating-point...
+    {
+      // Hide the children so we don't recurse.
+      oldLeft = left;
+      oldRight = right;
+      left = NULL;
+      right = NULL;
+    }
+
+    ar & CreateNVP(left, "left");
+    ar & CreateNVP(right, "right");
+
+    // Restore the children, if we hid them.
+    if (std::abs(parentDistance) < 1e-10)
+    {
+      left = oldLeft;
+      right = oldRight;
+    }
+
+    // Restore parent distance.
+    parentDistance = oldParentDistance;
+  }
+  else
+  {
+    // We are loading; nothing special needs to happen here.
+    ar & CreateNVP(left, "left");
+    ar & CreateNVP(right, "right");
+
+    // Link the children to the parent.
+    if (left)
       left->Parent() = this;
-    if (right && right->Parent() != this)
+    if (right)
       right->Parent() = this;
-
-    // Do we need to delete the left parent?
-    if (leftParent != NULL && leftParent != this)
-    {
-      // Sever the duplicate parent's children.  Ensure we don't delete the
-      // dataset, by faking the duplicated parent's parent (that is, we need to
-      // set the parent to something non-NULL; 'this' works).
-      leftParent->Parent() = this;
-      leftParent->Left() = NULL;
-      leftParent->Right() = NULL;
-      delete leftParent;
-    }
-
-    // Do we need to delete the right parent?
-    if (rightParent != NULL && rightParent != this && rightParent != leftParent)
-    {
-      // Sever the duplicate parent's children, in the same way as above.
-      rightParent->Parent() = this;
-      rightParent->Left() = NULL;
-      rightParent->Right() = NULL;
-      delete rightParent;
-    }
   }
 }
 
