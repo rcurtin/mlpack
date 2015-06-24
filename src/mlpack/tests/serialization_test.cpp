@@ -702,6 +702,32 @@ BOOST_AUTO_TEST_CASE(BinarySpaceTreeSubtreeTest)
   CheckTrees(*tree.Left(), xmlTree, textTree, binaryTree);
 }
 
+BOOST_AUTO_TEST_CASE(BinarySpaceTreePartialTreeTest)
+{
+  arma::mat data;
+  data.randu(3, 5000);
+  arma::mat datacopy(data);
+  BinarySpaceTree<HRectBound<2>> tree(data);
+
+  // Now serialize the first 2 levels of the tree.
+  ofstream ofs("test");
+  boost::archive::xml_oarchive oarch(ofs);
+  tree.Serialize(oarch, 0, 2);
+  ofs.close();
+
+  ifstream ifs("test");
+  boost::archive::xml_iarchive iarch(ifs);
+  tree.Serialize(iarch, 0);
+  ifs.close();
+
+  // Now make sure the tree has no more than two levels.
+  BOOST_REQUIRE(tree.Left()->Left() == NULL);
+  BOOST_REQUIRE(tree.Left()->Right() == NULL);
+  BOOST_REQUIRE(tree.Right()->Left() == NULL);
+  BOOST_REQUIRE(tree.Right()->Right() == NULL);
+  BOOST_REQUIRE_EQUAL(tree.NumDescendantNodes(), 2);
+}
+
 BOOST_AUTO_TEST_CASE(NeighborSearchMPIWrapperTest)
 {
   // Create datasets and trees.
