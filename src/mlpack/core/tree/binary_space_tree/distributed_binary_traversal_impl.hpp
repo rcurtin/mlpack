@@ -34,18 +34,25 @@ DistributedBinaryTraversal<RuleType>::DistributedBinaryTraversal() :
   // off the usual recursion, and when we're done, we send the results back.
   typename RuleType::MPIWrapper wrapper;
   Log::Info << "Process " << world.rank() << " is waiting for a message.\n";
+  Timer::Start("child_receive");
   world.recv(0, 0, wrapper);
+  Timer::Stop("child_receive");
   Log::Info << "Process " << world.rank() << " has received a message.\n";
+
 
   // We've now received our information.  Start the recursion.
   this->rule = wrapper.Rules();
+  Timer::Start("child_traversal");
   Traverse(*wrapper.QueryTree(), *wrapper.ReferenceTree());
+  Timer::Stop("child_traversal");
 
   // Now, we have to ship the neighbors and distances back to the master.
   typename RuleType::MPIResultsWrapper resultsWrapper(rule->Neighbors(),
                                                       rule->Distances());
   Log::Info << "Process " << world.rank() << " is sending results.\n";
+  Timer::Start("send_results");
   world.send(0, 0, resultsWrapper);
+  Timer::Stop("send_results");
   Log::Info << "Process " << world.rank() << " is finished.\n";
 }
 
@@ -79,11 +86,13 @@ void DistributedBinaryTraversal<RuleType>::Traverse(TreeType& queryNode,
     boost::mpi::wait_all(resultRequests, resultRequests + world.size() - 1);
 
     Log::Info << "Received all results; merging.\n";
+    Timer::Start("merging_results");
     for (int i = 0; i < world.size() - 1; ++i)
       results[i].Merge(*rule);
 
     delete[] resultRequests;
     delete[] results;
+    Timer::Stop("merging_results");
   }
   else
   {
@@ -100,7 +109,8 @@ void DistributedBinaryTraversal<RuleType>::MasterTraverse(
 {
   // Okay, we are the MPI master.  We need to recurse for a handful of levels,
   // before we are able to ship off tasks.
-  if (level < std::ceil(std::log2(world.size() - 1)) - 1)
+  Log::Info << "Required level is " << std::ceil(std::log2(world.size() - 1)) / 2 << "; current level is " << level << ".\n";
+  if (level < std::ceil(std::log2(world.size() - 1)) / 2)
   {
     // Perform unprioritized dual-tree recursion.
     const double score = rule->Score(queryNode, referenceNode);
@@ -144,8 +154,10 @@ void DistributedBinaryTraversal<RuleType>::MasterTraverse(
     Log::Info << "Get target id.\n";
     const size_t target = GetTarget(queryNode, referenceNode);
     Log::Info << "Sending trees to " << target << ".\n";
+    Timer::Start("world_send");
     world.send(target, 0, wrapper);
-    Log::Info << "Message sent to " << target << "!\n";
+    Timer::Stop("world_send");
+    Log::Info << "Message queued to " << target << "!\n";
 
     // Wait for results.
     for (size_t i = 0; i < 1000000; ++i) { }
