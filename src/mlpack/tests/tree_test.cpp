@@ -1338,6 +1338,68 @@ bool CheckPointBounds(TreeType& node)
 }
 
 /**
+ * Make sure that NumDescendantNodes() and DescendantNode() work correctly for
+ * the BinarySpaceTree.
+ */
+BOOST_AUTO_TEST_CASE(BinarySpaceTreeDescendantNodeTest)
+{
+  arma::mat dataset(5, 500);
+  dataset.randu();
+
+  BinarySpaceTree<HRectBound<2>> tree(dataset);
+
+  // We'll look at every point to make sure the number of descendant nodes and
+  // the descendant node indices are correct.
+  std::queue<BinarySpaceTree<HRectBound<2>>*> queue;
+  queue.push(&tree);
+  size_t numNodes = 0;
+  while (!queue.empty())
+  {
+    BinarySpaceTree<HRectBound<2>>* node = queue.front();
+    queue.pop();
+    ++numNodes;
+
+    if (node->NumChildren() == 2)
+    {
+      BOOST_REQUIRE_EQUAL(node->NumDescendantNodes() - 2,
+          node->Left()->NumDescendantNodes() +
+          node->Right()->NumDescendantNodes());
+
+      BOOST_REQUIRE_EQUAL((void*) &node->DescendantNode(0), (void*)
+          node->Left());
+      BOOST_REQUIRE_EQUAL((void*) &node->DescendantNode(1), (void*)
+          node->Right());
+
+      queue.push(node->Left());
+      queue.push(node->Right());
+    }
+    else if (node->NumChildren() == 1)
+    {
+      BOOST_REQUIRE_EQUAL(node->NumDescendantNodes() - 1,
+          node->Left()->NumDescendantNodes());
+
+      BOOST_REQUIRE_EQUAL((void*) &node->DescendantNode(0),
+          (void*) node->Left());
+
+      queue.push(node->Left());
+    }
+    else
+    {
+      BOOST_REQUIRE_EQUAL(node->NumDescendantNodes(), 0);
+
+      // Make sure an exception is thrown when we access an invalid descendant
+      // node.
+      BOOST_REQUIRE_THROW(node->DescendantNode(3),
+          std::invalid_argument);
+    }
+  }
+
+  // The minus one is because we counted the root, and NumDescendantNodes() does
+  // not.
+  BOOST_REQUIRE_EQUAL(tree.NumDescendantNodes(), numNodes - 1);
+}
+
+/**
  * Exhaustive ball tree test based on #125.
  *
  * - Generate a random dataset of a random size.
