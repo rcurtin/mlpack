@@ -74,7 +74,8 @@ class NeighborSearch
   NeighborSearch(const typename TreeType::Mat& referenceSet,
                  const bool naive = false,
                  const bool singleMode = false,
-                 const MetricType metric = MetricType());
+                 PointerWrapper<MetricType> metric =
+                     PointerWrapper<MetricType>(*(new MetricType()), true));
 
   /**
    * Initialize the NeighborSearch object with the given pre-constructed
@@ -103,7 +104,8 @@ class NeighborSearch
    */
   NeighborSearch(TreeType* referenceTree,
                  const bool singleMode = false,
-                 const MetricType metric = MetricType());
+                 PointerWrapper<MetricType> metric =
+                     PointerWrapper<MetricType>(*(new MetricType()), true));
 
   /**
    * Delete the NeighborSearch object. The tree is the only member we are
@@ -206,7 +208,7 @@ class NeighborSearch
   bool singleMode;
 
   //! Instantiation of metric.
-  MetricType metric;
+  PointerWrapper<MetricType> metric;
 
   //! The total number of base cases.
   size_t baseCases;

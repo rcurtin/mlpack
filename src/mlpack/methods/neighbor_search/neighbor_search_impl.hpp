@@ -48,7 +48,7 @@ NeighborSearch<SortPolicy, MetricType, TreeType, TraversalType>::
 NeighborSearch(const typename TreeType::Mat& referenceSetIn,
                const bool naive,
                const bool singleMode,
-               const MetricType metric) :
+               PointerWrapper<MetricType> metric) :
     referenceTree(naive ? NULL :
         BuildTree<TreeType>(referenceSetIn, oldFromNewReferences)),
     referenceSet(naive ? referenceSetIn : referenceTree->Dataset()),
@@ -70,7 +70,7 @@ template<typename SortPolicy,
 NeighborSearch<SortPolicy, MetricType, TreeType, TraversalType>::
 NeighborSearch(TreeType* referenceTree,
                const bool singleMode,
-               const MetricType metric) :
+               PointerWrapper<MetricType> metric) :
     referenceTree(referenceTree),
     referenceSet(referenceTree->Dataset()),
     treeOwner(false),
