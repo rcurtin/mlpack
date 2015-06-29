@@ -166,6 +166,7 @@
 #include <mlpack/core/dists/discrete_distribution.hpp>
 #include <mlpack/core/dists/gaussian_distribution.hpp>
 #include <mlpack/core/dists/laplace_distribution.hpp>
+#include <mlpack/core/util/pointer_wrapper.hpp>
 
 // Include kernel traits.
 #include <mlpack/core/kernels/kernel_traits.hpp>
