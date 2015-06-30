@@ -21,6 +21,8 @@
 #include "sort_policies/nearest_neighbor_sort.hpp"
 #include "neighbor_search_rules.hpp"
 
+#include <boost/optional.hpp>
+
 namespace mlpack {
 namespace neighbor /** Neighbor-search routines.  These include
                     * all-nearest-neighbors and all-furthest-neighbors
@@ -74,8 +76,7 @@ class NeighborSearch
   NeighborSearch(const typename TreeType::Mat& referenceSet,
                  const bool naive = false,
                  const bool singleMode = false,
-                 PointerWrapper<MetricType> metric =
-                     PointerWrapper<MetricType>(*(new MetricType()), true));
+                 boost::optional<MetricType&> metric = boost::none);
 
   /**
    * Initialize the NeighborSearch object with the given pre-constructed
@@ -104,8 +105,7 @@ class NeighborSearch
    */
   NeighborSearch(TreeType* referenceTree,
                  const bool singleMode = false,
-                 PointerWrapper<MetricType> metric =
-                     PointerWrapper<MetricType>(*(new MetricType()), true));
+                 boost::optional<MetricType&> metric = boost::none);
 
   /**
    * Delete the NeighborSearch object. The tree is the only member we are

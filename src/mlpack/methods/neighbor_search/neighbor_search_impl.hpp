@@ -48,14 +48,14 @@ NeighborSearch<SortPolicy, MetricType, TreeType, TraversalType>::
 NeighborSearch(const typename TreeType::Mat& referenceSetIn,
                const bool naive,
                const bool singleMode,
-               PointerWrapper<MetricType> metric) :
+               boost::optional<MetricType&> metric) :
     referenceTree(naive ? NULL :
         BuildTree<TreeType>(referenceSetIn, oldFromNewReferences)),
     referenceSet(naive ? referenceSetIn : referenceTree->Dataset()),
     treeOwner(!naive), // False if a tree was passed.  If naive, then no trees.
     naive(naive),
     singleMode(!naive && singleMode), // No single mode if naive.
-    metric(metric),
+    metric(metric ? *metric : *(new MetricType()), metric ? false : true),
     baseCases(0),
     scores(0)
 {
@@ -70,13 +70,13 @@ template<typename SortPolicy,
 NeighborSearch<SortPolicy, MetricType, TreeType, TraversalType>::
 NeighborSearch(TreeType* referenceTree,
                const bool singleMode,
-               PointerWrapper<MetricType> metric) :
+               boost::optional<MetricType&> metric) :
     referenceTree(referenceTree),
     referenceSet(referenceTree->Dataset()),
     treeOwner(false),
     naive(false),
     singleMode(singleMode),
-    metric(metric),
+    metric(metric ? *metric : *(new MetricType()), metric ? false : true),
     baseCases(0),
     scores(0)
 {
