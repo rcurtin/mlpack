@@ -38,10 +38,34 @@ namespace mlpack {
  * Using the PointerWrapper is similar to using a reference:
  *
  * @code
+ * // Wrap a pointer owned by someone else.
  * arma::mat x;
- * PointerWrapper<arma::mat> pw(x, true);
+ * PointerWrapper<arma::mat> pw(x, false);
  *
  * pw.randu(100, 100); // Use it just like an arma::mat.
+ *
+ * // Make the wrapper responsible for the pointer.
+ * PointerWrapper<arma::mat> pw2(new arma::mat, true);
+ * pw2.randu(100, 100);
+ * @endcode
+ *
+ * If you want to change the owner of a PointerWrapper, use std::move()
+ * semantics.  Be aware that if you have a PointerWrapper as a default argument
+ * to a function and you do not use std::move(), the memory will be invalid and
+ * horrible things will happen!
+ *
+ * @code
+ * // The temporary PointerWrapper will be deleted after it is assigned, so pw
+ * // points to invalid memory!
+ * arma::mat x;
+ * PointerWrapper<arma::mat> pw;
+ * pw = PointerWrapper<arma::mat>(new arma::mat, true);
+ * pw.randu(100, 100); // This will fail!
+ *
+ * // This is the correct way to take ownership.
+ * PointerWrapper<arma::mat> pw2 =
+ *     std::move(PointerWrapper<arma::mat>(new arma::mat, true));
+ * pw.randu(100, 100); // This will work!
  * @endcode
  */
 template<typename T>
@@ -78,7 +102,30 @@ class PointerWrapper
  private:
   T* t;
   bool owner;
+
+  //! Disable copy and move constructors.
+  /**
+   * Construct the wrapper around another wrapper object.  If the other object
+   * is wrapped around NULL, then this will create
+   *
+   * @param other PointerWrapper to copy.
+   */
+  PointerWrapper(const PointerWrapper& other) :
+      t(&other), owner(false) { }
+
+  /**
+   * Take ownership of the memory pointed to by the other PointerWrapper.
+   *
+   * @param other PointerWrapper to take over.
+   */
+  PointerWrapper(const PointerWrapper&& other) : t(&other), owner(true)
+  {
+    // Make sure the other wrapper does not try to free.
+    other.owner = false;
+  }
 };
+
+
 
 } // namespace mlpack
 
