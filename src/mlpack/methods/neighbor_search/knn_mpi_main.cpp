@@ -33,22 +33,56 @@ int main(int argc, char** argv)
   typedef NeighborSearchRules<NearestNeighborSort, EuclideanDistance, TreeType>
       RuleType;
 
-  // If we are MPI master, we have to start the whole thing.
+  // Every process will load the dataset, for now.
+  const string referenceFile = CLI::GetParam<string>("reference_file");
+  const string queryFile = CLI::GetParam<string>("query_file");
+  const size_t k = (size_t) CLI::GetParam<int>("k");
+
+  arma::mat referenceSet;
+  arma::mat querySet;
+  data::Load(referenceFile, referenceSet, true);
+  data::Load(queryFile, querySet, true);
+
   boost::mpi::environment env;
   boost::mpi::communicator world;
 
+  // Vectors to store point mappings in.
+  std::vector<size_t> oldFromNewReferences;
+  std::vector<size_t> oldFromNewQueries;
+
+  // If we are the MPI master, we will build the trees, and this will populate
+  // the oldFromNewReferences and oldFromNewQueries vectors so that we can
+  // broadcast those.
   if (world.rank() == 0)
   {
-    const string queryFile = CLI::GetParam<string>("query_file");
-    const string referenceFile = CLI::GetParam<string>("reference_file");
-    const size_t k = (size_t) CLI::GetParam<int>("k");
+    // First, construct the trees.
+    Log::Info << "MPI process " << world.rank() << ": constructing trees..."
+        << endl;
+    TreeType referenceTree(referenceData, oldFromNewReferences);
+    TreeType queryTree(queryData, oldFromNewQueries);
+  }
 
-    arma::mat queryData;
-    arma::mat referenceData;
+  // Now we must send the mappings to the other MPI nodes if we are the master,
+  // and receive them if we are an MPI child (broadcast() takes care of both).
+  boost::mpi::broadcast(world, oldFromNewReferences, 0);
+  boost::mpi::broadcast(world, oldFromNewQueries, 0);
 
-    data::Load(queryFile, queryData, true);
-    data::Load(referenceFile, referenceData, true);
+  // If we are a child, we must rearrange the dataset.
+  if (world.rank() != 0)
+  {
+    Log::Info << "MPI process " << world.rank() << ": rearranging datasets..."
+      << endl;
+    arma::mat oldReferences(std::move(referenceSet));
+    referenceSet.set_size(oldReferences.n_rows, oldReferences.n_cols);
+    for (size_t i = 0; i < referenceSet.n_cols; ++i)
+      referenceSet.col(i) = oldReferences.col(oldFromNewReferences[i]);
 
+    arma::mat oldQueries(std::move(querySet));
+    querySet.set_size(oldQueries.n_rows, oldQueries.n_cols);
+    for (size_t i = 0; i < querySet.n_cols; ++i)
+      querySet.col(i) = oldQueries.col(oldFromNewQueries[i]);
+  }
+/*
     KNNType knn(referenceData);
 
     arma::Mat<size_t> neighbors;
@@ -63,8 +97,23 @@ int main(int argc, char** argv)
   }
   else
   {
-    // We are not the MPI master.  We have to wait for our assignment.  So,
-    // create the child traversal object, and it all goes from there.
+    // We are not the MPI master.  We have to wait for our assignment.  But we
+    // can construct the RuleType object and prepare for the traversal.
+    metric::EuclideanDistance metric;
+    arma::Mat<size_t> neighbors(k, queryData.n_cols);
+    arma::mat distances(k, queryData.n_cols);
+    distances.fill(DBL_MAX);
+
+    // The MPI master, which constructed the trees, must tell us the reordering
+    // of the points so that we can shuffle our dataset accordingly.
+    std::vector<size_t> oldFromNewReferences;
+    std::vector<size_t> oldFromNewQueries;
+
+    world.receive(0, 0, 
+
+    RuleType rule(queryData, referenceData, neighbors, distances, metric);
+
     DistributedBinaryTraversal<RuleType> traversal;
   }
+*/
 }
