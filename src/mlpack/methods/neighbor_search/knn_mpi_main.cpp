@@ -38,10 +38,10 @@ int main(int argc, char** argv)
   const string queryFile = CLI::GetParam<string>("query_file");
   const size_t k = (size_t) CLI::GetParam<int>("k");
 
-  arma::mat referenceSet;
-  arma::mat querySet;
-  data::Load(referenceFile, referenceSet, true);
-  data::Load(queryFile, querySet, true);
+  arma::mat referenceData;
+  arma::mat queryData;
+  data::Load(referenceFile, referenceData, true);
+  data::Load(queryFile, queryData, true);
 
   boost::mpi::environment env;
   boost::mpi::communicator world;
@@ -60,27 +60,33 @@ int main(int argc, char** argv)
         << endl;
     TreeType referenceTree(referenceData, oldFromNewReferences);
     TreeType queryTree(queryData, oldFromNewQueries);
+    Log::Info << "Trees constructed." << endl;
   }
 
   // Now we must send the mappings to the other MPI nodes if we are the master,
   // and receive them if we are an MPI child (broadcast() takes care of both).
+  Log::Info << "Broadcasting oldFromNewReferences (process " << world.rank()
+      << ")." << endl;
   boost::mpi::broadcast(world, oldFromNewReferences, 0);
+  Log::Info << "Broadcasting oldFromNewQueries (process " << world.rank()
+      << ")." << endl;
   boost::mpi::broadcast(world, oldFromNewQueries, 0);
+  Log::Info << "Done (process " << world.rank() << ")." << endl;
 
   // If we are a child, we must rearrange the dataset.
   if (world.rank() != 0)
   {
     Log::Info << "MPI process " << world.rank() << ": rearranging datasets..."
       << endl;
-    arma::mat oldReferences(std::move(referenceSet));
-    referenceSet.set_size(oldReferences.n_rows, oldReferences.n_cols);
-    for (size_t i = 0; i < referenceSet.n_cols; ++i)
-      referenceSet.col(i) = oldReferences.col(oldFromNewReferences[i]);
+    arma::mat oldReferences(std::move(referenceData));
+    referenceData.set_size(oldReferences.n_rows, oldReferences.n_cols);
+    for (size_t i = 0; i < referenceData.n_cols; ++i)
+      referenceData.col(i) = oldReferences.col(oldFromNewReferences[i]);
 
-    arma::mat oldQueries(std::move(querySet));
-    querySet.set_size(oldQueries.n_rows, oldQueries.n_cols);
-    for (size_t i = 0; i < querySet.n_cols; ++i)
-      querySet.col(i) = oldQueries.col(oldFromNewQueries[i]);
+    arma::mat oldQueries(std::move(queryData));
+    queryData.set_size(oldQueries.n_rows, oldQueries.n_cols);
+    for (size_t i = 0; i < queryData.n_cols; ++i)
+      queryData.col(i) = oldQueries.col(oldFromNewQueries[i]);
   }
 /*
     KNNType knn(referenceData);
