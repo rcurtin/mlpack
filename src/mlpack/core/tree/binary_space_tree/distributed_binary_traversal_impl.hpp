@@ -73,26 +73,8 @@ void DistributedBinaryTraversal<RuleType>::Traverse(TreeType& queryNode,
   // traversal.
   if (world.rank() == 0)
   {
-    // Initialize the result request array.
-    resultRequests = new boost::mpi::request[world.size() - 1];
-    results = new typename RuleType::MPIResultsWrapper[world.size() - 1];
-    Log::Info << "Result requests length " << world.size() - 1 << ".\n";
-
     // Start the traversal, and pass the work to the children.
     MasterTraverse(queryNode, referenceNode);
-
-    // Wait until we have all the results, then merge them in.
-    Log::Info << "Waiting on all results.\n";
-    boost::mpi::wait_all(resultRequests, resultRequests + world.size() - 1);
-
-    Log::Info << "Received all results; merging.\n";
-    Timer::Start("merging_results");
-    for (int i = 0; i < world.size() - 1; ++i)
-      results[i].Merge(*rule);
-
-    delete[] resultRequests;
-    delete[] results;
-    Timer::Stop("merging_results");
   }
   else
   {
@@ -104,65 +86,23 @@ template<typename RuleType>
 template<typename TreeType>
 void DistributedBinaryTraversal<RuleType>::MasterTraverse(
     TreeType& queryNode,
-    TreeType& referenceNode,
-    const size_t level)
+    TreeType& referenceNode)
 {
-  // Okay, we are the MPI master.  We need to recurse for a handful of levels,
-  // before we are able to ship off tasks.
-  Log::Info << "Required level is " << std::ceil(std::log2(world.size() - 1)) / 2 << "; current level is " << level << ".\n";
-  if (level < std::ceil(std::log2(world.size() - 1)) / 2)
+  // A list of jobs to be done.
+  std::queue<std::pair<TreeType*, TreeType*>> jobs;
+  jobs.push(&queryNode, &referenceNode);
+
+  // A list of which nodes are busy and which aren't.
+  std::vector<bool> busy(world.size() - 1, false);
+
+  while (!jobs.empty())
   {
-    // Perform unprioritized dual-tree recursion.
-    const double score = rule->Score(queryNode, referenceNode);
+    // Get the current job.
+    std::pair<TreeType*, TreeType*> job = jobs.front();
+    jobs.pop();
 
-    if (score == DBL_MAX)
-      return; // Pruned at a high level.
-
-    // Otherwise, perform base cases.
-    for (size_t i = 0; i < queryNode.NumPoints(); ++i)
-      for (size_t j = 0; j < referenceNode.NumPoints(); ++j)
-        rule->BaseCase(queryNode.Point(i), referenceNode.Point(j));
-
-    // Now, perform unprioritized recursion.
-    if (!queryNode.IsLeaf() && !referenceNode.IsLeaf())
-    {
-      MasterTraverse(*queryNode.Left(), *referenceNode.Left(), level + 1);
-      MasterTraverse(*queryNode.Left(), *referenceNode.Right(), level + 1);
-      MasterTraverse(*queryNode.Right(), *referenceNode.Left(), level + 1);
-      MasterTraverse(*queryNode.Right(), *referenceNode.Right(), level + 1);
-    }
-    else if (queryNode.IsLeaf() && !referenceNode.IsLeaf())
-    {
-      // Hopefully this does not happen because GetTarget() won't handle it.
-      MasterTraverse(queryNode, *referenceNode.Left(), level + 1);
-      MasterTraverse(queryNode, *referenceNode.Right(), level + 1);
-    }
-    else if (!queryNode.IsLeaf() && referenceNode.IsLeaf())
-    {
-      // Hopefully this won't happen because GetTarget() won't handle it.
-      MasterTraverse(*queryNode.Left(), referenceNode, level + 1);
-      MasterTraverse(*queryNode.Right(), referenceNode, level + 1);
-    }
-  }
-  else
-  {
-    // We are now ready to ship off tasks to children.  We have up to four
-    // recursions we can perform here.  First, prepare the MPIWrapper object,
-    // which is what we'll send.
-    Log::Info << "Preparing MPI wrapper.\n";
-    typename RuleType::MPIWrapper wrapper(&referenceNode, &queryNode, rule);
-    Log::Info << "Get target id.\n";
-    const size_t target = GetTarget(queryNode, referenceNode);
-    Log::Info << "Sending trees to " << target << ".\n";
-    Timer::Start("world_send");
-    world.send(target, 0, wrapper);
-    Timer::Stop("world_send");
-    Log::Info << "Message queued to " << target << "!\n";
-
-    // Wait for results.
-    for (size_t i = 0; i < 1000000; ++i) { }
-    resultRequests[target - 1] = world.irecv(target, 0, results[target - 1]);
-    Log::Info << "Called irecv() for target " << target << ".\n";
+    // Find an unused worker.
+    
   }
 }
 

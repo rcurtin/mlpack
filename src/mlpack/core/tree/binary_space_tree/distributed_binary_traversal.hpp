@@ -36,8 +36,7 @@ class DistributedBinaryTraversal
 
   template<typename TreeType>
   void MasterTraverse(TreeType& queryNode,
-                      TreeType& referenceNode,
-                      const size_t level = 0);
+                      TreeType& referenceNode);
 
   template<typename TreeType>
   void ChildTraverse(TreeType& queryNode,
