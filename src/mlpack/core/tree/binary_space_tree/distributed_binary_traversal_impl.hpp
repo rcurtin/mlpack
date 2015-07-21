@@ -97,12 +97,27 @@ void DistributedBinaryTraversal<RuleType>::MasterTraverse(
 
   while (!jobs.empty())
   {
-    // Get the current job.
-    std::pair<TreeType*, TreeType*> job = jobs.front();
-    jobs.pop();
+    // Find an unused worker (wait for a response).
+    RuleType::MPIResultType result;
+    boost::mpi::status status;
+    status = communicator.recv(boost::mpi::any_source, boost::mpi::any_tag,
+        result);
 
-    // Find an unused worker.
-    
+    // Immediately put that worker back to work on a new job.
+    RuleType::MPIWorkType work(queue.front().first, queue.front().second);
+    communicator.send(status.source(), 0 /* zero tag */, work);
+
+    if (result.tag() == 1) // Initialization tag; no data.
+    {
+      // Now, look through the results to add new jobs.
+      const RuleType::MPIWorkType& job = jobs[status.source()];
+      for (size_t i = 0; i < result.NumNewTasks(); ++i)
+        jobs.push_back(result.NewTask(job.QueryNode(), job.ReferenceNode()));
+
+      // And merge the results into the tree that we have.
+      for (size_t i = 0; i < result.NumTreeUpdates(); ++i)
+        result.MergeResult(job.QueryNode(), job.ReferenceNode());
+    }
   }
 }
 
