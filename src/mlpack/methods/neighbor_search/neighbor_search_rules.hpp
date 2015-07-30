@@ -120,9 +120,7 @@ class NeighborSearchRules
   template<typename Archive>
   void Serialize(Archive& ar, const unsigned int version);
 
-  typedef NeighborSearchMPIWrapper<SortPolicy, MetricType, TreeType>
-      MPIWrapper;
-  typedef NeighborSearchMPIResultsWrapper MPIResultsWrapper;
+  typedef NeighborSearchMPIResultsWrapper MPIResultType;
 
  protected:
   //! The reference set.

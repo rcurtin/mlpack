@@ -14,53 +14,70 @@
 namespace mlpack {
 namespace neighbor {
 
-namespace util {
-// Utility power of four function.
-// Only useful because binary trees.
-template<size_t pow>
-constexpr size_t powfour<pow>()
-{
-  return (pow == 0) ? 1 : 2 * powfour<pow - 1>();
-}
-
-}
-
-template<typename SortPolicy, typename MetricType, typename TreeType>
-class NeighborSearchMPIWrapper
-{
- public:
-};
-
-template<size_t TaskDepth = 6>
 class NeighborSearchMPIResultsWrapper
 {
- private:
-  // Store a bit for each possible descendant combination.
-  // The bit will be set to 'true' if the descendant combination should be
-  // visited.
-  std::bitset<util::powfour<TaskDepth>> newTasks;
-
  public:
-  NeighborSearchMPIResultsWrapper()
+  NeighborSearchMPIResultsWrapper() { }
+
+  template<typename RuleType>
+  NeighborSearchMPIResultsWrapper(RuleType& rule) :
+      neighbors(std::move(rule.Neighbors())),
+      distances(std::move(rule.Distances()))
   {
-    for (size_t i = 0; i < combinationBytes; ++i)
-      childCombinations[i] = 0; // Set all bits to 0.
+    // Nothing to do.
   }
 
-  size_t NumNewTasks() const
+  template<typename Archive>
+  void serialize(Archive& ar, const unsigned int version)
   {
-    return newTasks.count();
+    Serialize(ar, version);
   }
 
-  template<typename TreeType>
-  AddToTaskQueue(TreeType* queryRoot,
-                 TreeType* referenceRoot,
-                 std::queue<std::pair<TreeType*, TreeType*>>& queue)
+  template<typename Archive>
+  void Serialize(Archive& ar, const unsigned int /* version */)
   {
-    
+    ar & data::CreateNVP(neighbors, "neighbors");
+    ar & data::CreateNVP(distances, "distances");
   }
 
+  template<typename SortPolicy, typename MetricType, typename TreeType>
+  void Merge(NeighborSearchRules<SortPolicy, MetricType, TreeType>& rules)
+  {
+    // Allocate space once for merging.
+    arma::Col<size_t> oldNeighbors(neighbors.n_rows);
+    arma::vec oldDistances(neighbors.n_rows);
 
+    for (size_t i = 0; i < neighbors.n_cols; ++i)
+    {
+      // Intentional copy.
+      oldNeighbors = rules.Neighbors().col(i);
+      oldDistances = rules.Distances().col(i);
+
+      size_t oldIndex = 0; // Tracks where we are in the old results.
+      size_t index = 0; // Tracks where we are in the new results.
+
+      // Loop until the resulting vectors are merged properly.
+      while (index + oldIndex < rules.Neighbors().n_rows)
+      {
+        if (SortPolicy::IsBetter(distances(index, i), oldDistances(oldIndex)))
+        {
+          rules.Neighbors()(index + oldIndex, i) = neighbors(index, i);
+          rules.Distances()(index + oldIndex, i) = distances(index, i);
+          ++index;
+        }
+        else
+        {
+          rules.Neighbors()(index + oldIndex, i) = oldNeighbors(oldIndex);
+          rules.Distances()(index + oldIndex, i) = oldDistances(oldIndex);
+          ++oldIndex;
+        }
+      }
+    }
+  }
+
+ private:
+  arma::Mat<size_t> neighbors;
+  arma::mat distances;
 };
 
 } // namespace neighbor

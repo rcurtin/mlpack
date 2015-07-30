@@ -23,6 +23,16 @@ PARAM_STRING_REQ("neighbors_file", "Output neighbors file.", "n");
 
 int main(int argc, char** argv)
 {
+  {
+    int i = 0;
+    char hostname[256];
+    gethostname(hostname, sizeof(hostname));
+    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+    fflush(stdout);
+//    while (0 == i)
+//        sleep(5);
+  }
+
   CLI::ParseCommandLine(argc, argv);
 
   // Convenience typedefs.
@@ -53,14 +63,26 @@ int main(int argc, char** argv)
   // If we are the MPI master, we will build the trees, and this will populate
   // the oldFromNewReferences and oldFromNewQueries vectors so that we can
   // broadcast those.
+  TreeType* referenceTree;
+  TreeType* queryTree;
   if (world.rank() == 0)
   {
     // First, construct the trees.
     Log::Info << "MPI process " << world.rank() << ": constructing trees..."
         << endl;
-    TreeType referenceTree(referenceData, oldFromNewReferences);
-    TreeType queryTree(queryData, oldFromNewQueries);
+    referenceTree = new TreeType(referenceData, oldFromNewReferences);
+    queryTree = new TreeType(queryData, oldFromNewQueries);
     Log::Info << "Trees constructed." << endl;
+
+    for (size_t i = 0; i < oldFromNewReferences.size(); ++i)
+    {
+      if (oldFromNewReferences[i] == 302)
+        Log::Warn << "Point 302 maps to point " << i << ".\n";
+      else if (oldFromNewReferences[i] == 29630)
+        Log::Warn << "Point 29630 maps to point " << i << ".\n";
+      else if (oldFromNewReferences[i] == 20377)
+        Log::Warn << "Point 20377 maps to point " << i << ".\n";
+    }
   }
 
   // Now we must send the mappings to the other MPI nodes if we are the master,
@@ -88,38 +110,57 @@ int main(int argc, char** argv)
     for (size_t i = 0; i < queryData.n_cols; ++i)
       queryData.col(i) = oldQueries.col(oldFromNewQueries[i]);
   }
-/*
-    KNNType knn(referenceData);
+
+  if (world.rank() == 0)
+  {
+    KNNType knn(referenceTree);
 
     arma::Mat<size_t> neighbors;
     arma::mat distances;
-    knn.Search(queryData, k, neighbors, distances);
+
+    knn.Search(queryTree, k, neighbors, distances);
 
     const string distancesFile = CLI::GetParam<string>("distances_file");
     const string neighborsFile = CLI::GetParam<string>("neighbors_file");
 
-    data::Save(distancesFile, distances);
-    data::Save(neighborsFile, neighbors);
+    // Unmap points.
+    Log::Info << "Unmapping results.\n";
+
+    arma::mat unmappedDistances(distances.n_rows, distances.n_cols);
+    arma::Mat<size_t> unmappedNeighbors(neighbors.n_rows, neighbors.n_cols);
+
+    for (size_t i = 0; i < distances.n_cols; i++)
+    {
+      // Map distances (copy a column).
+      unmappedDistances.col(oldFromNewQueries[i]) = distances.col(i);
+
+      // Map indices of neighbors.
+      for (size_t j = 0; j < distances.n_rows; j++)
+      {
+        unmappedNeighbors(j, oldFromNewQueries[i]) =
+            oldFromNewReferences[neighbors(j, i)];
+      }
+    }
+
+    data::Save(distancesFile, unmappedDistances);
+    data::Save(neighborsFile, unmappedNeighbors);
+
+    delete queryTree;
+    delete referenceTree;
   }
   else
   {
-    // We are not the MPI master.  We have to wait for our assignment.  But we
-    // can construct the RuleType object and prepare for the traversal.
+    // We are not the MPI master.  So construct the traverser and the rules, and
+    // wait for an assignment.
     metric::EuclideanDistance metric;
     arma::Mat<size_t> neighbors(k, queryData.n_cols);
     arma::mat distances(k, queryData.n_cols);
     distances.fill(DBL_MAX);
 
-    // The MPI master, which constructed the trees, must tell us the reordering
-    // of the points so that we can shuffle our dataset accordingly.
-    std::vector<size_t> oldFromNewReferences;
-    std::vector<size_t> oldFromNewQueries;
-
-    world.receive(0, 0, 
-
     RuleType rule(queryData, referenceData, neighbors, distances, metric);
 
-    DistributedBinaryTraversal<RuleType> traversal;
+    DistributedBinaryTraversal<RuleType> traversal(rule);
+
+    traversal.ChildTraverse<TreeType>();
   }
-*/
 }
