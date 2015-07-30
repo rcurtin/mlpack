@@ -207,8 +207,10 @@ class BinarySpaceTree
    * can take a long time and use a lot of memory.
    *
    * @param other Tree to be replicated.
+   * @param shallow If true, then the copy is completely shallow, so the
+   *     pointers will all probably need to be modified by hand.
    */
-  BinarySpaceTree(const BinarySpaceTree& other);
+  BinarySpaceTree(const BinarySpaceTree& other, const bool shallow = false);
 
   /**
    * Initialize the tree from a boost::serialization archive.

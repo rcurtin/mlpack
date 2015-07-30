@@ -209,7 +209,8 @@ template<typename BoundType,
          typename MatType,
          typename SplitType>
 BinarySpaceTree<BoundType, StatisticType, MatType, SplitType>::BinarySpaceTree(
-    const BinarySpaceTree& other) :
+    const BinarySpaceTree& other,
+    const bool shallow) :
     left(NULL),
     right(NULL),
     parent(other.parent),
@@ -220,8 +221,12 @@ BinarySpaceTree<BoundType, StatisticType, MatType, SplitType>::BinarySpaceTree(
     parentDistance(other.parentDistance),
     furthestDescendantDistance(other.furthestDescendantDistance),
     // Copy matrix, but only if we are the root.
-    dataset((other.parent == NULL) ? new MatType(*other.dataset) : NULL)
+    dataset((other.parent == NULL && !shallow) ? new MatType(*other.dataset) :
+        NULL)
 {
+  if (shallow)
+    return;
+
   // Create left and right children (if any).
   if (other.Left())
   {
@@ -831,16 +836,17 @@ void BinarySpaceTree<BoundType, StatisticType, MatType, SplitType>::Serialize(
       oldRight = right;
       left = NULL;
       right = NULL;
-    }
 
-    ar & CreateNVP(left, "left");
-    ar & CreateNVP(right, "right");
+      ar & CreateNVP(left, "left");
+      ar & CreateNVP(right, "right");
 
-    // Restore the children, if we hid them.
-    if (std::abs(parentDistance) < 1e-10)
-    {
       left = oldLeft;
       right = oldRight;
+    }
+    else
+    {
+      ar & CreateNVP(left, "left");
+      ar & CreateNVP(right, "right");
     }
 
     // Restore parent distance.
