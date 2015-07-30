@@ -87,6 +87,16 @@ class NeighborSearchStat
     ar & CreateNVP(bound, "bound");
     ar & CreateNVP(lastDistance, "lastDistance");
   }
+
+  std::string ToString() const
+  {
+    std::ostringstream oss;
+    oss << "NeighborSearchStat [" << this << "]" << std::endl;
+    oss << "  firstBound: " << firstBound << std::endl;
+    oss << "  secondBound: " << secondBound << std::endl;
+    oss << "  lastDistance: " << lastDistance << std::endl;
+    return oss.str();
+  }
 };
 
 }; // namespace neighbor
