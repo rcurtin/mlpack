@@ -269,7 +269,6 @@ class DistributedBinaryTraversal
 {
  public:
   DistributedBinaryTraversal(RuleType& rule);
-  DistributedBinaryTraversal();
 
   /**
    * Perform a single-tree traversal.

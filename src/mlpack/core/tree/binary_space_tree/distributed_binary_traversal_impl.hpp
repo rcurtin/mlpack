@@ -26,38 +26,6 @@ DistributedBinaryTraversal<RuleType>::DistributedBinaryTraversal(
 }
 
 template<typename RuleType>
-DistributedBinaryTraversal<RuleType>::DistributedBinaryTraversal() :
-    rule(NULL),
-    world()
-{
-  // We are an MPI child.  We must receive and construct our own RuleType
-  // object, query tree, and reference tree.  Once we have done that, we kick
-  // off the usual recursion, and when we're done, we send the results back.
-  typename RuleType::MPIWrapper wrapper;
-  Log::Info << "Process " << world.rank() << " is waiting for a message.\n";
-  Timer::Start("child_receive");
-  world.recv(0, 0, wrapper);
-  Timer::Stop("child_receive");
-  Log::Info << "Process " << world.rank() << " has received a message.\n";
-
-
-  // We've now received our information.  Start the recursion.
-  this->rule = wrapper.Rules();
-  Timer::Start("child_traversal");
-  Traverse(*wrapper.QueryTree(), *wrapper.ReferenceTree());
-  Timer::Stop("child_traversal");
-
-  // Now, we have to ship the neighbors and distances back to the master.
-  typename RuleType::MPIResultsWrapper resultsWrapper(rule->Neighbors(),
-                                                      rule->Distances());
-  Log::Info << "Process " << world.rank() << " is sending results.\n";
-  Timer::Start("send_results");
-  world.send(0, 0, resultsWrapper);
-  Timer::Stop("send_results");
-  Log::Info << "Process " << world.rank() << " is finished.\n";
-}
-
-template<typename RuleType>
 template<typename TreeType>
 void DistributedBinaryTraversal<RuleType>::Traverse(const size_t queryIndex,
                                                     TreeType& referenceNode)
@@ -100,22 +68,57 @@ void DistributedBinaryTraversal<RuleType>::MasterTraverse(
       assignedJobs(world.size() - 1, DualTreeMPITask<TreeType,
       typename RuleType::TraversalInfoType>());
   size_t currentlyAssignedJobs = world.size() - 1;
+  std::vector<bool> busy(world.size() - 1, true);
 
   while (!jobs.empty() || currentlyAssignedJobs > 0)
   {
+    // Assign any jobs that we can.
+    if (!jobs.empty() && currentlyAssignedJobs < world.size() - 1)
+    {
+      Timer::Start(GetPrefix() + "assign_idle_work");
+      // Find an unused worker.
+      for (size_t i = 0; i < busy.size(); ++i)
+      {
+        if (!busy[i])
+        {
+          ++currentlyAssignedJobs;
+          assignedJobs[i] = DualTreeMPITask<TreeType, typename
+              RuleType::TraversalInfoType>(jobs.front().first,
+              jobs.front().second, tiQueue.front());
+          jobs.pop();
+          tiQueue.pop();
+          Log::Info << "MPI master: assign q" <<
+              assignedJobs[i].QueryTree()->Begin() << "c" <<
+              assignedJobs[i].QueryTree()->Count() << ", r" <<
+              assignedJobs[i].ReferenceTree()->Begin() << "c" <<
+              assignedJobs[i].ReferenceTree()->Count() << " to idle child " <<
+              i + 1 << ".\n";
+          world.send(i + 1, 0, assignedJobs[i]);
+          busy[i] = true;
+        }
+      }
+      Timer::Stop(GetLastPrefix() + "assign_idle_work");
+    }
+
     Log::Info << "MPI master: wait for signal from any child. " << jobs.size()
 << " jobs in queue and " << currentlyAssignedJobs << " currently assigned jobs."
     << "\n";
     // Find an unused worker (wait for a response).
+    Timer::Start(GetPrefix() + "wait_on_message");
     DualTreeMPITaskResult<typename RuleType::TraversalInfoType> result;
     boost::mpi::status status;
     status = world.probe();
     Log::Info << "MPI master: receiving message " << status.tag() << " from "
         << "MPI child " << status.source() << ".\n";
+    Timer::Stop(GetLastPrefix() + "wait_on_message");
 
+    Timer::Start(GetPrefix() + "receive_message");
     status = world.recv(status.source(), status.tag(), result);
+    Timer::Stop(GetLastPrefix() + "receive_message");
     Log::Info << "MPI master: received signal from child " << status.source()
         << ".\n";
+
+    Timer::Start(GetPrefix() + "process_message");
     TreeType* oldQueryRoot = assignedJobs[status.source() - 1].QueryTree();
     TreeType* oldRefRoot = assignedJobs[status.source() - 1].ReferenceTree();
     if (status.tag() == 1) // 0 is the initialization tag; no data.
@@ -128,10 +131,12 @@ void DistributedBinaryTraversal<RuleType>::MasterTraverse(
       // And merge the results into the tree that we have.
       result.MergeResults(oldQueryRoot);
     }
+    Timer::Stop(GetLastPrefix() + "process_message");
 
     // Immediately put that worker back to work on a new job.
     if (!jobs.empty())
     {
+      Timer::Start(GetPrefix() + "assign_new_job");
       assignedJobs[status.source() - 1] =
           DualTreeMPITask<TreeType, typename RuleType::TraversalInfoType>(
           jobs.front().first, jobs.front().second, tiQueue.front());
@@ -146,31 +151,43 @@ void DistributedBinaryTraversal<RuleType>::MasterTraverse(
       world.send(status.source(), 0 /* zero tag */,
           assignedJobs[status.source() - 1]);
       Log::Info << "MPI master: work sent.\n";
+      Timer::Stop(GetLastPrefix() + "assign_new_job");
     }
     else
     {
       Log::Info << "Jobs empty; no job for worker " << status.source() << ".\n";
+      busy[status.source() - 1] = false;
       --currentlyAssignedJobs;
     }
   }
 
+  Timer::Start(GetPrefix() + "send_completion_messages");
   Log::Info << "MPI master: jobs are done; sending completion messages.\n";
   // Inform all MPI children that we are done and they should send back the
   // results so they can be merged.
   for (int i = 1; i < world.size(); ++i)
     world.send(i, 1); // Tag 1 represents "send results and exit".
+  Timer::Stop(GetLastPrefix() + "send_completion_messages");
 
+  Timer::Start(GetPrefix() + "wait_final_results");
   int received = 0;
   while (received < world.size() - 1)
   {
     typename RuleType::MPIResultType results;
     boost::mpi::status status = world.recv(boost::mpi::any_source, 2, results);
+    Timer::Stop(GetLastPrefix() + "wait_final_results");
     Log::Info << "MPI master: received results from MPI child " <<
         status.source() << ".\n";
 
+    Timer::Start(GetPrefix() + "merge_final_results");
     results.Merge(*rule);
     ++received;
+    Timer::Stop(GetLastPrefix() + "merge_final_results");
+
+    Timer::Start(GetPrefix() + "wait_final_results");
   }
+
+  Timer::Stop(GetLastPrefix() + "wait_final_results");
 }
 
 template<typename RuleType>
@@ -179,20 +196,28 @@ void DistributedBinaryTraversal<RuleType>::ChildTraverse()
 {
   // We need to send a message to tell the master that we're ready.
   // This should probably be changed.
+  Timer::Start(GetPrefix() + "initialize");
   DualTreeMPITaskResult<typename RuleType::TraversalInfoType> result;
   Log::Info << "MPI process " << world.rank() << ": send initialization "
       << "message.\n";
   world.send(0, 0 /* initialization tag */, result);
+  Timer::Stop(GetLastPrefix() + "initialize");
 
   // Now, we wait for a message with work.
   Log::Info << "MPI process " << world.rank() << ": waiting for messages.\n";
+  Timer::Start(GetPrefix() + "wait_for_work");
   while (world.probe(0, boost::mpi::any_tag).tag() == 0)
   {
+    Timer::Stop(GetLastPrefix() + "wait_for_work");
+
     // Receive the message.
+    Timer::Start(GetPrefix() + "receive_work");
     DualTreeMPITask<TreeType, typename RuleType::TraversalInfoType> job;
     world.recv(0, 0, job);
     Log::Info << "MPI process " << world.rank() << ": received message.\n";
+    Timer::Stop(GetLastPrefix() + "receive_work");
 
+    Timer::Start(GetPrefix() + "recursion");
     // Now extract the query and reference trees.
     TreeType* queryRoot = job.QueryTree();
     TreeType* referenceRoot = job.ReferenceTree();
@@ -208,9 +233,6 @@ void DistributedBinaryTraversal<RuleType>::ChildTraverse()
     tiStack.push(job.TraversalInfo());
 
     DualTreeMPITaskResult<typename RuleType::TraversalInfoType> taskResult;
-
-    bool correct = (queryRoot->Begin() == 36638 && referenceRoot->Begin() ==
-36794);
 
     while (!queryStack.empty())
     {
@@ -325,14 +347,22 @@ void DistributedBinaryTraversal<RuleType>::ChildTraverse()
         }
       }
     }
+    Timer::Stop(GetLastPrefix() + "recursion");
 
+    Timer::Start(GetPrefix() + "send_task_result");
     Log::Info << "MPI process " << world.rank() << ": send results for job.\n";
     world.send(0, 1, taskResult);
+    Timer::Stop(GetLastPrefix() + "send_task_result");
+
+    Timer::Start(GetPrefix() + "wait_for_work");
   }
+  Timer::Stop(GetLastPrefix() + "wait_for_work");
 
   // Now we should have gotten tag 1.  So we send our results and exit.
+  Timer::Start(GetPrefix() + "send_final_result");
   typename RuleType::MPIResultType finalResults(*rule);
   world.send(0, 2, finalResults);
+  Timer::Stop(GetLastPrefix() + "send_final_result");
   // And we're done.  Return.
 }
 

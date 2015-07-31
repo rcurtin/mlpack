@@ -5,9 +5,37 @@
  * Do k-nearest-neighbors with kd-trees via MPI.
  */
 #include <mlpack/core.hpp>
+#include <boost/mpi.hpp>
+
+size_t currentTask = 0;
+  
+boost::mpi::environment env;
+boost::mpi::communicator world;
+
+std::string GetPrefix()
+{
+  std::ostringstream oss;
+  if (world.rank() == 0)
+    oss << "master_" << std::setfill('0') << std::setw(6) << currentTask << "_";
+  else
+    oss << "child_" << world.rank() << "_" << std::setfill('0') << std::setw(6) << currentTask << "_";
+
+  ++currentTask;
+  return oss.str();
+}
+std::string GetLastPrefix()
+{
+  std::ostringstream oss;
+  if (world.rank() == 0)
+    oss << "master_" << std::setfill('0') << std::setw(6) << currentTask - 1 << "_";
+  else
+    oss << "child_" << world.rank() << "_" << std::setfill('0') << std::setw(6) << currentTask - 1<< "_";
+
+  return oss.str();
+}
+
 #include <mlpack/core/tree/binary_space_tree/distributed_binary_traversal.hpp>
 #include <mlpack/methods/neighbor_search/neighbor_search.hpp>
-#include <boost/mpi.hpp>
 
 using namespace mlpack;
 using namespace mlpack::tree;
@@ -23,6 +51,7 @@ PARAM_STRING_REQ("neighbors_file", "Output neighbors file.", "n");
 
 int main(int argc, char** argv)
 {
+  Timer::Start(GetPrefix() + "initialize");
   {
     int i = 0;
     char hostname[256];
@@ -47,14 +76,14 @@ int main(int argc, char** argv)
   const string referenceFile = CLI::GetParam<string>("reference_file");
   const string queryFile = CLI::GetParam<string>("query_file");
   const size_t k = (size_t) CLI::GetParam<int>("k");
+  Timer::Stop(GetLastPrefix() + "initialize");
 
+  Timer::Start(GetPrefix() + "load_data");
   arma::mat referenceData;
   arma::mat queryData;
   data::Load(referenceFile, referenceData, true);
   data::Load(queryFile, queryData, true);
-
-  boost::mpi::environment env;
-  boost::mpi::communicator world;
+  Timer::Stop(GetLastPrefix() + "load_data");
 
   // Vectors to store point mappings in.
   std::vector<size_t> oldFromNewReferences;
@@ -67,6 +96,7 @@ int main(int argc, char** argv)
   TreeType* queryTree;
   if (world.rank() == 0)
   {
+    Timer::Start(GetPrefix() + "tree_construction");
     // First, construct the trees.
     Log::Info << "MPI process " << world.rank() << ": constructing trees..."
         << endl;
@@ -74,19 +104,12 @@ int main(int argc, char** argv)
     queryTree = new TreeType(queryData, oldFromNewQueries);
     Log::Info << "Trees constructed." << endl;
 
-    for (size_t i = 0; i < oldFromNewReferences.size(); ++i)
-    {
-      if (oldFromNewReferences[i] == 302)
-        Log::Warn << "Point 302 maps to point " << i << ".\n";
-      else if (oldFromNewReferences[i] == 29630)
-        Log::Warn << "Point 29630 maps to point " << i << ".\n";
-      else if (oldFromNewReferences[i] == 20377)
-        Log::Warn << "Point 20377 maps to point " << i << ".\n";
-    }
+    Timer::Stop(GetLastPrefix() + "tree_construction");
   }
 
   // Now we must send the mappings to the other MPI nodes if we are the master,
   // and receive them if we are an MPI child (broadcast() takes care of both).
+  Timer::Start(GetPrefix() + "broadcast_mappings");
   Log::Info << "Broadcasting oldFromNewReferences (process " << world.rank()
       << ")." << endl;
   boost::mpi::broadcast(world, oldFromNewReferences, 0);
@@ -94,10 +117,12 @@ int main(int argc, char** argv)
       << ")." << endl;
   boost::mpi::broadcast(world, oldFromNewQueries, 0);
   Log::Info << "Done (process " << world.rank() << ")." << endl;
+  Timer::Stop(GetLastPrefix() + "broadcast_mappings");
 
   // If we are a child, we must rearrange the dataset.
   if (world.rank() != 0)
   {
+    Timer::Start(GetPrefix() + "rearrange_dataset");
     Log::Info << "MPI process " << world.rank() << ": rearranging datasets..."
       << endl;
     arma::mat oldReferences(std::move(referenceData));
@@ -109,14 +134,17 @@ int main(int argc, char** argv)
     queryData.set_size(oldQueries.n_rows, oldQueries.n_cols);
     for (size_t i = 0; i < queryData.n_cols; ++i)
       queryData.col(i) = oldQueries.col(oldFromNewQueries[i]);
+    Timer::Stop(GetLastPrefix() + "rearrange_dataset");
   }
 
   if (world.rank() == 0)
   {
+    Timer::Start(GetPrefix() + "setup_knn");
     KNNType knn(referenceTree);
 
     arma::Mat<size_t> neighbors;
     arma::mat distances;
+    Timer::Stop(GetLastPrefix() + "setup_knn");
 
     knn.Search(queryTree, k, neighbors, distances);
 
@@ -124,6 +152,7 @@ int main(int argc, char** argv)
     const string neighborsFile = CLI::GetParam<string>("neighbors_file");
 
     // Unmap points.
+    Timer::Start(GetPrefix() + "unmap_results");
     Log::Info << "Unmapping results.\n";
 
     arma::mat unmappedDistances(distances.n_rows, distances.n_cols);
@@ -141,6 +170,7 @@ int main(int argc, char** argv)
             oldFromNewReferences[neighbors(j, i)];
       }
     }
+    Timer::Stop(GetLastPrefix() + "unmap_results");
 
     data::Save(distancesFile, unmappedDistances);
     data::Save(neighborsFile, unmappedNeighbors);
@@ -152,6 +182,7 @@ int main(int argc, char** argv)
   {
     // We are not the MPI master.  So construct the traverser and the rules, and
     // wait for an assignment.
+    Timer::Start(GetPrefix() + "setup_knn");
     metric::EuclideanDistance metric;
     arma::Mat<size_t> neighbors(k, queryData.n_cols);
     arma::mat distances(k, queryData.n_cols);
@@ -160,6 +191,7 @@ int main(int argc, char** argv)
     RuleType rule(queryData, referenceData, neighbors, distances, metric);
 
     DistributedBinaryTraversal<RuleType> traversal(rule);
+    Timer::Stop(GetLastPrefix() + "setup_knn");
 
     traversal.ChildTraverse<TreeType>();
   }
