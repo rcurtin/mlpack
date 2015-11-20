@@ -23,3 +23,11 @@ target_link_libraries(kernel_pca
   mlpack
 )
 install(TARGETS kernel_pca RUNTIME DESTINATION bin)
+
+add_executable(kernel_cosine_tree
+  kernel_cosine_tree_main.cpp
+)
+target_link_libraries(kernel_cosine_tree
+  mlpack
+)
+install(TARGETS kernel_cosine_tree RUNTIME DESTINATION bin)

@@ -15,9 +15,10 @@ class KernelCosineTree
 {
  public:
   KernelCosineTree(const arma::mat& data,
+                   KernelType& kernel,
                    const double epsilon);
 
-  KernelCosineTree(arma::mat&& data);
+  KernelCosineTree(arma::mat&& data, KernelType& kernel);
 
   ~KernelCosineTree();
 
@@ -27,9 +28,13 @@ class KernelCosineTree
   const arma::mat& Dataset() const { return dataset; }
   arma::mat& Dataset() { return dataset; }
 
+  double CalculateError();
+
  private:
   arma::vec point;
   arma::mat dataset;
+
+  KernelType& kernel;
 
   KernelCosineTree* left;
   KernelCosineTree* right;
@@ -37,5 +42,7 @@ class KernelCosineTree
 
 } // namespace kpca
 } // namespace mlpack
+
+#include "kernel_cosine_tree_impl.hpp"
 
 #endif

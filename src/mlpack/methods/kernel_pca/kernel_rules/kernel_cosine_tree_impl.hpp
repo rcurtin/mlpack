@@ -12,7 +12,10 @@ namespace kpca {
 
 template<typename KernelType>
 KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
-                                               const double epsilon)
+                                               KernelType& kernel,
+                                               const double epsilon) :
+    dataset(data),
+    kernel(kernel)
 {
   // Pick a point randomly...
   point = data.col(0); // (That's not very random.)
@@ -30,7 +33,7 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
     norms[i] = std::sqrt(kernel.Evaluate(data.col(i), data.col(i)));
 
   // Let's find the per-point error.
-  double nodeError = CalculateError(data);
+  double nodeError = CalculateError();
 
   // Build a priority queue of nodes to split.
   std::priority_queue<std::pair<double, KernelCosineTree*>> queue;
@@ -80,8 +83,8 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
     }
 
     // Create left and right children.
-    left = new KernelCosineTree(std::move(near));
-    right = new KernelCosineTree(std::move(far));
+    left = new KernelCosineTree(std::move(near), kernel);
+    right = new KernelCosineTree(std::move(far), kernel);
 
     // Now update the error calculation.
     nodeError -= frameError;
@@ -95,8 +98,10 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
 }
 
 template<typename KernelType>
-KernelCosineTree<KernelType>::KernelCosineTree(arma::mat&& data) :
-    dataset(std::move(data))
+KernelCosineTree<KernelType>::KernelCosineTree(arma::mat&& data,
+                                               KernelType& kernel) :
+    dataset(std::move(data)),
+    kernel(kernel)
 {
   // Nothing to do.
 }
@@ -111,21 +116,21 @@ KernelCosineTree<KernelType>::~KernelCosineTree()
 }
 
 template<typename KernelType>
-template<typename MatType>
-double KernelCosineTree<KernelType>::CalculateError(const MatType& data)
+double KernelCosineTree<KernelType>::CalculateError()
 {
   // Return \| x - x' \|_H for all points in data.
   // That's sqrt(K(x, x) + K(x', x') - 2 K(x, x')).
   // K(x', x') = |x|^2 / |y|^2 K(y, y) = |x|^2 = K(x, x).
   // K(x, x') = |x| / |y| K(x, y).
   double error = 0.0;
-  const double pointNorm = std::sqrt(kernel.Evaluate(point, point));
-  for (size_t i = 0; i < data.n_cols; ++i)
+  const double pointNorm = std::sqrt(kernel.Evaluate(dataset.col(0),
+        dataset.col(0)));
+  for (size_t i = 0; i < dataset.n_cols; ++i)
   {
-    const double selfKernel = kernel.Evaluate(data.col(i), data.col(i));
+    const double selfKernel = kernel.Evaluate(dataset.col(i), dataset.col(i));
 
     error += std::sqrt(2 * selfKernel - (std::sqrt(selfKernel) / pointNorm) *
-        kernel.Evaluate(data.col(i), point));
+        kernel.Evaluate(dataset.col(i), point));
   }
 }
 
