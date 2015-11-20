@@ -1,6 +1,9 @@
 # Define the files we need to compile
 # Anything not in this list will not be compiled into MLPACK.
 set(SOURCES
+  kernel_cosine_tree.hpp
+  kernel_cosine_tree_impl.hpp
+  kernel_tree_method.hpp
   nystroem_method.hpp
   naive_method.hpp
 )
