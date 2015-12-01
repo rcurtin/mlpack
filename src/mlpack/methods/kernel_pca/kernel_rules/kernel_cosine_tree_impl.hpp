@@ -240,6 +240,7 @@ double KernelCosineTree<KernelType>::CalculateError()
 
   // Now project all the points onto that matrix via Gram-Schmidt...
   // Well, it's not G-S because the bases aren't orthogonal.
+/*
   arma::mat ppinv = arma::pinv(points).t();
   arma::mat mixingMatrix = ppinv.t() * dataset;
   arma::mat approxData = points * mixingMatrix;
@@ -249,6 +250,25 @@ double KernelCosineTree<KernelType>::CalculateError()
   for (size_t i = 0; i < dataset.n_cols; ++i)
     for (size_t j = 0; j < dataset.n_cols; ++j)
       approxK(j, i) = kernel.Evaluate(approxData.col(i), approxData.col(j));
+*/
+  // Let's do actual Nystroem method with our own points...
+  arma::mat miniKernel(points.n_cols, points.n_cols);
+  for (size_t i = 0; i < points.n_cols; ++i)
+    for (size_t j = 0; j < points.n_cols; ++j)
+      miniKernel(j, i) = kernel.Evaluate(points.col(i), points.col(j));
+
+  arma::mat semiKernel(points.n_cols, dataset.n_cols);
+  for (size_t i = 0; i < dataset.n_cols; ++i)
+    for (size_t j = 0; j < points.n_cols; ++j)
+      semiKernel(j, i) = kernel.Evaluate(dataset.col(i), points.col(j));
+
+  arma::mat U, V;
+  arma::vec s;
+  arma::svd(U, s, V, miniKernel);
+
+  arma::mat normalization = arma::diagmat(1.0 / sqrt(s));
+  arma::mat g = semiKernel.t() * U * normalization * V;
+  arma::mat approxK = g * g.t();
 
   return arma::norm(k - approxK, "fro") / arma::norm(k, "fro");
 }
