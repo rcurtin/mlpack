@@ -141,12 +141,12 @@ angle << ";";
   if (angle < splitValue)
   {
     Log::Debug << " go left!\n";
-    return left->Approximate(p);
+    return (norm / pointNorm) * left->Approximate(p);
   }
   else
   {
     Log::Debug << " go right!\n";
-    return right->Approximate(p);
+    return (norm / pointNorm) * right->Approximate(p);
   }
 }
 
