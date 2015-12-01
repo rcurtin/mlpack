@@ -49,7 +49,6 @@ std::endl;
     // desired relative error bound.
     std::pair<size_t, KernelCosineTree*> frame = queue.top();
     queue.pop();
-    size_t frameError = frame.first;
     KernelCosineTree* node = frame.second;
 
     // Now, calculate the angle between all points.
@@ -60,7 +59,6 @@ std::endl;
           node->Dataset().col(0))) / (norms[i] * norms[0]);
     }
     node->SplitValue() = arma::median(angles);
-    Log::Info << "Split value: " << node->SplitValue() << ".\n";
 
     // Now, split the points into near and far.
     size_t numNear = 0;
@@ -120,24 +118,16 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
     norms[i] = std::sqrt(kernel.Evaluate(data.col(i), data.col(i)));
   pointNorm = norms[0];
 
-  // Let's find the per-point error.
-  double relativeError = CalculateError();
-  Log::Info << "Current relative error: " << relativeError << "." << std::endl;
-
   // Build a priority queue of nodes to split.
   std::priority_queue<std::pair<size_t, KernelCosineTree*>> queue;
   queue.push(std::make_pair(data.n_cols, this));
 
-  for (size_t i = 0; i < rank; ++i)
+  for (size_t i = 1; i < rank; ++i)
   {
-    Log::Info << "Current relative error: " << relativeError << "." <<
-std::endl;
-
     // Split the points in this node into near and far, until we are below our
     // desired relative error bound.
     std::pair<size_t, KernelCosineTree*> frame = queue.top();
     queue.pop();
-    size_t frameError = frame.first;
     KernelCosineTree* node = frame.second;
 
     // Now, calculate the angle between all points.
@@ -179,10 +169,6 @@ std::endl;
     // Create left and right children.
     node->Left() = new KernelCosineTree(std::move(near), kernel);
     node->Right() = new KernelCosineTree(std::move(far), kernel);
-
-    // Now update the error calculation.
-    relativeError = CalculateError();
-    Log::Info << "New relative error: " << relativeError << ".\n";
 
     queue.push(std::make_pair(node->Left()->Dataset().n_cols, node->Left()));
     queue.push(std::make_pair(node->Right()->Dataset().n_cols, node->Right()));
@@ -251,7 +237,6 @@ double KernelCosineTree<KernelType>::CalculateError()
   // Next, get the points associated with the leaves of the tree.
   arma::mat points;
   GetBasis(points);
-  Log::Debug << "Basis matrix: " << points.n_cols << " points.\n";
 
   // Now project all the points onto that matrix via Gram-Schmidt...
   // Well, it's not G-S because the bases aren't orthogonal.
