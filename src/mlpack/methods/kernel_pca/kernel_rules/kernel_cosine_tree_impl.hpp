@@ -37,8 +37,8 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
   Log::Info << "Current relative error: " << relativeError << "." << std::endl;
 
   // Build a priority queue of nodes to split.
-  std::priority_queue<std::pair<double, KernelCosineTree*>> queue;
-  queue.push(std::make_pair(0, this));
+  std::priority_queue<std::pair<size_t, KernelCosineTree*>> queue;
+  queue.push(std::make_pair(data.n_cols, this));
 
   while (relativeError > epsilon)
   {
@@ -47,9 +47,9 @@ std::endl;
 
     // Split the points in this node into near and far, until we are below our
     // desired relative error bound.
-    std::pair<double, KernelCosineTree*> frame = queue.top();
+    std::pair<size_t, KernelCosineTree*> frame = queue.top();
     queue.pop();
-    double frameError = frame.first;
+    size_t frameError = frame.first;
     KernelCosineTree* node = frame.second;
 
     // Now, calculate the angle between all points.
@@ -61,7 +61,6 @@ std::endl;
     }
     node->SplitValue() = arma::median(angles);
     Log::Info << "Split value: " << node->SplitValue() << ".\n";
-    Log::Debug << "Splitting point " << node->Point().t();
 
     // Now, split the points into near and far.
     size_t numNear = 0;
@@ -95,9 +94,10 @@ std::endl;
 
     // Now update the error calculation.
     relativeError = CalculateError();
+    Log::Info << "New relative error: " << relativeError << ".\n";
 
-    queue.push(std::make_pair(0, node->Left()));
-    queue.push(std::make_pair(0, node->Right()));
+    queue.push(std::make_pair(node->Left()->Dataset().n_cols, node->Left()));
+    queue.push(std::make_pair(node->Right()->Dataset().n_cols, node->Right()));
   }
 }
 
@@ -113,7 +113,6 @@ KernelCosineTree<KernelType>::KernelCosineTree(arma::mat&& data,
 {
   // Nothing to do.
   point = dataset.col(0);
-  Log::Debug << "Made new point with point " << point.t();
 }
 
 template<typename KernelType>
@@ -162,7 +161,29 @@ double KernelCosineTree<KernelType>::CalculateError()
       k(j, i) = kernel.Evaluate(dataset.col(i), dataset.col(j));
 
   // Next, get the points associated with the leaves of the tree.
-  arma::mat points(dataset.n_rows, 0);
+  arma::mat points;
+  GetBasis(points);
+  Log::Debug << "Basis matrix: " << points.n_cols << " points.\n";
+
+  // Now project all the points onto that matrix via Gram-Schmidt...
+  // Well, it's not G-S because the bases aren't orthogonal.
+  arma::mat ppinv = arma::pinv(points).t();
+  arma::mat mixingMatrix = ppinv.t() * dataset;
+  arma::mat approxData = points * mixingMatrix;
+
+  // Calculate the approximate kernel matrix.
+  arma::mat approxK(dataset.n_cols, dataset.n_cols);
+  for (size_t i = 0; i < dataset.n_cols; ++i)
+    for (size_t j = 0; j < dataset.n_cols; ++j)
+      approxK(j, i) = kernel.Evaluate(approxData.col(i), approxData.col(j));
+
+  return arma::norm(k - approxK, "fro") / arma::norm(k, "fro");
+}
+
+template<typename KernelType>
+void KernelCosineTree<KernelType>::GetBasis(arma::mat& basis)
+{
+  basis.resize(dataset.n_rows, 0);
   std::queue<KernelCosineTree*> queue;
   queue.push(this);
   while (!queue.empty())
@@ -173,8 +194,8 @@ double KernelCosineTree<KernelType>::CalculateError()
     if (node->Left() == NULL && node->Right() == NULL)
     {
       // Add point.
-      points.resize(points.n_rows, points.n_cols + 1);
-      points.col(points.n_cols - 1) = node->Point();
+      basis.resize(basis.n_rows, basis.n_cols + 1);
+      basis.col(basis.n_cols - 1) = node->Point();
     }
     else
     {
@@ -182,27 +203,6 @@ double KernelCosineTree<KernelType>::CalculateError()
       queue.push(node->Right());
     }
   }
-
-  Log::Debug << "Basis matrix:\n" << points.t();
-
-  // Now project all the points onto that matrix via Gram-Schmidt...
-  arma::mat approxData(dataset.n_rows, dataset.n_cols);
-  for (size_t i = 0; i < dataset.n_cols; ++i)
-  {
-//    Log::Debug << "Approximate point " << i << ".\n";
-    arma::vec v = approxData.col(i);
-    Approximate(dataset.col(i), v);
-    approxData.col(i) = v;
-//    Log::Debug << dataset.col(i).t() << "  vs. " << approxData.col(i).t();
-  }
-
-  // Calculate the approximate kernel matrix.
-  arma::mat approxK(dataset.n_cols, dataset.n_cols);
-  for (size_t i = 0; i < dataset.n_cols; ++i)
-    for (size_t j = 0; j < dataset.n_cols; ++j)
-      approxK(j, i) = kernel.Evaluate(approxData.col(i), approxData.col(j));
-
-  return arma::norm(k - approxK, "fro") / arma::norm(k, "fro");
 }
 
 } // namespace kpca

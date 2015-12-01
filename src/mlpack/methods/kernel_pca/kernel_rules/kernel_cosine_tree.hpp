@@ -18,6 +18,10 @@ class KernelCosineTree
                    KernelType& kernel,
                    const double epsilon);
 
+  KernelCosineTree(const arma::mat& data,
+                   KernelType& kernel,
+                   const size_t rank);
+
   KernelCosineTree(arma::mat&& data, KernelType& kernel);
 
   ~KernelCosineTree();
@@ -41,6 +45,8 @@ class KernelCosineTree
   KernelCosineTree*& Right() { return right; }
 
   double CalculateError();
+
+  void GetBasis(arma::mat& basis);
 
  private:
   arma::vec point;
