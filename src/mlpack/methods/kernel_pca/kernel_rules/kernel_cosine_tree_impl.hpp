@@ -161,13 +161,39 @@ double KernelCosineTree<KernelType>::CalculateError()
     for (size_t j = 0; j < dataset.n_cols; ++j)
       k(j, i) = kernel.Evaluate(dataset.col(i), dataset.col(j));
 
-  // Now, approximate the dataset.
+  // Next, get the points associated with the leaves of the tree.
+  arma::mat points(dataset.n_rows, 0);
+  std::queue<KernelCosineTree*> queue;
+  queue.push(this);
+  while (!queue.empty())
+  {
+    KernelCosineTree* node = queue.front();
+    queue.pop();
+
+    if (node->Left() == NULL && node->Right() == NULL)
+    {
+      // Add point.
+      points.resize(points.n_rows, points.n_cols + 1);
+      points.col(points.n_cols - 1) = node->Point();
+    }
+    else
+    {
+      queue.push(node->Left());
+      queue.push(node->Right());
+    }
+  }
+
+  Log::Debug << "Basis matrix:\n" << points.t();
+
+  // Now project all the points onto that matrix via Gram-Schmidt...
   arma::mat approxData(dataset.n_rows, dataset.n_cols);
   for (size_t i = 0; i < dataset.n_cols; ++i)
   {
-    Log::Debug << "Approximate point " << i << ".\n";
-    approxData.col(i) = Approximate(dataset.col(i));
-    Log::Debug << dataset.col(i).t() << "  vs. " << approxData.col(i).t();
+//    Log::Debug << "Approximate point " << i << ".\n";
+    arma::vec v = approxData.col(i);
+    Approximate(dataset.col(i), v);
+    approxData.col(i) = v;
+//    Log::Debug << dataset.col(i).t() << "  vs. " << approxData.col(i).t();
   }
 
   // Calculate the approximate kernel matrix.
