@@ -23,32 +23,14 @@ class KernelTreeRule
                                 const size_t rank,
                                 KernelType kernel = KernelType())
   {
-    // We want to pick 'rank' points that approximate the space well.
-    // The first point we select will be relatively arbitrary.
-    arma::Col<size_t> selectedIndices(rank);
+    // Build a cosine tree of the given depth.
+    KernelCosineTree<KernelType> tree(data, kernel, rank);
 
-    // Calculate norms in the Hilbert space.
-    arma::vec norms(data.n_cols);
-    for (size_t i = 0; i < data.n_cols; ++i)
-      norms[i] = std::sqrt(kernel.Evaluate(data.col(i), data.col(i)));
+    // Now get the basis.
+    arma::mat basis;
+    tree.GetBasis(basis);
 
-    selectedIndices(0) = 0; // Hm, just pick the first point for now.
-
-    // Now calculate the angle between the first point and the rest of the
-    // points.
-    arma::vec angles(data.n_cols);
-    for (size_t i = 0; i < data.n_cols; ++i)
-    {
-      // Skip ourselves.
-      if (i == 0) continue;
-
-      angles[i] = kernel.Evaluate(data.col(i), data.col(0)) / 
-          (norms[i] * norms[0]);
-    }
-
-    // Now we split into two groups: "near" and "far", using the angle of 0.5 to
-    // split.
-
+    // Some other stuff later.
   }
 };
 
