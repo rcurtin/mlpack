@@ -7,6 +7,9 @@
 #ifndef __MLPACK_METHODS_KERNEL_PCA_KERNEL_RULES_KERNEL_COSINE_TREE_IMPL_HPP
 #define __MLPACK_METHODS_KERNEL_PCA_KERNEL_RULES_KERNEL_COSINE_TREE_IMPL_HPP
 
+#include "kernel_cosine_tree.hpp"
+#include <queue>
+
 namespace mlpack {
 namespace kpca {
 
@@ -15,34 +18,32 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
                                                KernelType& kernel,
                                                const double epsilon) :
     dataset(data),
-    kernel(kernel)
+    kernel(kernel),
+    left(NULL),
+    right(NULL)
 {
+  Log::Info << "Building kernel cosine tree.\n";
   // Pick a point randomly...
   point = data.col(0); // (That's not very random.)
-
-  // Cheap hack: find the norm of the kernel matrix, for relative-value error
-  // calculations.
-  const double kernelNorm = 0.0;
-  for (size_t i = 0; i < data.n_cols; ++i)
-    for (size_t j = 0; j < data.n_cols; ++j)
-      kernelNorm += kernel.Evaluate(data.col(i), data.col(j));
 
   // Calculate self-kernels.
   arma::vec norms(data.n_cols);
   for (size_t i = 0; i < data.n_cols; ++i)
     norms[i] = std::sqrt(kernel.Evaluate(data.col(i), data.col(i)));
+  pointNorm = norms[0];
 
   // Let's find the per-point error.
-  double nodeError = CalculateError();
+  double relativeError = CalculateError();
+  Log::Info << "Current relative error: " << relativeError << "." << std::endl;
 
   // Build a priority queue of nodes to split.
   std::priority_queue<std::pair<double, KernelCosineTree*>> queue;
-  queue.push(std::make_pair(nodeError, this));
+  queue.push(std::make_pair(0, this));
 
-  while ((nodeError / kernelNorm) > epsilon)
+  while (relativeError > epsilon)
   {
-    Log::Info << "Current relative error: " << (nodeError / kernelNorm)
-        << " (" << nodeError << " / " << kernelNorm << ")." << std::endl;
+    Log::Info << "Current relative error: " << relativeError << "." <<
+std::endl;
 
     // Split the points in this node into near and far, until we are below our
     // desired relative error bound.
@@ -54,13 +55,16 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
     // Now, calculate the angle between all points.
     arma::vec angles(node->Dataset().n_cols - 1);
     for (size_t i = 1; i < node->Dataset().n_cols; ++i)
-      angles[i] = std::abs(kernel.Evaluate(node->Dataset().col(i),
+    {
+      angles[i - 1] = std::abs(kernel.Evaluate(node->Dataset().col(i),
           node->Dataset().col(0))) / (norms[i] * norms[0]);
+    }
+    splitValue = arma::mean(angles);
 
     // Now, split the points into near and far.
     size_t numNear = 0;
     for (size_t i = 0; i < angles.n_elem; ++i)
-      if (angles[i] < 0.5)
+      if (angles[i] < splitValue)
         numNear++;
 
     // Probably not the best way to do it.  But maybe it is?
@@ -70,7 +74,7 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
     size_t farIndex = 0;
     for (size_t i = 0; i < angles.n_elem; ++i)
     {
-      if (angles[i] < 0.5)
+      if (angles[i] < splitValue)
       {
         near.col(nearIndex) = data.col(i + 1);
         ++nearIndex;
@@ -87,23 +91,25 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
     right = new KernelCosineTree(std::move(far), kernel);
 
     // Now update the error calculation.
-    nodeError -= frameError;
-    double leftError = left->CalculateError();
-    double rightError = right->CalculateError();
-    nodeError += leftError + rightError;
+    relativeError = CalculateError();
 
-    queue.push(std::make_pair(leftError, left));
-    queue.push(std::make_pair(rightError, right));
+    queue.push(std::make_pair(0, left));
+    queue.push(std::make_pair(0, right));
   }
 }
 
 template<typename KernelType>
 KernelCosineTree<KernelType>::KernelCosineTree(arma::mat&& data,
                                                KernelType& kernel) :
+    pointNorm(std::sqrt(kernel.Evaluate(point, point))),
+    splitValue(0.5),
     dataset(std::move(data)),
-    kernel(kernel)
+    kernel(kernel),
+    left(NULL),
+    right(NULL)
 {
   // Nothing to do.
+  point = dataset.col(0);
 }
 
 template<typename KernelType>
@@ -116,22 +122,45 @@ KernelCosineTree<KernelType>::~KernelCosineTree()
 }
 
 template<typename KernelType>
+template<typename VecType>
+const arma::vec& KernelCosineTree<KernelType>::Approximate(const VecType& p)
+{
+  if (!left && !right)
+    return point;
+
+  const double norm = std::sqrt(kernel.Evaluate(p, p));
+  const double angle = std::abs(kernel.Evaluate(point, p)) / (norm * pointNorm);
+
+  if (angle < splitValue)
+    return left->Approximate(p);
+  else
+    return right->Approximate(p);
+}
+
+template<typename KernelType>
 double KernelCosineTree<KernelType>::CalculateError()
 {
-  // Return \| x - x' \|_H for all points in data.
-  // That's sqrt(K(x, x) + K(x', x') - 2 K(x, x')).
-  // K(x', x') = |x|^2 / |y|^2 K(y, y) = |x|^2 = K(x, x).
-  // K(x, x') = |x| / |y| K(x, y).
-  double error = 0.0;
-  const double pointNorm = std::sqrt(kernel.Evaluate(dataset.col(0),
-        dataset.col(0)));
-  for (size_t i = 0; i < dataset.n_cols; ++i)
-  {
-    const double selfKernel = kernel.Evaluate(dataset.col(i), dataset.col(i));
+  // Calculate the exact value of || K - K' ||_F if we are approximating points
+  // as the point held in each tree node.
 
-    error += std::sqrt(2 * selfKernel - (std::sqrt(selfKernel) / pointNorm) *
-        kernel.Evaluate(dataset.col(i), point));
-  }
+  // First, calculate the full kernel matrix.
+  arma::mat k(dataset.n_cols, dataset.n_cols);
+  for (size_t i = 0; i < dataset.n_cols; ++i)
+    for (size_t j = 0; j < dataset.n_cols; ++j)
+      k(j, i) = kernel.Evaluate(dataset.col(i), dataset.col(j));
+
+  // Now, approximate the dataset.
+  arma::mat approxData(dataset.n_rows, dataset.n_cols);
+  for (size_t i = 0; i < dataset.n_cols; ++i)
+    approxData.col(i) = Approximate(dataset.col(i));
+
+  // Calculate the approximate kernel matrix.
+  arma::mat approxK(dataset.n_cols, dataset.n_cols);
+  for (size_t i = 0; i < dataset.n_cols; ++i)
+    for (size_t j = 0; j < dataset.n_cols; ++j)
+      approxK(j, i) = kernel.Evaluate(approxData.col(i), approxData.col(j));
+
+  return arma::norm(k - approxK, "fro") / arma::norm(k, "fro");
 }
 
 } // namespace kpca

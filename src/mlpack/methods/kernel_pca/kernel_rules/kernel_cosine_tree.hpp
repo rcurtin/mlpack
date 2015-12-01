@@ -28,10 +28,15 @@ class KernelCosineTree
   const arma::mat& Dataset() const { return dataset; }
   arma::mat& Dataset() { return dataset; }
 
+  template<typename VecType>
+  const arma::vec& Approximate(const VecType& p);
+
   double CalculateError();
 
  private:
   arma::vec point;
+  double pointNorm;
+  double splitValue;
   arma::mat dataset;
 
   KernelType& kernel;
