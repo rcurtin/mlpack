@@ -56,25 +56,27 @@ std::endl;
     arma::vec angles(node->Dataset().n_cols - 1);
     for (size_t i = 1; i < node->Dataset().n_cols; ++i)
     {
-      angles[i - 1] = std::abs(kernel.Evaluate(node->Dataset().col(i),
+      angles[i - 1] = 1 - std::abs(kernel.Evaluate(node->Dataset().col(i),
           node->Dataset().col(0))) / (norms[i] * norms[0]);
     }
-    splitValue = arma::mean(angles);
+    node->SplitValue() = arma::median(angles);
+    Log::Info << "Split value: " << node->SplitValue() << ".\n";
 
     // Now, split the points into near and far.
     size_t numNear = 0;
     for (size_t i = 0; i < angles.n_elem; ++i)
-      if (angles[i] < splitValue)
+      if (angles[i] < node->SplitValue())
         numNear++;
 
     // Probably not the best way to do it.  But maybe it is?
-    arma::mat near(node->Dataset().n_rows, numNear);
+    arma::mat near(node->Dataset().n_rows, numNear + 1);
     arma::mat far(node->Dataset().n_rows, angles.n_elem - numNear);
-    size_t nearIndex = 0;
+    near.col(0) = node->Dataset().col(0);
+    size_t nearIndex = 1;
     size_t farIndex = 0;
     for (size_t i = 0; i < angles.n_elem; ++i)
     {
-      if (angles[i] < splitValue)
+      if (angles[i] < node->SplitValue())
       {
         near.col(nearIndex) = data.col(i + 1);
         ++nearIndex;
@@ -87,14 +89,14 @@ std::endl;
     }
 
     // Create left and right children.
-    left = new KernelCosineTree(std::move(near), kernel);
-    right = new KernelCosineTree(std::move(far), kernel);
+    node->Left() = new KernelCosineTree(std::move(near), kernel);
+    node->Right() = new KernelCosineTree(std::move(far), kernel);
 
     // Now update the error calculation.
     relativeError = CalculateError();
 
-    queue.push(std::make_pair(0, left));
-    queue.push(std::make_pair(0, right));
+    queue.push(std::make_pair(0, node->Left()));
+    queue.push(std::make_pair(0, node->Right()));
   }
 }
 
@@ -126,15 +128,26 @@ template<typename VecType>
 const arma::vec& KernelCosineTree<KernelType>::Approximate(const VecType& p)
 {
   if (!left && !right)
+  {
+    Log::Debug << "Approximate as " << point.t();
     return point;
+  }
 
   const double norm = std::sqrt(kernel.Evaluate(p, p));
-  const double angle = std::abs(kernel.Evaluate(point, p)) / (norm * pointNorm);
+  const double angle = 1 - std::abs(kernel.Evaluate(point, p)) / (norm * pointNorm);
+  Log::Debug << "norm " << norm << " point norm " << pointNorm << " angle " <<
+angle << ";";
 
   if (angle < splitValue)
+  {
+    Log::Debug << " go left!\n";
     return left->Approximate(p);
+  }
   else
+  {
+    Log::Debug << " go right!\n";
     return right->Approximate(p);
+  }
 }
 
 template<typename KernelType>
@@ -152,7 +165,11 @@ double KernelCosineTree<KernelType>::CalculateError()
   // Now, approximate the dataset.
   arma::mat approxData(dataset.n_rows, dataset.n_cols);
   for (size_t i = 0; i < dataset.n_cols; ++i)
+  {
+    Log::Debug << "Approximate point " << i << ".\n";
     approxData.col(i) = Approximate(dataset.col(i));
+    Log::Debug << dataset.col(i).t() << "  vs. " << approxData.col(i).t();
+  }
 
   // Calculate the approximate kernel matrix.
   arma::mat approxK(dataset.n_cols, dataset.n_cols);

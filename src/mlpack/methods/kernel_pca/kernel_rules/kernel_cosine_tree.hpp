@@ -28,8 +28,17 @@ class KernelCosineTree
   const arma::mat& Dataset() const { return dataset; }
   arma::mat& Dataset() { return dataset; }
 
+  double SplitValue() const { return splitValue; }
+  double& SplitValue() { return splitValue; }
+
   template<typename VecType>
   const arma::vec& Approximate(const VecType& p);
+
+  KernelCosineTree* Left() const { return left; }
+  KernelCosineTree*& Left() { return left; }
+
+  KernelCosineTree* Right() const { return right; }
+  KernelCosineTree*& Right() { return right; }
 
   double CalculateError();
 
