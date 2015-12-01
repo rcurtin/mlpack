@@ -61,6 +61,7 @@ std::endl;
     }
     node->SplitValue() = arma::median(angles);
     Log::Info << "Split value: " << node->SplitValue() << ".\n";
+    Log::Debug << "Splitting point " << node->Point().t();
 
     // Now, split the points into near and far.
     size_t numNear = 0;
@@ -78,12 +79,12 @@ std::endl;
     {
       if (angles[i] < node->SplitValue())
       {
-        near.col(nearIndex) = data.col(i + 1);
+        near.col(nearIndex) = node->Dataset().col(i + 1);
         ++nearIndex;
       }
       else
       {
-        far.col(farIndex) = data.col(i + 1);
+        far.col(farIndex) = node->Dataset().col(i + 1);
         ++farIndex;
       }
     }
@@ -112,6 +113,7 @@ KernelCosineTree<KernelType>::KernelCosineTree(arma::mat&& data,
 {
   // Nothing to do.
   point = dataset.col(0);
+  Log::Debug << "Made new point with point " << point.t();
 }
 
 template<typename KernelType>
