@@ -32,7 +32,7 @@ class KernelCosineTree
   double& SplitValue() { return splitValue; }
 
   template<typename VecType>
-  const arma::vec& Approximate(const VecType& p);
+  void Approximate(const VecType& p, arma::vec& approx);
 
   KernelCosineTree* Left() const { return left; }
   KernelCosineTree*& Left() { return left; }

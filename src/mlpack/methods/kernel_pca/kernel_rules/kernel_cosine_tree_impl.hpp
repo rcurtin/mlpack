@@ -125,28 +125,25 @@ KernelCosineTree<KernelType>::~KernelCosineTree()
 
 template<typename KernelType>
 template<typename VecType>
-const arma::vec& KernelCosineTree<KernelType>::Approximate(const VecType& p)
+void KernelCosineTree<KernelType>::Approximate(const VecType& p,
+                                               arma::vec& approx)
 {
+  const double norm = std::sqrt(kernel.Evaluate(p, p));
   if (!left && !right)
   {
-    Log::Debug << "Approximate as " << point.t();
-    return point;
+    approx = (norm / pointNorm) * point;
+    return;
   }
 
-  const double norm = std::sqrt(kernel.Evaluate(p, p));
   const double angle = 1 - std::abs(kernel.Evaluate(point, p)) / (norm * pointNorm);
-  Log::Debug << "norm " << norm << " point norm " << pointNorm << " angle " <<
-angle << ";";
 
   if (angle < splitValue)
   {
-    Log::Debug << " go left!\n";
-    return (norm / pointNorm) * left->Approximate(p);
+    left->Approximate(p, approx);
   }
   else
   {
-    Log::Debug << " go right!\n";
-    return (norm / pointNorm) * right->Approximate(p);
+    right->Approximate(p, approx);
   }
 }
 
