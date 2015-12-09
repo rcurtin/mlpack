@@ -33,14 +33,14 @@ void NystroemMethod<KernelType, PointSelectionPolicy>::GetKernelMatrix(
   // Assemble mini-kernel matrix.
   for (size_t i = 0; i < rank; ++i)
     for (size_t j = 0; j < rank; ++j)
-      miniKernel(i, j) = kernel.Evaluate(selectedData->col(i),
+      miniKernel(j, i) = kernel.Evaluate(selectedData->col(i),
                                          selectedData->col(j));
 
   // Construct semi-kernel matrix with interactions between selected data and
   // all points.
   for (size_t i = 0; i < data.n_cols; ++i)
     for (size_t j = 0; j < rank; ++j)
-      semiKernel(i, j) = kernel.Evaluate(data.col(i),
+      semiKernel(j, i) = kernel.Evaluate(data.col(i),
                                          selectedData->col(j));
   // Clean the memory.
   delete selectedData;
@@ -55,14 +55,14 @@ void NystroemMethod<KernelType, PointSelectionPolicy>::GetKernelMatrix(
   // Assemble mini-kernel matrix.
   for (size_t i = 0; i < rank; ++i)
     for (size_t j = 0; j < rank; ++j)
-      miniKernel(i, j) = kernel.Evaluate(data.col(selectedPoints(i)),
+      miniKernel(j, i) = kernel.Evaluate(data.col(selectedPoints(i)),
                                          data.col(selectedPoints(j)));
 
   // Construct semi-kernel matrix with interactions between selected points and
   // all points.
   for (size_t i = 0; i < data.n_cols; ++i)
     for (size_t j = 0; j < rank; ++j)
-      semiKernel(i, j) = kernel.Evaluate(data.col(i),
+      semiKernel(j, i) = kernel.Evaluate(data.col(i),
                                          data.col(selectedPoints(j)));
 }
 
@@ -70,7 +70,7 @@ template<typename KernelType, typename PointSelectionPolicy>
 void NystroemMethod<KernelType, PointSelectionPolicy>::Apply(arma::mat& output)
 {
   arma::mat miniKernel(rank, rank);
-  arma::mat semiKernel(data.n_cols, rank);
+  arma::mat semiKernel(rank, data.n_cols);
 
   GetKernelMatrix(PointSelectionPolicy::Select(data, rank), miniKernel,
                   semiKernel);
@@ -82,7 +82,7 @@ void NystroemMethod<KernelType, PointSelectionPolicy>::Apply(arma::mat& output)
 
   // Construct the output matrix.
   arma::mat normalization = arma::diagmat(1.0 / sqrt(s));
-  output = semiKernel * U * normalization * V;
+  output = semiKernel.t() * U * normalization * V;
 }
 
 }; // namespace kernel
