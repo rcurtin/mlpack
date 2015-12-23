@@ -722,7 +722,7 @@ BOOST_AUTO_TEST_CASE(TrainTest)
   AdaBoost<> a(inputData, labels.row(0), p, iterations, tolerance);
 
   // Now load another dataset...
-  if (!data::Load("vc2.txt", inputData))
+  if (!data::Load("vc2.csv", inputData))
     BOOST_FAIL("Cannot load test dataset vc2.txt!");
   if (!data::Load("vc2_labels.txt", labels))
     BOOST_FAIL("Cannot load labels for vc2_labels.txt");
@@ -734,8 +734,8 @@ BOOST_AUTO_TEST_CASE(TrainTest)
 
   // Load test set to see if it trained on vc2 correctly.
   arma::mat testData;
-  if (!data::Load("vc2_test.txt", testData))
-    BOOST_FAIL("Cannot load test dataset vc2_test.txt!");
+  if (!data::Load("vc2_test.csv", testData))
+    BOOST_FAIL("Cannot load test dataset vc2_test.csv!");
 
   arma::Mat<size_t> trueTestLabels;
   if (!data::Load("vc2_test_labels.txt", trueTestLabels))
