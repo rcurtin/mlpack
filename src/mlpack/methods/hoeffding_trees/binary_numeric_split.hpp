@@ -98,8 +98,8 @@ class BinaryNumericSplit
 
   //! The majority class of the points seen so far.
   size_t MajorityClass() const;
-  //! The probability of the majority class given the points seen so far.
-  double MajorityProbability() const;
+  //! Get the probabilities of each class based on the points seen so far.
+  void Probabilities(arma::rowvec& probabilities) const;
 
   //! Serialize the object.
   template<typename Archive>

@@ -179,10 +179,8 @@ class HoeffdingTree
   //! Modify the majority class.
   size_t& MajorityClass() { return majorityClass; }
 
-  //! Get the probability of the majority class (based on training samples).
-  double MajorityProbability() const { return majorityProbability; }
-  //! Modify the probability of the majority class.
-  double& MajorityProbability() { return majorityProbability; }
+  //! Get the probabilities of each class (based on training samples).
+  const arma::rowvec& Probabilities() const { return probabilities; }
 
   //! Get the number of children.
   size_t NumChildren() const { return children.size(); }
@@ -254,6 +252,16 @@ class HoeffdingTree
                 arma::rowvec& probabilities) const;
 
   /**
+   * Get the probability of the point being from each class, returning the
+   * result in the given vector.  The results in the given vector will sum to 1.
+   *
+   * @param point Point to calculate probabilities for.
+   * @param probabilities Vector to store probabilities in.
+   */
+  template<typename VecType>
+  void Probabilities(const VecType& point, arma::rowvec& probabilities) const;
+
+  /**
    * Given that this node should split, create the children.
    */
   void CreateChildren();
@@ -298,9 +306,8 @@ class HoeffdingTree
   size_t splitDimension;
   //! The majority class of this node.
   size_t majorityClass;
-  //! The empirical probability of a point this node saw having the majority
-  //! class.
-  double majorityProbability;
+  //! The empirical probability of a point this node saw having each class.
+  arma::rowvec probabilities;
   //! If the split is categorical, this holds the splitting information.
   typename CategoricalSplitType<FitnessFunction>::SplitInfo categoricalSplit;
   //! If the split is numeric, this holds the splitting information.

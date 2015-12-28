@@ -82,11 +82,12 @@ size_t HoeffdingCategoricalSplit<FitnessFunction>::MajorityClass() const
 }
 
 template<typename FitnessFunction>
-double HoeffdingCategoricalSplit<FitnessFunction>::MajorityProbability() const
+void HoeffdingCategoricalSplit<FitnessFunction>::Probabilities(
+    arma::rowvec& probabilities) const
 {
-  arma::Col<size_t> classCounts = arma::sum(sufficientStatistics, 1);
-
-  return double(classCounts.max()) / double(arma::accu(classCounts));
+  probabilities = arma::conv_to<arma::rowvec>::from(
+      arma::sum(sufficientStatistics, 1));
+  probabilities /= arma::accu(probabilities);
 }
 
 } // namespace tree

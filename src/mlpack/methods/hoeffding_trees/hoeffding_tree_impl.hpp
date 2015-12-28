@@ -164,7 +164,7 @@ HoeffdingTree<FitnessFunction, NumericSplitType, CategoricalSplitType>::
     successProbability(other.successProbability),
     splitDimension(other.splitDimension),
     majorityClass(other.majorityClass),
-    majorityProbability(other.majorityProbability),
+    probabilities(other.probabilities),
     categoricalSplit(other.categoricalSplit),
     numericSplit(other.numericSplit)
 {
@@ -291,12 +291,12 @@ void HoeffdingTree<
     if (categoricalSplits.size() > 0)
     {
       majorityClass = categoricalSplits[0].MajorityClass();
-      majorityProbability = categoricalSplits[0].MajorityProbability();
+      categoricalSplits[0].Probabilities(probabilities);
     }
     else
     {
       majorityClass = numericSplits[0].MajorityClass();
-      majorityProbability = numericSplits[0].MajorityProbability();
+      numericSplits[0].Probabilities(probabilities);
     }
 
     // Check for a split, if we should.
@@ -473,7 +473,7 @@ void HoeffdingTree<
   {
     // We are a leaf, so classify accordingly.
     prediction = majorityClass;
-    probability = majorityProbability;
+    probability = probabilities[majorityClass];
   }
   else
   {
@@ -520,6 +520,31 @@ void HoeffdingTree<
   probabilities.set_size(data.n_cols);
   for (size_t i = 0; i < data.n_cols; ++i)
     Classify(data.col(i), predictions[i], probabilities[i]);
+}
+
+//! Get the probabilities for each class.
+template<
+    typename FitnessFunction,
+    template<typename> class NumericSplitType,
+    template<typename> class CategoricalSplitType
+>
+template<typename VecType>
+void HoeffdingTree<
+    FitnessFunction,
+    NumericSplitType,
+    CategoricalSplitType
+>::Probabilities(const VecType& point, arma::rowvec& probabilities) const
+{
+  if (children.size() == 0)
+  {
+    // We are a leaf, so we have all the probabilities.
+    probabilities = this->probabilities;
+  }
+  else
+  {
+    // Pass to the right child.
+    children[CalculateDirection(point)]->Probabilities(point, probabilities);
+  }
 }
 
 template<
@@ -618,7 +643,7 @@ void HoeffdingTree<
   }
 
   ar & CreateNVP(majorityClass, "majorityClass");
-  ar & CreateNVP(majorityProbability, "majorityProbability");
+  ar & CreateNVP(probabilities, "probabilities");
 
   // Depending on whether or not we have split yet, we may need to save
   // different things.

@@ -157,10 +157,11 @@ size_t BinaryNumericSplit<FitnessFunction, ObservationType>::MajorityClass()
 }
 
 template<typename FitnessFunction, typename ObservationType>
-double BinaryNumericSplit<FitnessFunction, ObservationType>::
-    MajorityProbability() const
+void BinaryNumericSplit<FitnessFunction, ObservationType>::
+    Probabilities(arma::rowvec& probabilities) const
 {
-  return double(arma::max(classCounts)) / double(arma::accu(classCounts));
+  probabilities = arma::conv_to<arma::rowvec>::from(classCounts) /
+      arma::accu(classCounts);
 }
 
 template<typename FitnessFunction, typename ObservationType>

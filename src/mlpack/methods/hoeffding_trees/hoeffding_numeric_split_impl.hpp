@@ -157,29 +157,25 @@ size_t HoeffdingNumericSplit<FitnessFunction, ObservationType>::
 }
 
 template<typename FitnessFunction, typename ObservationType>
-double HoeffdingNumericSplit<FitnessFunction, ObservationType>::
-    MajorityProbability() const
+void HoeffdingNumericSplit<FitnessFunction, ObservationType>::
+    Probabilities(arma::rowvec& probabilities) const
 {
   // If we haven't yet determined the bins, we must calculate this by hand.
   if (samplesSeen < observationsBeforeBinning)
   {
-    arma::Col<size_t> classes(sufficientStatistics.n_rows);
-    classes.zeros();
-
+    probabilities.zeros(sufficientStatistics.n_rows);
     for (size_t i = 0; i < samplesSeen; ++i)
-      classes[labels[i]]++;
-
-    return double(classes.max()) / double(arma::accu(classes));
+      probabilities[labels[i]]++;
   }
   else
   {
     // We've calculated the bins, so we can just sum over the sufficient
     // statistics.
-    arma::Col<size_t> classCounts = arma::sum(sufficientStatistics, 1);
-
-    return double(classCounts.max()) / double(arma::sum(classCounts));
+    probabilities =
+        arma::conv_to<arma::rowvec>::from(arma::sum(sufficientStatistics, 1));
   }
 
+  probabilities /= arma::accu(probabilities);
 }
 
 template<typename FitnessFunction, typename ObservationType>

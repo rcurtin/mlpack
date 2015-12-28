@@ -108,8 +108,8 @@ class HoeffdingNumericSplit
 
   //! Return the majority class.
   size_t MajorityClass() const;
-  //! Return the probability of the majority class.
-  double MajorityProbability() const;
+  //! Get the probabilities of each class.
+  void Probabilities(arma::rowvec& probabilities) const;
 
   //! Return the number of bins.
   size_t Bins() const { return bins; }

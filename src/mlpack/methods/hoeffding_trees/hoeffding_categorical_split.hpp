@@ -98,8 +98,8 @@ class HoeffdingCategoricalSplit
 
   //! Get the majority class seen so far.
   size_t MajorityClass() const;
-  //! Get the probability of the majority class given the points seen so far.
-  double MajorityProbability() const;
+  //! Get the probability of each class given the points seen so far.
+  void Probabilities(arma::rowvec& probabilities) const;
 
   //! Serialize the categorical split.
   template<typename Archive>
