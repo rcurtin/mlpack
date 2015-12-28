@@ -1,41 +1,41 @@
-/*! @page build Building MLPACK From Source
+/*! @page build Building mlpack From Source
 
 @section buildintro Introduction
 
-MLPACK uses CMake as a build system and allows several flexible build
+mlpack uses CMake as a build system and allows several flexible build
 configuration options.  One can consult any of numerous CMake tutorials for
-further documentation, but this tutorial should be enough to get MLPACK built
+further documentation, but this tutorial should be enough to get mlpack built
 and installed.
 
 @section Download latest mlpack build
-Download latest mlpack build from here: <a href="http://www.mlpack.org/files/mlpack-1.0.10.tar.gz">mlpack-1.0.10</a>
+Download latest mlpack build from here: <a href="http://www.mlpack.org/files/mlpack-1.0.12.tar.gz">mlpack-1.0.12</a>
 
 @section builddir Creating Build Directory
 
-Once the MLPACK source is unpacked, you should create a build directory.
+Once the mlpack source is unpacked, you should create a build directory.
 
 @code
-$ cd mlpack-1.0.10
+$ cd mlpack-1.0.12
 $ mkdir build
 @endcode
 
 The directory can have any name, not just 'build', but 'build' is sufficient
 enough.
 
-@section dep Dependencies of MLPACK
+@section dep Dependencies of mlpack
 
-MLPACK depends on the following libraries, which need to be installed on the
+mlpack depends on the following libraries, which need to be installed on the
 system and have headers present:
 
- - Armadillo >= 3.6.0 (with LAPACK support)
- - LibXML2 >= 2.6.0
- - Boost (math_c99, program_options, unit_test_framework, heap) >= 1.49
+ - Armadillo >= 4.100.0 (with LAPACK support)
+ - Boost (math_c99, program_options, serialization, unit_test_framework, heap)
+      >= 1.49
 
 In Ubuntu and Debian, you can get all of these dependencies through apt:
 
 @code
 # apt-get install libboost-math-dev libboost-program-options-dev
-  libboost-test-dev libxml2-dev libarmadillo-dev
+  libboost-test-dev libboost-serialization-dev libarmadillo-dev
 @endcode
 
 If you are using an Ubuntu version older than 13.10 ("Saucy Salamander") or
@@ -75,7 +75,7 @@ $ cd build
 $ cmake -D DEBUG=OFF -D PROFILE=OFF ../
 @endcode
 
-The full list of options MLPACK allows:
+The full list of options mlpack allows:
 
  - DEBUG=(ON/OFF): compile with debugging symbols (default ON in svn trunk, OFF
    in releases)
@@ -87,7 +87,7 @@ The full list of options MLPACK allows:
 Each option can be specified to CMake with the '-D' flag.  Other tools can also
 be used to configure CMake, but those are not documented here.
 
-@section build Building MLPACK
+@section build Building mlpack
 
 Once CMake is configured, building the library is as simple as typing 'make'.
 This will build all library components as well as 'mlpack_test'.
@@ -108,16 +108,16 @@ $ make pca allknn allkfn
 @endcode
 
 If the build fails and you cannot figure out why, register an account on Trac
-and submit a ticket and the MLPACK developers will quickly help you figure it
+and submit a ticket and the mlpack developers will quickly help you figure it
 out:
 
 http://mlpack.org/
 
-Alternately, MLPACK help can be found in IRC at \#mlpack on irc.freenode.net.
+Alternately, mlpack help can be found in IRC at \#mlpack on irc.freenode.net.
 
-@section install Installing MLPACK
+@section install Installing mlpack 
 
-If you wish to install MLPACK to /usr/include/mlpack/ and /usr/lib/ and
+If you wish to install mlpack to /usr/include/mlpack/ and /usr/lib/ and
 /usr/bin/, once it has built, make sure you have root privileges (or write
 permissions to those two directories), and simply type
 
@@ -125,7 +125,7 @@ permissions to those two directories), and simply type
 # make install
 @endcode
 
-You can now run the executables by name; you can link against MLPACK with
--lmlpack, and the MLPACK headers are found in /usr/include/mlpack/.
+You can now run the executables by name; you can link against mlpack with
+-lmlpack, and the mlpack headers are found in /usr/include/mlpack/.
 
 */

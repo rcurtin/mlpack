@@ -6,7 +6,7 @@ a machine learning analog to LAPACK. It aims to implement a wide array of
 machine learning methods and functions as a "swiss army knife" for machine
 learning researchers.
 
-**Download [current stable version (1.0.12)](http://www.mlpack.org/files/mlpack-1.0.12.tar.gz).**
+**Download [current stable version (2.0.0)](http://www.mlpack.org/files/mlpack-2.0.0.tar.gz).**
 
 [![Build Status](http://big.cc.gt.atl.ga.us/job/mlpack%20-%20git%20commit%20test/badge/icon)](http://big.cc.gt.atl.ga.us/job/mlpack%20-%20git%20commit%20test/)
 
@@ -41,7 +41,7 @@ If you use mlpack in your research or software, please cite mlpack using the
 citation below (given in BiBTeX format):
 
     @article{mlpack2013,
-      title     = {{MLPACK}: A Scalable {C++} Machine Learning Library},
+      title     = {{mlpack}: A Scalable {C++} Machine Learning Library},
       author    = {Curtin, Ryan R. and Cline, James R. and Slagle, Neil P. and
                    March, William B. and Ram, P. and Mehta, Nishant A. and Gray,
                    Alexander G.},
@@ -58,7 +58,7 @@ Citations are beneficial for the growth and improvement of mlpack.
 
 mlpack has the following dependencies:
 
-      Armadillo     >= 3.6.0
+      Armadillo     >= 4.100.0
       Boost (program_options, math_c99, unit_test_framework, serialization)
       CMake         >= 2.8.5
 

@@ -31,8 +31,8 @@ target_link_libraries(mlpack
 )
 set_target_properties(mlpack
   PROPERTIES
-  VERSION 1.0
-  SOVERSION 1
+  VERSION 2.0
+  SOVERSION 2
 )
 
 # Make sure the linker can find the needed library.
@@ -85,5 +85,5 @@ add_dependencies(mlpack mlpack_headers)
 add_custom_target(test
   ${CMAKE_BINARY_DIR}/bin/mlpack_test "--log_level=test_suite" # Set UTF runtime param
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/ # This is where test files are put.
-  COMMENT "Running MLPACK test"
+  COMMENT "Running mlpack test"
   DEPENDS mlpack_test)

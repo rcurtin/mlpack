@@ -110,7 +110,7 @@ endif(ARMA_EXTRA_DEBUG)
 #   BOOST_INCLUDEDIR - include directory for Boost
 #   BOOST_LIBRARYDIR - library directory for Boost
 
-find_package(Armadillo 3.6.0 REQUIRED)
+find_package(Armadillo 4.100.0 REQUIRED)
 
 # If Armadillo was compiled without ARMA_64BIT_WORD and we are on a 64-bit
 # system (where size_t will be 64 bits), suggest to the user that they should
@@ -142,7 +142,7 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     message(WARNING "This is a 64-bit system, but Armadillo was compiled "
         "without 64-bit index support.  Consider recompiling Armadillo with "
         "ARMA_64BIT_WORD to enable 64-bit indices (large matrix support). "
-        "MLPACK will still work without ARMA_64BIT_WORD defined, but will not "
+        "mlpack will still work without ARMA_64BIT_WORD defined, but will not "
         "scale to matrices with more than 4 billion elements.")
   endif(ARMA_HAS_64BIT_WORD EQUAL 0)
 endif(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -350,6 +350,7 @@ if (UNIX)
           mlpack_hmm_loglik
           mlpack_hmm_train
           mlpack_hmm_viterbi
+          mlpack_hoeffding_tree
           mlpack_kernel_pca
           mlpack_kmeans
           mlpack_lars

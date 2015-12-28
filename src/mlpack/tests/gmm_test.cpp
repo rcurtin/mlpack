@@ -405,9 +405,9 @@ BOOST_AUTO_TEST_CASE(GMMRandomTest)
   BOOST_REQUIRE_CLOSE(gmm.Weights()[1], gmm2.Weights()[sortedIndices[1]], 7.0);
 
   BOOST_REQUIRE_CLOSE(gmm.Component(0).Mean()[0],
-      gmm2.Component(sortedIndices[0]).Mean()[0], 6.5);
+      gmm2.Component(sortedIndices[0]).Mean()[0], 7.5);
   BOOST_REQUIRE_CLOSE(gmm.Component(0).Mean()[1],
-      gmm2.Component(sortedIndices[0]).Mean()[1], 6.5);
+      gmm2.Component(sortedIndices[0]).Mean()[1], 7.5);
 
   BOOST_REQUIRE_CLOSE(gmm.Component(0).Covariance()(0, 0),
       gmm2.Component(sortedIndices[0]).Covariance()(0, 0), 13.0);
@@ -419,9 +419,9 @@ BOOST_AUTO_TEST_CASE(GMMRandomTest)
       gmm2.Component(sortedIndices[0]).Covariance()(1, 1), 13.0);
 
   BOOST_REQUIRE_CLOSE(gmm.Component(1).Mean()[0],
-      gmm2.Component(sortedIndices[1]).Mean()[0], 6.5);
+      gmm2.Component(sortedIndices[1]).Mean()[0], 7.5);
   BOOST_REQUIRE_CLOSE(gmm.Component(1).Mean()[1],
-      gmm2.Component(sortedIndices[1]).Mean()[1], 6.5);
+      gmm2.Component(sortedIndices[1]).Mean()[1], 7.5);
 
   BOOST_REQUIRE_CLOSE(gmm.Component(1).Covariance()(0, 0),
       gmm2.Component(sortedIndices[1]).Covariance()(0, 0), 13.0);
@@ -559,7 +559,8 @@ BOOST_AUTO_TEST_CASE(NoConstraintTest)
 
 BOOST_AUTO_TEST_CASE(PositiveDefiniteConstraintTest)
 {
-  // Make sure matrices are made to be positive definite.
+  // Make sure matrices are made to be positive definite, or more specifically,
+  // that they can be Cholesky decomposed.
   for (size_t i = 0; i < 30; ++i)
   {
     const size_t elem = 5 + math::RandInt(50);
@@ -568,7 +569,14 @@ BOOST_AUTO_TEST_CASE(PositiveDefiniteConstraintTest)
 
     PositiveDefiniteConstraint::ApplyConstraint(cov);
 
-    BOOST_REQUIRE_GE((double) det(cov), 1e-50);
+    arma::mat c;
+    #if (ARMA_VERSION_MAJOR < 4) || \
+        ((ARMA_VERSION_MAJOR == 4) && (ARMA_VERSION_MINOR < 500))
+    BOOST_REQUIRE(arma::chol(c, cov));
+    #else
+    BOOST_REQUIRE(arma::chol(c, cov, "lower"));
+    #endif
+
   }
 }
 

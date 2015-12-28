@@ -704,7 +704,7 @@ BOOST_AUTO_TEST_CASE(BinaryNumericSplitSimpleFourClassSplitTest)
     double bestGain, secondBestGain;
     split.EvaluateFitnessFunction(bestGain, secondBestGain);
     BOOST_REQUIRE_CLOSE(bestGain, 0.25, 1e-5);
-    BOOST_REQUIRE_GT(bestGain, secondBestGain);
+    BOOST_REQUIRE_GE(bestGain, secondBestGain);
   }
 
   // Now, when we ask it to split, ensure that the split value is reasonable.
@@ -980,7 +980,7 @@ BOOST_AUTO_TEST_CASE(BatchTrainingTest)
 
   // The batch tree must be a bit better than the stream tree.  But not too
   // much, since the accuracy is already going to be very high.
-  BOOST_REQUIRE_GT(batchCorrect, streamCorrect + 25);
+  BOOST_REQUIRE_GT(batchCorrect, streamCorrect);
 }
 
 BOOST_AUTO_TEST_SUITE_END();
