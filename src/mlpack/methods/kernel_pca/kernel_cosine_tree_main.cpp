@@ -30,54 +30,74 @@ int main(int argc, char** argv)
   arma::mat dataset;
   data::Load(inputFile, dataset);
 
-  GaussianKernel gk(3.0);
+  for (double bw = 1; bw < std::pow(2.0, 16); bw *= 2)
+  {
+    Log::Info << "Bandwidth " << bw << ".\n";
+    GaussianKernel gk(bw);
 
-  // Calculate the true kernel matrix.
-  arma::mat kernel(dataset.n_cols, dataset.n_cols);
-  for (size_t i = 0; i < dataset.n_cols; ++i)
-    for (size_t j = 0; j < dataset.n_cols; ++j)
-      kernel(j, i) = gk.Evaluate(dataset.col(i), dataset.col(j));
-  const double kNorm = arma::norm(kernel, "fro");
+    // Calculate the true kernel matrix.
+    arma::mat kernel(dataset.n_cols, dataset.n_cols);
+    for (size_t i = 0; i < dataset.n_cols; ++i)
+      for (size_t j = 0; j < dataset.n_cols; ++j)
+        kernel(j, i) = gk.Evaluate(dataset.col(i), dataset.col(j));
+    const double kNorm = arma::norm(kernel, "fro");
 
-  // Now build the kernel tree.
-  Timer::Start("kernel_cosine_tree");
-  KernelCosineTree<GaussianKernel> kt(dataset, gk, rank);
-  Timer::Stop("kernel_cosine_tree");
+    // Calculate the number of dimensions necessary to capture 95% of the
+    // eigenspectrum.
+    arma::vec eigval = arma::eig_sym(kernel);
+    eigval /= arma::sum(eigval);
+    double sum = 0.0;
+    size_t r = 0;
+    for ( ; r < eigval.n_elem; ++r)
+    {
+      sum += eigval[eigval.n_elem - r - 1];
+      if (sum > 0.95)
+        break;
+    }
+    Log::Info << "Kernel matrix is approximately of rank " << r + 1 << ".\n";
 
-  // Calculate the relative error.
-  const double kctError = kt.CalculateError();
+    // Now build the kernel tree.
+    Timer::Start("kernel_cosine_tree");
+    KernelCosineTree<GaussianKernel> kt(dataset, gk, rank);
+    Timer::Stop("kernel_cosine_tree");
 
-  Log::Info << "Relative error for kernel cosine tree: " << kctError << ".\n";
+    // Calculate the relative error.
+    const double kctError = kt.CalculateError();
 
-  // Now do Nystroem method with k-means.
-  Timer::Start("nystroem_kmeans");
-  NystroemMethod<GaussianKernel> nm(dataset, gk, rank);
-  arma::mat g;
-  nm.Apply(g);
-  Timer::Stop("nystroem_kmeans");
+    Log::Info << "Relative error for kernel cosine tree: " << kctError << ".\n";
 
-  arma::mat nmK = g * g.t();
-  const double nmkError = arma::norm(kernel - nmK, "fro") / kNorm;
-  Log::Info << "Relative error for Nystroem method with k-means selection: "
-      << nmkError << ".\n";
+    // Now do Nystroem method with k-means.
+    Timer::Start("nystroem_kmeans");
+    Log::Info.ignoreInput = true;
+    NystroemMethod<GaussianKernel> nm(dataset, gk, rank);
+    arma::mat g;
+    nm.Apply(g);
+    Log::Info.ignoreInput = false;
+    Timer::Stop("nystroem_kmeans");
 
-  Timer::Start("nystroem_ordered");
-  NystroemMethod<GaussianKernel, OrderedSelection> nmo(dataset, gk, rank);
-  nmo.Apply(g);
-  Timer::Stop("nystroem_ordered");
-  nmK = g * g.t();
+    arma::mat nmK = g * g.t();
+    const double nmkError = arma::norm(kernel - nmK, "fro") / kNorm;
+    Log::Info << "Relative error for Nystroem method with k-means selection: "
+        << nmkError << ".\n";
 
-  const double nmoError = arma::norm(kernel - nmK, "fro") / kNorm;
-  Log::Info << "Relative error for Nystroem method with ordered selection: "
-      << nmoError << ".\n";
+    Timer::Start("nystroem_ordered");
+    NystroemMethod<GaussianKernel, OrderedSelection> nmo(dataset, gk, rank);
+    nmo.Apply(g);
+    Timer::Stop("nystroem_ordered");
+    nmK = g * g.t();
 
-  Timer::Start("nystroem_random");
-  NystroemMethod<GaussianKernel, RandomSelection> nmr(dataset, gk, rank);
-  nmr.Apply(g);
-  Timer::Stop("nystroem_random");
-  nmK = g * g.t();
+    const double nmoError = arma::norm(kernel - nmK, "fro") / kNorm;
+    Log::Info << "Relative error for Nystroem method with ordered selection: "
+        << nmoError << ".\n";
 
-  const double nmrError = arma::norm(kernel - nmK, "fro") / kNorm;
-  Log::Info << "Relative error for Nystroem method with random selection: "
-      << nmrError << ".\n";
+    Timer::Start("nystroem_random");
+    NystroemMethod<GaussianKernel, RandomSelection> nmr(dataset, gk, rank);
+    nmr.Apply(g);
+    Timer::Stop("nystroem_random");
+    nmK = g * g.t();
+
+    const double nmrError = arma::norm(kernel - nmK, "fro") / kNorm;
+    Log::Info << "Relative error for Nystroem method with random selection: "
+        << nmrError << ".\n";
+  }
 }
