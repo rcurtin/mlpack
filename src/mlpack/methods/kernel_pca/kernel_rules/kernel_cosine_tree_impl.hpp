@@ -22,7 +22,6 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
     left(NULL),
     right(NULL)
 {
-  Log::Info << "Building kernel cosine tree.\n";
   // Pick a point randomly...
   point = data.col(0); // (That's not very random.)
 
@@ -34,7 +33,6 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
 
   // Let's find the per-point error.
   double relativeError = CalculateError();
-  Log::Info << "Current relative error: " << relativeError << "." << std::endl;
 
   // Build a priority queue of nodes to split.
   std::priority_queue<std::pair<size_t, KernelCosineTree*>> queue;
@@ -42,8 +40,6 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
 
   while (relativeError > epsilon)
   {
-    Log::Info << "Current relative error: " << relativeError << "." <<
-std::endl;
 
     // Split the points in this node into near and far, until we are below our
     // desired relative error bound.
@@ -92,7 +88,6 @@ std::endl;
 
     // Now update the error calculation.
     relativeError = CalculateError();
-    Log::Info << "New relative error: " << relativeError << ".\n";
 
     queue.push(std::make_pair(node->Left()->Dataset().n_cols, node->Left()));
     queue.push(std::make_pair(node->Right()->Dataset().n_cols, node->Right()));
@@ -108,7 +103,6 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
     left(NULL),
     right(NULL)
 {
-  Log::Info << "Building kernel cosine tree.\n";
   // Pick a point randomly...
   point = data.col(0); // (That's not very random.)
 
@@ -138,7 +132,6 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
           node->Dataset().col(0))) / (norms[i] * norms[0]);
     }
     node->SplitValue() = arma::median(angles);
-    Log::Info << "Split value: " << node->SplitValue() << ".\n";
 
     // Now, split the points into near and far.
     size_t numNear = 0;
