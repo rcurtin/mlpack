@@ -22,8 +22,8 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
     left(NULL),
     right(NULL)
 {
-  // Pick a point randomly...
-  point = data.col(0); // (That's not very random.)
+  // First point is always the root.  This is the point given to us from above.
+  point = data.col(0);
 
   // Calculate self-kernels.
   arma::vec norms(data.n_cols);
@@ -66,6 +66,7 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
     arma::mat near(node->Dataset().n_rows, numNear + 1);
     arma::mat far(node->Dataset().n_rows, angles.n_elem - numNear);
     near.col(0) = node->Dataset().col(0);
+    arma::vec farAngles(angles.n_elem - numNear);
     size_t nearIndex = 1;
     size_t farIndex = 0;
     for (size_t i = 0; i < angles.n_elem; ++i)
@@ -78,9 +79,28 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
       else
       {
         far.col(farIndex) = node->Dataset().col(i + 1);
+        farAngles[farIndex] = angles[i];
         ++farIndex;
       }
     }
+
+    // What is the most different point?
+    size_t mostDifferentIndex = 0;
+    double maxAngle = 0.0;
+    for (size_t i = 0; i < farAngles.n_elem; ++i)
+    {
+      if (farAngles[i] > maxAngle)
+      {
+        maxAngle = farAngles[i];
+        mostDifferentIndex = i;
+      }
+    }
+    std::cout << "max angle " << maxAngle << ", furthest " << mostDifferentIndex
+<< ".\n";
+
+    arma::vec tmp = far.col(0);
+    far.col(0) = far.col(mostDifferentIndex);
+    far.col(mostDifferentIndex) = tmp;
 
     // Create left and right children.
     node->Left() = new KernelCosineTree(std::move(near), kernel);
@@ -142,6 +162,7 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
     // Probably not the best way to do it.  But maybe it is?
     arma::mat near(node->Dataset().n_rows, numNear + 1);
     arma::mat far(node->Dataset().n_rows, angles.n_elem - numNear);
+    arma::vec farAngles(angles.n_elem - numNear);
     near.col(0) = node->Dataset().col(0);
     size_t nearIndex = 1;
     size_t farIndex = 0;
@@ -155,9 +176,28 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
       else
       {
         far.col(farIndex) = node->Dataset().col(i + 1);
+        farAngles[farIndex] = angles[i];
         ++farIndex;
       }
     }
+
+    // What is the most different point?
+    size_t mostDifferentIndex = 0;
+    double maxAngle = 0.0;
+    for (size_t i = 0; i < farAngles.n_elem; ++i)
+    {
+      if (farAngles[i] > maxAngle)
+      {
+        maxAngle = farAngles[i];
+        mostDifferentIndex = i;
+      }
+    }
+    std::cout << "max angle " << maxAngle << ", furthest " << mostDifferentIndex
+<< ".\n";
+
+    arma::vec tmp = far.col(0);
+    far.col(0) = far.col(mostDifferentIndex);
+    far.col(mostDifferentIndex) = tmp;
 
     // Create left and right children.
     node->Left() = new KernelCosineTree(std::move(near), kernel);
