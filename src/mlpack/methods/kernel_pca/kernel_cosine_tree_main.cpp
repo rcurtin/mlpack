@@ -62,7 +62,7 @@ int main(int argc, char** argv)
     Timer::Stop("kernel_cosine_tree");
 
     // Calculate the relative error.
-    const double kctError = kt.CalculateError();
+    const double kctError = kt.CalculateError(dataset);
 
     Log::Info << "Relative error for kernel cosine tree: " << kctError << ".\n";
 

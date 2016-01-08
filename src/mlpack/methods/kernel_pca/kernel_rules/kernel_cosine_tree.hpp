@@ -44,7 +44,7 @@ class KernelCosineTree
   KernelCosineTree* Right() const { return right; }
   KernelCosineTree*& Right() { return right; }
 
-  double CalculateError();
+  double CalculateError(const arma::mat& dataset);
 
   void GetBasis(arma::mat& basis);
 

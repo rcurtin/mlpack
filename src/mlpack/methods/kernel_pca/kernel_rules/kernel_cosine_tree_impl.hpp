@@ -32,7 +32,7 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
   pointNorm = norms[0];
 
   // Let's find the per-point error.
-  double relativeError = CalculateError();
+  double relativeError = CalculateError(data);
 
   // Build a priority queue of nodes to split.
   std::priority_queue<std::pair<size_t, KernelCosineTree*>> queue;
@@ -107,7 +107,7 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
     node->Right() = new KernelCosineTree(std::move(far), kernel);
 
     // Now update the error calculation.
-    relativeError = CalculateError();
+    relativeError = CalculateError(data);
 
     queue.push(std::make_pair(node->Left()->Dataset().n_cols, node->Left()));
     queue.push(std::make_pair(node->Right()->Dataset().n_cols, node->Right()));
@@ -133,14 +133,14 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
   pointNorm = norms[0];
 
   // Build a priority queue of nodes to split.
-  std::priority_queue<std::pair<size_t, KernelCosineTree*>> queue;
-  queue.push(std::make_pair(data.n_cols, this));
+  std::priority_queue<std::pair<double, KernelCosineTree*>> queue;
+  queue.push(std::make_pair(0.0, this));
 
   for (size_t i = 1; i < rank; ++i)
   {
     // Split the points in this node into near and far, until we are below our
     // desired relative error bound.
-    std::pair<size_t, KernelCosineTree*> frame = queue.top();
+    std::pair<double, KernelCosineTree*> frame = queue.top();
     queue.pop();
     KernelCosineTree* node = frame.second;
 
@@ -203,8 +203,16 @@ KernelCosineTree<KernelType>::KernelCosineTree(const arma::mat& data,
     node->Left() = new KernelCosineTree(std::move(near), kernel);
     node->Right() = new KernelCosineTree(std::move(far), kernel);
 
-    queue.push(std::make_pair(node->Left()->Dataset().n_cols, node->Left()));
-    queue.push(std::make_pair(node->Right()->Dataset().n_cols, node->Right()));
+    // Calculate errors in children.
+    const double leftError = CalculateError(node->Left()->Dataset()) *
+        ((double) node->Left()->Dataset().n_cols / (double) dataset.n_cols);
+    const double rightError = CalculateError(node->Right()->Dataset()) *
+        ((double) node->Right()->Dataset().n_cols / (double) dataset.n_cols);
+    std::cout << "our error was " << frame.first << "; new left error " <<
+leftError << ", right error " << rightError << ".\n";
+
+    queue.push(std::make_pair(leftError, node->Left()));
+    queue.push(std::make_pair(rightError, node->Right()));
   }
 }
 
@@ -256,16 +264,16 @@ void KernelCosineTree<KernelType>::Approximate(const VecType& p,
 }
 
 template<typename KernelType>
-double KernelCosineTree<KernelType>::CalculateError()
+double KernelCosineTree<KernelType>::CalculateError(const arma::mat& data)
 {
   // Calculate the exact value of || K - K' ||_F if we are approximating points
   // as the point held in each tree node.
 
   // First, calculate the full kernel matrix.
-  arma::mat k(dataset.n_cols, dataset.n_cols);
-  for (size_t i = 0; i < dataset.n_cols; ++i)
-    for (size_t j = 0; j < dataset.n_cols; ++j)
-      k(j, i) = kernel.Evaluate(dataset.col(i), dataset.col(j));
+  arma::mat k(data.n_cols, data.n_cols);
+  for (size_t i = 0; i < data.n_cols; ++i)
+    for (size_t j = 0; j < data.n_cols; ++j)
+      k(j, i) = kernel.Evaluate(data.col(i), data.col(j));
 
   // Next, get the points associated with the leaves of the tree.
   arma::mat points;
@@ -290,10 +298,10 @@ double KernelCosineTree<KernelType>::CalculateError()
     for (size_t j = 0; j < points.n_cols; ++j)
       miniKernel(j, i) = kernel.Evaluate(points.col(i), points.col(j));
 
-  arma::mat semiKernel(points.n_cols, dataset.n_cols);
-  for (size_t i = 0; i < dataset.n_cols; ++i)
+  arma::mat semiKernel(points.n_cols, data.n_cols);
+  for (size_t i = 0; i < data.n_cols; ++i)
     for (size_t j = 0; j < points.n_cols; ++j)
-      semiKernel(j, i) = kernel.Evaluate(dataset.col(i), points.col(j));
+      semiKernel(j, i) = kernel.Evaluate(data.col(i), points.col(j));
 
   arma::mat U, V;
   arma::vec s;
