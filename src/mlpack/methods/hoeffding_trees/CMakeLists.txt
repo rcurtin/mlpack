@@ -10,6 +10,8 @@ set(SOURCES
   hoeffding_categorical_split_impl.hpp
   hoeffding_numeric_split.hpp
   hoeffding_numeric_split_impl.hpp
+  hoeffding_forest.hpp
+  hoeffding_forest_impl.hpp
   hoeffding_tree.hpp
   hoeffding_tree_impl.hpp
   information_gain.hpp
