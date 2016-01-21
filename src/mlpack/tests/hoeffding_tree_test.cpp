@@ -10,6 +10,7 @@
 #include <mlpack/methods/hoeffding_trees/hoeffding_tree.hpp>
 #include <mlpack/methods/hoeffding_trees/hoeffding_categorical_split.hpp>
 #include <mlpack/methods/hoeffding_trees/binary_numeric_split.hpp>
+#include <mlpack/methods/hoeffding_trees/hoeffding_forest.hpp>
 
 #include <boost/test/unit_test.hpp>
 #include "old_boost_test_definitions.hpp"
@@ -997,6 +998,91 @@ BOOST_AUTO_TEST_CASE(BatchTrainingTest)
   // The batch tree must be a bit better than the stream tree.  But not too
   // much, since the accuracy is already going to be very high.
   BOOST_REQUIRE_GT(batchCorrect, streamCorrect);
+}
+
+// Make sure a forest of 5 trees outperforms a single Hoeffding tree on the VC2
+// dataset.
+BOOST_AUTO_TEST_CASE(VC2HoeffdingForestTest)
+{
+  // Load the dataset.
+  arma::mat dataset;
+  data::Load("vc2.csv", dataset, true);
+  arma::Mat<size_t> labelsIn;
+  arma::Row<size_t> labels;
+  data::Load("vc2_labels.txt", labelsIn, true);
+  labels = labelsIn.row(0);
+  DatasetInfo info(dataset.n_rows + 10); // All features are numeric.
+
+  // Add a few features.  Some noise, some not.
+  const size_t oldRows = dataset.n_rows;
+  dataset.insert_rows(dataset.n_rows - 1, 10);
+  dataset.row(oldRows) = arma::randu<arma::rowvec>(dataset.n_cols);
+  dataset.row(oldRows + 1) = dataset.row(0) +
+      arma::randn<arma::rowvec>(dataset.n_cols);
+  dataset.row(oldRows + 2) = dataset.row(1) + 10.0 *
+      arma::randn<arma::rowvec>(dataset.n_cols);
+  dataset.row(oldRows + 3) = dataset.row(2) + dataset.row(3) - dataset.row(1);
+  dataset.row(oldRows + 4) = dataset.row(3) % dataset.row(2);
+  dataset.row(oldRows + 5) = dataset.row(3) -
+      15.0 * arma::randu<arma::rowvec>(dataset.n_cols) +
+      30.0 * arma::randn<arma::rowvec>(dataset.n_cols);
+  dataset.row(oldRows + 6) = dataset.row(0) % dataset.row(1);
+  dataset.row(oldRows + 7) = dataset.row(0) % dataset.row(1) % dataset.row(2);
+  dataset.row(oldRows + 8) = arma::ones<arma::rowvec>(dataset.n_cols);
+  dataset.row(oldRows + 9) = arma::zeros<arma::rowvec>(dataset.n_cols);
+
+  HoeffdingTree<> tree(dataset, info, labels, 3, false, 0.9);
+  // Take an additional 3 passes.
+  for (size_t p = 0; p < 3; ++p)
+    tree.Train(dataset, labels, false);
+
+  HoeffdingForest<HoeffdingTree<>> forest(5, 3, info);
+  for (size_t p = 0; p < 4; ++p)
+    forest.Train(dataset, labels, false);
+
+  // Load test set.
+  arma::mat testSet;
+  data::Load("vc2_test.csv", testSet, true);
+  arma::Mat<size_t> testLabelsIn;
+  arma::Row<size_t> testLabels;
+  data::Load("vc2_test_labels.txt", testLabelsIn, true);
+  testLabels = testLabelsIn.row(0);
+
+  testSet.insert_rows(testSet.n_rows - 1, 10);
+  testSet.row(oldRows) = arma::randu<arma::rowvec>(testSet.n_cols);
+  testSet.row(oldRows + 1) = testSet.row(0) +
+      arma::randn<arma::rowvec>(testSet.n_cols);
+  testSet.row(oldRows + 2) = testSet.row(1) + 10.0 *
+      arma::randn<arma::rowvec>(testSet.n_cols);
+  testSet.row(oldRows + 3) = testSet.row(2) + testSet.row(3) - testSet.row(1);
+  testSet.row(oldRows + 4) = testSet.row(3) % testSet.row(2);
+  testSet.row(oldRows + 5) = testSet.row(3) -
+      15.0 * arma::randu<arma::rowvec>(testSet.n_cols) +
+      30.0 * arma::randn<arma::rowvec>(testSet.n_cols);
+  testSet.row(oldRows + 6) = testSet.row(0) % testSet.row(1);
+  testSet.row(oldRows + 7) = testSet.row(0) % testSet.row(1) % testSet.row(2);
+  testSet.row(oldRows + 8) = arma::ones<arma::rowvec>(testSet.n_cols);
+  testSet.row(oldRows + 9) = arma::zeros<arma::rowvec>(testSet.n_cols);
+
+  // Get training set error.  The forest should be able to fit better to the
+  // training data.  (We can't easily say anything about the test data.)
+  arma::Row<size_t> treePredictions, forestPredictions;
+  treePredictions.set_size(dataset.n_cols);
+  forestPredictions.set_size(dataset.n_cols);
+
+  size_t treeTrainingErrors = 0;
+  size_t forestTrainingErrors = 0;
+  for (size_t i = 0; i < dataset.n_cols; ++i)
+  {
+    treePredictions[i] = tree.Classify(dataset.col(i));
+    forestPredictions[i] = forest.Classify(dataset.col(i));
+    if (treePredictions[i] != labels[i])
+      ++treeTrainingErrors;
+    if (forestPredictions[i] != labels[i])
+      ++forestTrainingErrors;
+  }
+
+  BOOST_REQUIRE_GE(treeTrainingErrors, forestTrainingErrors);
 }
 
 BOOST_AUTO_TEST_SUITE_END();
