@@ -92,9 +92,13 @@ class BinaryNumericSplit
    * children and an initialized SplitInfo object.
    *
    * @param childMajorities Majority classes of the children after the split.
+   * @param childProbabilities Matrix to store probabilities of each class in
+   *      each child in after the split.
    * @param splitInfo Split information.
    */
-  void Split(arma::Col<size_t>& childMajorities, SplitInfo& splitInfo);
+  void Split(arma::Col<size_t>& childMajorities,
+             arma::mat& childProbabilities,
+             SplitInfo& splitInfo);
 
   //! The majority class of the points seen so far.
   size_t MajorityClass() const;

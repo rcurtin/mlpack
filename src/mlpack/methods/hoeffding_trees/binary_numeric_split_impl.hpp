@@ -103,6 +103,7 @@ void BinaryNumericSplit<FitnessFunction, ObservationType>::
 template<typename FitnessFunction, typename ObservationType>
 void BinaryNumericSplit<FitnessFunction, ObservationType>::Split(
     arma::Col<size_t>& childMajorities,
+    arma::mat& childProbabilities,
     SplitInfo& splitInfo)
 {
   if (!isAccurate)
@@ -142,6 +143,17 @@ void BinaryNumericSplit<FitnessFunction, ObservationType>::Split(
   childMajorities[0] = size_t(maxIndex);
   counts.unsafe_col(1).max(maxIndex);
   childMajorities[1] = size_t(maxIndex);
+
+  // Calculate the probabilities.
+  childProbabilities = arma::conv_to<arma::mat>::from(counts);
+  for (size_t i = 0; i < childProbabilities.n_cols; ++i)
+  {
+    const double colsum = arma::accu(childProbabilities.col(i));
+    if (std::abs(colsum) > 0.0)
+      childProbabilities.col(i) /= arma::accu(childProbabilities.col(i));
+    else
+      childProbabilities.col(i).fill(1.0 / ((double) counts.n_rows));
+  }
 
   // Create the according SplitInfo object.
   splitInfo = SplitInfo(bestSplit);

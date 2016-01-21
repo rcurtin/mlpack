@@ -92,9 +92,12 @@ class HoeffdingCategoricalSplit
    * and initialize the SplitInfo object.
    *
    * @param childMajorities Majorities of child nodes to be created.
+   * @param childProbabilities Probabilities of each class for each child.
    * @param splitInfo Information for splitting.
    */
-  void Split(arma::Col<size_t>& childMajorities, SplitInfo& splitInfo);
+  void Split(arma::Col<size_t>& childMajorities,
+             arma::mat& childProbabilities,
+             SplitInfo& splitInfo);
 
   //! Get the majority class seen so far.
   size_t MajorityClass() const;

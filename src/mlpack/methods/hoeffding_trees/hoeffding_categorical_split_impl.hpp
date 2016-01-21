@@ -54,15 +54,24 @@ void HoeffdingCategoricalSplit<FitnessFunction>::EvaluateFitnessFunction(
 template<typename FitnessFunction>
 void HoeffdingCategoricalSplit<FitnessFunction>::Split(
     arma::Col<size_t>& childMajorities,
+    arma::mat& childProbabilities,
     SplitInfo& splitInfo)
 {
   // We'll make one child for each category.
   childMajorities.set_size(sufficientStatistics.n_cols);
+  childProbabilities = arma::conv_to<arma::mat>::from(sufficientStatistics);
   for (size_t i = 0; i < sufficientStatistics.n_cols; ++i)
   {
     arma::uword maxIndex = 0;
     sufficientStatistics.unsafe_col(i).max(maxIndex);
     childMajorities[i] = size_t(maxIndex);
+
+    const double colsum = arma::accu(childProbabilities.col(i));
+    if (std::abs(colsum) > 0.0)
+      childProbabilities.col(i) /= arma::accu(childProbabilities.col(i));
+    else
+      childProbabilities.col(i).fill(1.0 /
+          ((double) childProbabilities.n_rows));
   }
 
   // Create the according SplitInfo object.
