@@ -16,7 +16,6 @@ set(SOURCES
   hoeffding_tree_impl.hpp
   information_gain.hpp
   numeric_split_info.hpp
-  typedef.hpp
 )
 
 # Add directory name to sources.
