@@ -18,7 +18,8 @@ class HoeffdingForest
 {
  public:
   HoeffdingForest(const size_t forestSize,
-                  DatasetInfo& info);
+                  const size_t numClasses,
+                  data::DatasetInfo& info);
 
   template<typename VecType>
   void Train(const VecType& point, const size_t label);
@@ -52,10 +53,15 @@ class HoeffdingForest
   std::vector<arma::Col<size_t>> dimensions;
   arma::Col<size_t> dimensionCounts;
 
-  DatasetInfo& info;
+  data::DatasetInfo& info;
+
+  size_t numClasses;
 };
 
 } // namespace tree
 } // namespace mlpack
+
+// Include implementation.
+#include "hoeffding_forest_impl.hpp"
 
 #endif

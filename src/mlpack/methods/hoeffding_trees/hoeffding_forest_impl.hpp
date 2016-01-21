@@ -13,7 +13,7 @@ namespace tree {
 template<typename HoeffdingTreeType>
 HoeffdingForest<HoeffdingTreeType>::HoeffdingForest(const size_t forestSize,
                                                     const size_t numClasses,
-                                                    DatasetInfo& info) :
+                                                    data::DatasetInfo& info) :
     info(info),
     numClasses(numClasses)
 {
@@ -21,16 +21,16 @@ HoeffdingForest<HoeffdingTreeType>::HoeffdingForest(const size_t forestSize,
   for (size_t i = 0; i < forestSize; ++i)
   {
     // Generate dimensions for the tree.  We can't select zero dimensions.
-    arma::Col<size_t> selectedDimensions =
-        arma::randu<arma::Col<size_t>>(info.Dimensionality());
+    arma::Col<size_t> selectedDimensions;
+    selectedDimensions.zeros(info.Dimensionality());
     while ((dimensionCounts[i] = arma::sum(selectedDimensions)) == 0)
     {
-      selectedDimensions =
-          arma::randu<arma::Col<size_t>>(info.Dimensionality());
+      for (size_t d = 0; d < info.Dimensionality(); ++d)
+        selectedDimensions[d] = (size_t) math::RandInt(2);
     }
 
     // Now, assemble a new DatasetInfo to pass to the tree that we'll build.
-    DatasetInfo newInfo(dimensionCounts[i]);
+    data::DatasetInfo newInfo(dimensionCounts[i]);
     dimensions.push_back(arma::Col<size_t>(dimensionCounts[i]));
     size_t currentDim = 0;
 
@@ -38,7 +38,7 @@ HoeffdingForest<HoeffdingTreeType>::HoeffdingForest(const size_t forestSize,
     {
       if (selectedDimensions[j] == 1)
       {
-        dimensions[i][currentDim] = j;
+        dimensions[i][currentDim++] = j;
 
         // Extract information about this dimension; if it's categorical, we
         // have to copy the mappings.  If it's numeric, this entire loop gets
@@ -96,8 +96,12 @@ size_t HoeffdingForest<HoeffdingTreeType>::Classify(const VecType& point) const
   // Add the probability contribution of each point.
   for (size_t i = 0; i < trees.size(); ++i)
   {
+    arma::vec newPoint(dimensionCounts[i]);
+    for (size_t j = 0; j < dimensionCounts[i]; ++j)
+      newPoint(j) = point(dimensions[i][j]);
+
     arma::rowvec treeProbs;
-    trees[i].Probabilities(point, treeProbs);
+    trees[i].Probabilities(newPoint, treeProbs);
 
     probabilities += treeProbs;
   }
@@ -122,8 +126,12 @@ void HoeffdingForest<HoeffdingTreeType>::Classify(const VecType& point,
   // Add the probability contribution of each point.
   for (size_t i = 0; i < trees.size(); ++i)
   {
+    arma::vec newPoint(dimensionCounts[i]);
+    for (size_t j = 0; j < dimensionCounts[i]; ++j)
+      newPoint(j) = point(dimensions[i][j]);
+
     arma::rowvec treeProbs;
-    trees[i].Probabilities(point, treeProbs);
+    trees[i].Probabilities(newPoint, treeProbs);
 
     probabilities += treeProbs;
   }
@@ -138,7 +146,7 @@ void HoeffdingForest<HoeffdingTreeType>::Classify(const VecType& point,
 }
 
 template<typename HoeffdingTreeType>
-template<typename MatType>a
+template<typename MatType>
 void HoeffdingForest<HoeffdingTreeType>::Classify(
     const MatType& data,
     arma::Row<size_t>& predictions) const
