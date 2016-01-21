@@ -45,6 +45,7 @@ HoeffdingTree<
     ownsInfo(false),
     successProbability(successProbability),
     splitDimension(size_t(-1)),
+    probabilities(arma::ones<arma::rowvec>(numClasses) / (double) numClasses),
     categoricalSplit(0),
     numericSplit()
 {
@@ -101,6 +102,7 @@ HoeffdingTree<
     ownsInfo(false),
     successProbability(successProbability),
     splitDimension(size_t(-1)),
+    probabilities(arma::ones<arma::rowvec>(numClasses) / (double) numClasses),
     categoricalSplit(0),
     numericSplit()
 {
@@ -170,7 +172,7 @@ HoeffdingTree<FitnessFunction, NumericSplitType, CategoricalSplitType>::
 {
   // Copy each of the children.
   for (size_t i = 0; i < other.children.size(); ++i)
-    children.push_back(new HoeffdingTree(other.children[i]));
+    children.push_back(new HoeffdingTree(*other.children[i]));
 }
 
 template<typename FitnessFunction,
@@ -560,17 +562,18 @@ void HoeffdingTree<
 {
   // Create the children.
   arma::Col<size_t> childMajorities;
+  arma::mat childProbabilities;
   if (dimensionMappings->at(splitDimension).first ==
       data::Datatype::categorical)
   {
     categoricalSplits[dimensionMappings->at(splitDimension).second].Split(
-        childMajorities, categoricalSplit);
+        childMajorities, childProbabilities, categoricalSplit);
   }
   else if (dimensionMappings->at(splitDimension).first ==
            data::Datatype::numeric)
   {
     numericSplits[dimensionMappings->at(splitDimension).second].Split(
-        childMajorities, numericSplit);
+        childMajorities, childProbabilities, numericSplit);
   }
 
   // We already know what the splitDimension will be.
@@ -606,6 +609,7 @@ void HoeffdingTree<
     }
 
     children[i]->MajorityClass() = childMajorities[i];
+    children[i]->probabilities = childProbabilities.col(i).t();
   }
 
   // Eliminate now-unnecessary split information.
