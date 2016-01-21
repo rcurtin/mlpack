@@ -324,9 +324,13 @@ BOOST_AUTO_TEST_CASE(HoeffdingCategoricalSplitSplitTest)
 
   // Create the children.
   arma::Col<size_t> childMajorities;
-  split.Split(childMajorities, splitInfo);
+  arma::mat childProbabilities;
+  split.Split(childMajorities, childProbabilities, splitInfo);
 
   BOOST_REQUIRE_EQUAL(childMajorities.n_elem, 3);
+  BOOST_REQUIRE_EQUAL(childProbabilities.n_cols, 3);
+  BOOST_REQUIRE_EQUAL(childProbabilities.n_rows, 3);
+  BOOST_REQUIRE_CLOSE(arma::accu(childProbabilities), 3.0, 1e-5);
   BOOST_REQUIRE_EQUAL(splitInfo.CalculateDirection(0), 0);
   BOOST_REQUIRE_EQUAL(splitInfo.CalculateDirection(1), 1);
   BOOST_REQUIRE_EQUAL(splitInfo.CalculateDirection(2), 2);
@@ -632,8 +636,12 @@ BOOST_AUTO_TEST_CASE(HoeffdingNumericSplitBimodalTest)
   // children is created, and that the bins end up in the right place.
   NumericSplitInfo<> info;
   arma::Col<size_t> childMajorities;
-  split.Split(childMajorities, info);
+  arma::mat childProbabilities;
+  split.Split(childMajorities, childProbabilities, info);
   BOOST_REQUIRE_EQUAL(childMajorities.n_elem, 2);
+  BOOST_REQUIRE_EQUAL(childProbabilities.n_cols, 2);
+  BOOST_REQUIRE_EQUAL(childProbabilities.n_rows, 2);
+  BOOST_REQUIRE_CLOSE(arma::accu(childProbabilities), 2.0, 1e-5);
 
   // Now check the split info.
   for (size_t i = 0; i < 10; ++i)
@@ -669,11 +677,15 @@ BOOST_AUTO_TEST_CASE(BinaryNumericSplitSimpleSplitTest)
 
   // Now, when we ask it to split, ensure that the split value is reasonable.
   arma::Col<size_t> childMajorities;
+  arma::mat childProbabilities;
   BinaryNumericSplitInfo<> splitInfo;
-  split.Split(childMajorities, splitInfo);
+  split.Split(childMajorities, childProbabilities, splitInfo);
 
   BOOST_REQUIRE_EQUAL(childMajorities[0], 0);
   BOOST_REQUIRE_EQUAL(childMajorities[1], 1);
+  BOOST_REQUIRE_EQUAL(childProbabilities.n_cols, 2);
+  BOOST_REQUIRE_EQUAL(childProbabilities.n_rows, 2);
+  BOOST_REQUIRE_CLOSE(arma::accu(childProbabilities), 2.0, 1e-5);
   BOOST_REQUIRE_EQUAL(splitInfo.CalculateDirection(0.5), 0);
   BOOST_REQUIRE_EQUAL(splitInfo.CalculateDirection(1.5), 1);
   BOOST_REQUIRE_EQUAL(splitInfo.CalculateDirection(0.0), 0);
@@ -709,12 +721,16 @@ BOOST_AUTO_TEST_CASE(BinaryNumericSplitSimpleFourClassSplitTest)
 
   // Now, when we ask it to split, ensure that the split value is reasonable.
   arma::Col<size_t> childMajorities;
+  arma::mat childProbabilities;
   BinaryNumericSplitInfo<> splitInfo;
-  split.Split(childMajorities, splitInfo);
+  split.Split(childMajorities, childProbabilities, splitInfo);
 
   // We don't really care where it splits -- it can split anywhere.  But it has
   // to split in only two directions.
   BOOST_REQUIRE_EQUAL(childMajorities.n_elem, 2);
+  BOOST_REQUIRE_EQUAL(childProbabilities.n_cols, 2);
+  BOOST_REQUIRE_EQUAL(childProbabilities.n_rows, 4);
+  BOOST_REQUIRE_CLOSE(arma::accu(childProbabilities), 2.0, 1e-5);
 }
 
 /**
