@@ -56,7 +56,8 @@ class DatasetInfo
    */
   size_t MapString(const std::string& string, const size_t dimension);
 
-  const std::string& UnmapString(const size_t value, const size_t dimension);
+  const std::string& UnmapString(const size_t value, const size_t dimension)
+      const;
 
   Datatype Type(const size_t dimension) const;
   Datatype& Type(const size_t dimension);

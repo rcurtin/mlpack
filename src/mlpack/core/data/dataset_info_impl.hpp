@@ -48,10 +48,10 @@ inline size_t DatasetInfo::MapString(const std::string& string,
 // Return the string corresponding to a value in a given dimension.
 inline const std::string& DatasetInfo::UnmapString(
     const size_t value,
-    const size_t dimension)
+    const size_t dimension) const
 {
   // Throw an exception if the value doesn't exist.
-  if (maps[dimension].first.right.count(value) == 0)
+  if (maps.at(dimension).first.right.count(value) == 0)
   {
     std::ostringstream oss;
     oss << "DatasetInfo::UnmapString(): value '" << value << "' unknown for "
@@ -59,7 +59,7 @@ inline const std::string& DatasetInfo::UnmapString(
     throw std::invalid_argument(oss.str());
   }
 
-  return maps[dimension].first.right.at(value);
+  return maps.at(dimension).first.right.at(value);
 }
 
 // Get the type of a particular dimension.
