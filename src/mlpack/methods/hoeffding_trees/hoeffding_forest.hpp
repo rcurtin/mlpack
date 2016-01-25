@@ -21,6 +21,8 @@ class HoeffdingForest
                   const size_t numClasses,
                   data::DatasetInfo& info);
 
+  ~HoeffdingForest();
+
   template<typename VecType>
   void Train(const VecType& point, const size_t label);
 
@@ -47,13 +49,17 @@ class HoeffdingForest
 
   size_t NumTrees() const { return trees.size(); }
 
+  template<typename Archive>
+  void Serialize(Archive& ar, const unsigned int /* version */);
+
  private:
   std::vector<HoeffdingTreeType> trees;
 
   std::vector<arma::Col<size_t>> dimensions;
   arma::Col<size_t> dimensionCounts;
 
-  data::DatasetInfo& info;
+  const data::DatasetInfo* info;
+  bool ownsInfo;
 
   size_t numClasses;
 };

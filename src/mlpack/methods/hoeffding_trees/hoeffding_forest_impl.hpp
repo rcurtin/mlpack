@@ -14,7 +14,8 @@ template<typename HoeffdingTreeType>
 HoeffdingForest<HoeffdingTreeType>::HoeffdingForest(const size_t forestSize,
                                                     const size_t numClasses,
                                                     data::DatasetInfo& info) :
-    info(info),
+    info(&info),
+    ownsInfo(false),
     numClasses(numClasses)
 {
   dimensionCounts.zeros(forestSize);
@@ -22,10 +23,10 @@ HoeffdingForest<HoeffdingTreeType>::HoeffdingForest(const size_t forestSize,
   {
     // Generate dimensions for the tree.  We can't select zero dimensions.
     arma::Col<size_t> selectedDimensions;
-    selectedDimensions.zeros(info.Dimensionality());
+    selectedDimensions.zeros(this->info->Dimensionality());
     while ((dimensionCounts[i] = arma::sum(selectedDimensions)) == 0)
     {
-      for (size_t d = 0; d < info.Dimensionality(); ++d)
+      for (size_t d = 0; d < this->info->Dimensionality(); ++d)
         selectedDimensions[d] = (size_t) math::RandInt(2);
     }
 
@@ -34,7 +35,7 @@ HoeffdingForest<HoeffdingTreeType>::HoeffdingForest(const size_t forestSize,
     dimensions.push_back(arma::Col<size_t>(dimensionCounts[i]));
     size_t currentDim = 0;
 
-    for (size_t j = 0; j < info.Dimensionality(); ++j)
+    for (size_t j = 0; j < this->info->Dimensionality(); ++j)
     {
       if (selectedDimensions[j] == 1)
       {
@@ -43,14 +44,21 @@ HoeffdingForest<HoeffdingTreeType>::HoeffdingForest(const size_t forestSize,
         // Extract information about this dimension; if it's categorical, we
         // have to copy the mappings.  If it's numeric, this entire loop gets
         // skipped.
-        for (size_t k = 0; k < info.NumMappings(j); ++k)
-          newInfo.MapString(info.UnmapString(k, j), currentDim);
+        for (size_t k = 0; k < this->info->NumMappings(j); ++k)
+          newInfo.MapString(this->info->UnmapString(k, j), currentDim);
       }
     }
 
     // Now initialize the tree.
     trees.push_back(HoeffdingTreeType(newInfo, numClasses));
   }
+}
+
+template<typename HoeffdingTreeType>
+HoeffdingForest<HoeffdingTreeType>::~HoeffdingForest()
+{
+  if (ownsInfo)
+    delete info;
 }
 
 template<typename HoeffdingTreeType>
@@ -173,8 +181,49 @@ void HoeffdingForest<HoeffdingTreeType>::Classify(
     Classify(data.col(i), predictions[i], probabilities[i]);
 }
 
+template<typename HoeffdingTreeType>
+template<typename Archive>
+void HoeffdingForest<HoeffdingTreeType>::Serialize(
+    Archive& ar,
+    const unsigned int /* version */)
+{
+  using data::CreateNVP;
 
+  // Load or save the number of trees in the forest.
+  size_t numTrees;
+  if (Archive::is_saving::value)
+    numTrees = trees.size();
+  ar & CreateNVP(numTrees, "numTrees");
 
+  // Load or save the trees.
+  if (Archive::is_loading::value)
+    trees.resize(numTrees, HoeffdingTreeType(data::DatasetInfo(1), 1));
+  for (size_t i = 0; i < trees.size(); ++i)
+  {
+    std::ostringstream oss;
+    oss << "tree" << i;
+    ar & CreateNVP(trees[i], oss.str());
+  }
+
+  // Load the dimensions used for each tree.  We don't have to loop here because
+  // the std::vector support works correctly for classes that have serialize()
+  // not Serialize() (which Armadillo classes do).
+  ar & CreateNVP(dimensions, "dimensions");
+  ar & CreateNVP(dimensionCounts, "dimensionCounts");
+
+  // Special handling for const object.
+  data::DatasetInfo* d = NULL;
+  if (Archive::is_saving::value)
+    d = const_cast<data::DatasetInfo*>(info);
+  ar & CreateNVP(d, "datasetInfo");
+  if (Archive::is_loading::value)
+  {
+    info = d;
+    ownsInfo = true;
+  }
+
+  ar & CreateNVP(numClasses, "numClasses");
+}
 
 } // namespace tree
 } // namespace mlpack
