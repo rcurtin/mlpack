@@ -197,7 +197,10 @@ void HoeffdingForest<HoeffdingTreeType>::Serialize(
 
   // Load or save the trees.
   if (Archive::is_loading::value)
+  {
+    trees.clear();
     trees.resize(numTrees, HoeffdingTreeType(data::DatasetInfo(1), 1));
+  }
   for (size_t i = 0; i < trees.size(); ++i)
   {
     std::ostringstream oss;
@@ -208,6 +211,8 @@ void HoeffdingForest<HoeffdingTreeType>::Serialize(
   // Load the dimensions used for each tree.  We don't have to loop here because
   // the std::vector support works correctly for classes that have serialize()
   // not Serialize() (which Armadillo classes do).
+  if (Archive::is_loading::value)
+    dimensions.clear();
   ar & CreateNVP(dimensions, "dimensions");
   ar & CreateNVP(dimensionCounts, "dimensionCounts");
 
