@@ -14,6 +14,7 @@
 
 #include <boost/test/unit_test.hpp>
 #include "old_boost_test_definitions.hpp"
+#include "serialization.hpp"
 
 #include <stack>
 
@@ -1083,6 +1084,97 @@ BOOST_AUTO_TEST_CASE(VC2HoeffdingForestTest)
   }
 
   BOOST_REQUIRE_GE(treeTrainingErrors, forestTrainingErrors);
+}
+
+/**
+ * Test serialization of the Hoeffding forest.  This is very similar to the
+ * Hoeffding tree serialization test.
+ */
+BOOST_AUTO_TEST_CASE(HoeffdingForestSerializationTest)
+{
+  using namespace mlpack::tree;
+
+  // Load the dataset.
+  arma::mat dataset;
+  data::Load("vc2.csv", dataset, true);
+  arma::Mat<size_t> labelsIn;
+  arma::Row<size_t> labels;
+  data::Load("vc2_labels.txt", labelsIn, true);
+  labels = labelsIn.row(0);
+  DatasetInfo info(dataset.n_rows + 10); // All features are numeric.
+
+  // Add a few features.  Some noise, some not.
+  const size_t oldRows = dataset.n_rows;
+  dataset.insert_rows(dataset.n_rows - 1, 10);
+  dataset.row(oldRows) = arma::randu<arma::rowvec>(dataset.n_cols);
+  dataset.row(oldRows + 1) = dataset.row(0) +
+      arma::randn<arma::rowvec>(dataset.n_cols);
+  dataset.row(oldRows + 2) = dataset.row(1) + 10.0 *
+      arma::randn<arma::rowvec>(dataset.n_cols);
+  dataset.row(oldRows + 3) = dataset.row(2) + dataset.row(3) - dataset.row(1);
+  dataset.row(oldRows + 4) = dataset.row(3) % dataset.row(2);
+  dataset.row(oldRows + 5) = dataset.row(3) -
+      15.0 * arma::randu<arma::rowvec>(dataset.n_cols) +
+      30.0 * arma::randn<arma::rowvec>(dataset.n_cols);
+  dataset.row(oldRows + 6) = dataset.row(0) % dataset.row(1);
+  dataset.row(oldRows + 7) = dataset.row(0) % dataset.row(1) % dataset.row(2);
+  dataset.row(oldRows + 8) = arma::ones<arma::rowvec>(dataset.n_cols);
+  dataset.row(oldRows + 9) = arma::zeros<arma::rowvec>(dataset.n_cols);
+
+  // Build the tree, then serialize it.
+  HoeffdingForest<HoeffdingTree<>> forest(10, 3, info);
+  forest.Train(dataset, labels, false); // Non-batch training.
+
+  data::DatasetInfo xmlInfo(1);
+  HoeffdingForest<HoeffdingTree<>> xmlForest(3, 4, xmlInfo);
+  data::DatasetInfo binaryInfo(5);
+  HoeffdingForest<HoeffdingTree<>> binaryForest(12, 2, binaryInfo);
+  data::DatasetInfo textInfo(7);
+  HoeffdingForest<HoeffdingTree<>> textForest(5, 5, textInfo);
+
+  SerializeObjectAll(forest, xmlForest, binaryForest, textForest);
+
+  // Check that each forest has the same number of trees.
+  BOOST_REQUIRE_EQUAL(forest.NumTrees(), xmlForest.NumTrees());
+  BOOST_REQUIRE_EQUAL(forest.NumTrees(), binaryForest.NumTrees());
+  BOOST_REQUIRE_EQUAL(forest.NumTrees(), textForest.NumTrees());
+
+  // Now check that the results from each tree are the same.
+  arma::mat testSet;
+  data::Load("vc2_test.csv", testSet, true);
+
+  testSet.insert_rows(testSet.n_rows - 1, 10);
+  testSet.row(oldRows) = arma::randu<arma::rowvec>(testSet.n_cols);
+  testSet.row(oldRows + 1) = testSet.row(0) +
+      arma::randn<arma::rowvec>(testSet.n_cols);
+  testSet.row(oldRows + 2) = testSet.row(1) + 10.0 *
+      arma::randn<arma::rowvec>(testSet.n_cols);
+  testSet.row(oldRows + 3) = testSet.row(2) + testSet.row(3) - testSet.row(1);
+  testSet.row(oldRows + 4) = testSet.row(3) % testSet.row(2);
+  testSet.row(oldRows + 5) = testSet.row(3) -
+      15.0 * arma::randu<arma::rowvec>(testSet.n_cols) +
+      30.0 * arma::randn<arma::rowvec>(testSet.n_cols);
+  testSet.row(oldRows + 6) = testSet.row(0) % testSet.row(1);
+  testSet.row(oldRows + 7) = testSet.row(0) % testSet.row(1) % testSet.row(2);
+  testSet.row(oldRows + 8) = arma::ones<arma::rowvec>(testSet.n_cols);
+  testSet.row(oldRows + 9) = arma::zeros<arma::rowvec>(testSet.n_cols);
+
+  arma::Row<size_t> pred, xmlPred, binaryPred, textPred;
+
+  forest.Classify(testSet, pred);
+  xmlForest.Classify(testSet, xmlPred);
+  binaryForest.Classify(testSet, binaryPred);
+  textForest.Classify(testSet, textPred);
+
+  BOOST_REQUIRE_EQUAL(pred.n_elem, xmlPred.n_elem);
+  BOOST_REQUIRE_EQUAL(pred.n_elem, binaryPred.n_elem);
+  BOOST_REQUIRE_EQUAL(pred.n_elem, textPred.n_elem);
+  for (size_t i = 0; i < pred.n_elem; ++i)
+  {
+    BOOST_REQUIRE_EQUAL(pred[i], xmlPred[i]);
+    BOOST_REQUIRE_EQUAL(pred[i], binaryPred[i]);
+    BOOST_REQUIRE_EQUAL(pred[i], textPred[i]);
+  }
 }
 
 BOOST_AUTO_TEST_SUITE_END();
