@@ -17,6 +17,7 @@
 #include "serialization.hpp"
 
 #include <stack>
+#include <queue>
 
 using namespace std;
 using namespace arma;
@@ -1323,6 +1324,63 @@ BOOST_AUTO_TEST_CASE(VC2HoeffdingForestTest)
   BOOST_REQUIRE_GE(treeTrainingErrors, forestTrainingErrors);
 }
 
+BOOST_AUTO_TEST_CASE(MultipleSerializationTest)
+{
+  // Generate data.
+  arma::mat dataset(4, 9000);
+  arma::Row<size_t> labels(9000);
+  data::DatasetInfo info(4); // All features are numeric, except the fourth.
+  info.MapString("0", 3);
+  for (size_t i = 0; i < 9000; i += 3)
+  {
+    dataset(0, i) = mlpack::math::Random();
+    dataset(1, i) = mlpack::math::Random();
+    dataset(2, i) = mlpack::math::Random();
+    dataset(3, i) = 0.0;
+    labels[i] = 0;
+
+    dataset(0, i + 1) = mlpack::math::Random();
+    dataset(1, i + 1) = mlpack::math::Random() - 1.0;
+    dataset(2, i + 1) = mlpack::math::Random() + 0.5;
+    dataset(3, i + 1) = 0.0;
+    labels[i + 1] = 2;
+
+    dataset(0, i + 2) = mlpack::math::Random();
+    dataset(1, i + 2) = mlpack::math::Random() + 1.0;
+    dataset(2, i + 2) = mlpack::math::Random() + 0.8;
+    dataset(3, i + 2) = 0.0;
+    labels[i + 2] = 1;
+  }
+
+  // Batch training will give a tree with many labels.
+  HoeffdingTree<> deepTree(dataset, info, labels, 3, true);
+  // Streaming training will not.
+  HoeffdingTree<> shallowTree(dataset, info, labels, 3, false);
+
+  // Now serialize the shallow tree into the deep tree.
+  std::ostringstream oss;
+  {
+    boost::archive::binary_oarchive boa(oss);
+    boa << data::CreateNVP(shallowTree, "streamingDecisionTree");
+  }
+
+  std::istringstream iss(oss.str());
+  {
+    boost::archive::binary_iarchive bia(iss);
+    bia >> data::CreateNVP(deepTree, "streamingDecisionTree");
+  }
+
+  // Now do some classification and make sure the results are the same.
+  arma::Row<size_t> deepPredictions, shallowPredictions;
+  shallowTree.Classify(dataset, shallowPredictions);
+  deepTree.Classify(dataset, deepPredictions);
+
+  for (size_t i = 0; i < deepPredictions.n_elem; ++i)
+  {
+    BOOST_REQUIRE_EQUAL(shallowPredictions[i], deepPredictions[i]);
+  }
+}
+
 /**
  * Test serialization of the Hoeffding forest.  This is very similar to the
  * Hoeffding tree serialization test.
@@ -1411,87 +1469,6 @@ BOOST_AUTO_TEST_CASE(HoeffdingForestSerializationTest)
     BOOST_REQUIRE_EQUAL(pred[i], xmlPred[i]);
     BOOST_REQUIRE_EQUAL(pred[i], binaryPred[i]);
     BOOST_REQUIRE_EQUAL(pred[i], textPred[i]);
-=======
-  HoeffdingTree<> tree(dataset, info, labels, 3, true); // Batch training.
-
-  // Now change parameters...
-  tree.SuccessProbability(0.7);
-  tree.MinSamples(17);
-  tree.MaxSamples(192);
-  tree.CheckInterval(3);
-
-  std::stack<HoeffdingTree<>*> stack;
-  stack.push(&tree);
-  while (!stack.empty())
-  {
-    HoeffdingTree<>* node = stack.top();
-    stack.pop();
-
-    BOOST_REQUIRE_CLOSE(node->SuccessProbability(), 0.7, 1e-5);
-    BOOST_REQUIRE_EQUAL(node->MinSamples(), 17);
-    BOOST_REQUIRE_EQUAL(node->MaxSamples(), 192);
-    BOOST_REQUIRE_EQUAL(node->CheckInterval(), 3);
-
-    for (size_t i = 0; i < node->NumChildren(); ++i)
-      stack.push(&node->Child(i));
-  }
-}
-
-BOOST_AUTO_TEST_CASE(MultipleSerializationTest)
-{
-  // Generate data.
-  arma::mat dataset(4, 9000);
-  arma::Row<size_t> labels(9000);
-  data::DatasetInfo info(4); // All features are numeric, except the fourth.
-  info.MapString("0", 3);
-  for (size_t i = 0; i < 9000; i += 3)
-  {
-    dataset(0, i) = mlpack::math::Random();
-    dataset(1, i) = mlpack::math::Random();
-    dataset(2, i) = mlpack::math::Random();
-    dataset(3, i) = 0.0;
-    labels[i] = 0;
-
-    dataset(0, i + 1) = mlpack::math::Random();
-    dataset(1, i + 1) = mlpack::math::Random() - 1.0;
-    dataset(2, i + 1) = mlpack::math::Random() + 0.5;
-    dataset(3, i + 1) = 0.0;
-    labels[i + 1] = 2;
-
-    dataset(0, i + 2) = mlpack::math::Random();
-    dataset(1, i + 2) = mlpack::math::Random() + 1.0;
-    dataset(2, i + 2) = mlpack::math::Random() + 0.8;
-    dataset(3, i + 2) = 0.0;
-    labels[i + 2] = 1;
-  }
-
-  // Batch training will give a tree with many labels.
-  HoeffdingTree<> deepTree(dataset, info, labels, 3, true);
-  // Streaming training will not.
-  HoeffdingTree<> shallowTree(dataset, info, labels, 3, false);
-
-  // Now serialize the shallow tree into the deep tree.
-  std::ostringstream oss;
-  {
-    boost::archive::binary_oarchive boa(oss);
-    boa << data::CreateNVP(shallowTree, "streamingDecisionTree");
-  }
-
-  std::istringstream iss(oss.str());
-  {
-    boost::archive::binary_iarchive bia(iss);
-    bia >> data::CreateNVP(deepTree, "streamingDecisionTree");
-  }
-
-  // Now do some classification and make sure the results are the same.
-  arma::Row<size_t> deepPredictions, shallowPredictions;
-  shallowTree.Classify(dataset, shallowPredictions);
-  deepTree.Classify(dataset, deepPredictions);
-
-  for (size_t i = 0; i < deepPredictions.n_elem; ++i)
-  {
-    BOOST_REQUIRE_EQUAL(shallowPredictions[i], deepPredictions[i]);
->>>>>>> master
   }
 }
 

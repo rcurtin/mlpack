@@ -200,9 +200,9 @@ HoeffdingTree<FitnessFunction, NumericSplitType, CategoricalSplitType>::
     numericSplit()
 {
   // Get a categorical split and numeric split object to construct with.
-  CategoricalSplitType<FitnessFunction>* catSplit = NULL;
-  NumericSplitType<FitnessFunction>* numSplit = NULL;
-  HoeffdingTree* currentNode = &other;
+  const CategoricalSplitType<FitnessFunction>* catSplit = NULL;
+  const NumericSplitType<FitnessFunction>* numSplit = NULL;
+  const HoeffdingTree<>* currentNode = &other;
   while (currentNode->NumChildren() > 0)
     currentNode = &currentNode->Child(0);
 
