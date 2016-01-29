@@ -21,6 +21,15 @@ class HoeffdingForest
                   const size_t numClasses,
                   data::DatasetInfo& info);
 
+  /**
+   * Create a Hoeffding forest, using the given tree's parameters for each of
+   * the trees in the forest.  The given tree should have the number of classes
+   * set correctly, 
+   *
+   * @param tree Exemplar tree to take parameters from.
+   * @param forestSize Number of trees in the forest.
+   * @param */
+
   ~HoeffdingForest();
 
   template<typename VecType>
