@@ -138,6 +138,18 @@ class HoeffdingTree
   HoeffdingTree(const HoeffdingTree& other);
 
   /**
+   * Copy another tree, but with a different DatasetInfo and number of classes.
+   * This will copy only the learning parameters of the other tree.
+   *
+   * @param info DatasetInfo to use.
+   * @param numClasses Number of classes in the dataset.
+   * @param other Tree to take other parameters from.
+   */
+  HoeffdingTree(const data::DatasetInfo& datasetInfo,
+                const size_t numClasses,
+                const HoeffdingTree& other);
+
+  /**
    * Clean up memory.
    */
   ~HoeffdingTree();

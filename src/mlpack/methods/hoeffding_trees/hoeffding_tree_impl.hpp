@@ -175,6 +175,75 @@ HoeffdingTree<FitnessFunction, NumericSplitType, CategoricalSplitType>::
     children.push_back(new HoeffdingTree(*other.children[i]));
 }
 
+// Parameter copy constructor.
+template<typename FitnessFunction,
+         template<typename> class NumericSplitType,
+         template<typename> class CategoricalSplitType>
+HoeffdingTree<FitnessFunction, NumericSplitType, CategoricalSplitType>::
+    HoeffdingTree(const data::DatasetInfo& datasetInfo,
+                  const size_t numClasses,
+                  const HoeffdingTree& other) :
+    dimensionMappings(
+        new std::unordered_map<size_t, std::pair<size_t, size_t>>()),
+    ownsMappings(true),
+    numSamples(0),
+    numClasses(numClasses),
+    maxSamples(other.maxSamples),
+    checkInterval(other.checkInterval),
+    minSamples(other.minSamples),
+    datasetInfo(&datasetInfo),
+    ownsInfo(false),
+    successProbability(other.successProbability),
+    splitDimension(size_t(-1)),
+    probabilities(arma::ones<arma::rowvec>(numClasses) / (double) numClasses),
+    categoricalSplit(0),
+    numericSplit()
+{
+  // Get a categorical split and numeric split object to construct with.
+  CategoricalSplitType<FitnessFunction>* catSplit = NULL;
+  NumericSplitType<FitnessFunction>* numSplit = NULL;
+  HoeffdingTree* currentNode = &other;
+  while (currentNode->NumChildren() > 0)
+    currentNode = &currentNode->Child(0);
+
+  // Now that we have a leaf node, it will have valid categorical and numeric
+  // split objects.
+  if (currentNode->categoricalSplits.size() > 0)
+    catSplit = &currentNode->categoricalSplits[0];
+  else
+    catSplit = new CategoricalSplitType<FitnessFunction>(1, 1);
+
+  if (currentNode->numericSplits.size() > 0)
+    numSplit = &currentNode->numericSplits[0];
+  else
+    numSplit = new NumericSplitType<FitnessFunction>(1);
+
+  // Generate dimension mappings and create split objects.
+  for (size_t i = 0; i < datasetInfo.Dimensionality(); ++i)
+  {
+    if (datasetInfo.Type(i) == data::Datatype::categorical)
+    {
+      categoricalSplits.push_back(CategoricalSplitType<FitnessFunction>(
+          datasetInfo.NumMappings(i), numClasses, *catSplit));
+      (*dimensionMappings)[i] = std::make_pair(data::Datatype::categorical,
+          categoricalSplits.size() - 1);
+    }
+    else
+    {
+      numericSplits.push_back(NumericSplitType<FitnessFunction>(numClasses,
+          *numSplit));
+      (*dimensionMappings)[i] = std::make_pair(data::Datatype::numeric,
+          numericSplits.size() - 1);
+    }
+  }
+
+  // Clean up memory, if necessary.
+  if (currentNode->categoricalSplits.size() == 0)
+    delete catSplit;
+  if (currentNode->numericSplits.size() == 0)
+    delete numSplit;
+}
+
 template<typename FitnessFunction,
          template<typename> class NumericSplitType,
          template<typename> class CategoricalSplitType>
