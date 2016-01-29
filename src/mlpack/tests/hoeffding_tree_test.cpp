@@ -1001,6 +1001,132 @@ BOOST_AUTO_TEST_CASE(BatchTrainingTest)
   BOOST_REQUIRE_GT(batchCorrect, streamCorrect);
 }
 
+/**
+ * Ensure that the copy constructor works.
+ */
+BOOST_AUTO_TEST_CASE(CopyConstructorTest)
+{
+  // Build a tree.
+  using namespace std;
+
+  // Generate data.
+  arma::mat dataset(4, 900);
+  arma::Row<size_t> labels(900);
+  data::DatasetInfo info(4); // All features are numeric, except the fourth.
+  info.MapString("0", 3);
+  for (size_t i = 0; i < 900; i += 3)
+  {
+    dataset(0, i) = mlpack::math::Random();
+    dataset(1, i) = mlpack::math::Random();
+    dataset(2, i) = mlpack::math::Random();
+    dataset(3, i) = 0.0;
+    labels[i] = 0;
+
+    dataset(0, i + 1) = mlpack::math::Random();
+    dataset(1, i + 1) = mlpack::math::Random() - 1.0;
+    dataset(2, i + 1) = mlpack::math::Random() + 0.5;
+    dataset(3, i + 1) = 0.0;
+    labels[i + 1] = 2;
+
+    dataset(0, i + 2) = mlpack::math::Random();
+    dataset(1, i + 2) = mlpack::math::Random() + 1.0;
+    dataset(2, i + 2) = mlpack::math::Random() + 0.8;
+    dataset(3, i + 2) = 0.0;
+    labels[i + 2] = 1;
+  }
+
+  HoeffdingTree<> tree(dataset, info, labels, 3);
+
+  // Now copy the tree.
+  HoeffdingTree<> other(tree);
+
+  queue<pair<HoeffdingTree<>*, HoeffdingTree<>*>> queue;
+  queue.push(make_pair(&tree, &other));
+  while (!queue.empty())
+  {
+    HoeffdingTree<>* node = queue.front().first;
+    HoeffdingTree<>* otherNode = queue.front().second;
+    queue.pop();
+
+    BOOST_REQUIRE_CLOSE(node->SuccessProbability(),
+        otherNode->SuccessProbability(), 1e-5);
+    BOOST_REQUIRE_EQUAL(node->MinSamples(), otherNode->MinSamples());
+    BOOST_REQUIRE_EQUAL(node->MaxSamples(), otherNode->MaxSamples());
+    BOOST_REQUIRE_EQUAL(node->MajorityClass(), otherNode->MajorityClass());
+    BOOST_REQUIRE_EQUAL(node->NumChildren(), otherNode->NumChildren());
+
+    BOOST_REQUIRE_EQUAL(node->Probabilities().n_elem,
+        otherNode->Probabilities().n_elem);
+    for (size_t i = 0; i < node->Probabilities().n_elem; ++i)
+      BOOST_REQUIRE_CLOSE(node->Probabilities()[i],
+          otherNode->Probabilities()[i], 1e-5);
+
+    BOOST_REQUIRE_EQUAL(node->SplitDimension(), otherNode->SplitDimension());
+
+    for (size_t i = 0; i < node->NumChildren(); ++i)
+      queue.push(make_pair(&node->Child(i), &otherNode->Child(i)));
+  }
+}
+
+/**
+ * Ensure that the copy constructor that only copies parameters works.
+ */
+BOOST_AUTO_TEST_CASE(ParameterCopyConstructorTest)
+{
+  // Build a tree.
+  using namespace std;
+
+  // Generate data.
+  arma::mat dataset(4, 900);
+  arma::Row<size_t> labels(900);
+  data::DatasetInfo info(4); // All features are numeric, except the fourth.
+  info.MapString("0", 3);
+  for (size_t i = 0; i < 900; i += 3)
+  {
+    dataset(0, i) = mlpack::math::Random();
+    dataset(1, i) = mlpack::math::Random();
+    dataset(2, i) = mlpack::math::Random();
+    dataset(3, i) = 0.0;
+    labels[i] = 0;
+
+    dataset(0, i + 1) = mlpack::math::Random();
+    dataset(1, i + 1) = mlpack::math::Random() - 1.0;
+    dataset(2, i + 1) = mlpack::math::Random() + 0.5;
+    dataset(3, i + 1) = 0.0;
+    labels[i + 1] = 2;
+
+    dataset(0, i + 2) = mlpack::math::Random();
+    dataset(1, i + 2) = mlpack::math::Random() + 1.0;
+    dataset(2, i + 2) = mlpack::math::Random() + 0.8;
+    dataset(3, i + 2) = 0.0;
+    labels[i + 2] = 1;
+  }
+
+  // Pass a custom HoeffdingNumericSplit.
+  HoeffdingDoubleNumericSplit<GiniImpurity> numericSplit(2, 5, 200);
+
+  HoeffdingTree<> tree(dataset, info, labels, 3, false, 0.95, 0, 100, 100,
+      HoeffdingCategoricalSplit<GiniImpurity>(1, 1), numericSplit);
+
+  // Now copy the tree parameters.
+  dataset.insert_rows(dataset.n_rows, dataset.row(2));
+  data::DatasetInfo newInfo(5); // All numeric now.
+
+  HoeffdingTree<> otherTree(newInfo, 3, tree);
+
+  BOOST_REQUIRE_EQUAL(otherTree.NumChildren(), 0);
+  BOOST_REQUIRE_EQUAL(otherTree.MinSamples(), tree.MinSamples());
+  BOOST_REQUIRE_EQUAL(otherTree.MaxSamples(), tree.MaxSamples());
+  BOOST_REQUIRE_CLOSE(otherTree.SuccessProbability(), tree.SuccessProbability(),
+      1e-5);
+
+  otherTree.Train(dataset, labels);
+
+  // If the number of children is 5, then our numeric split parameter was
+  // successfully passed.
+  BOOST_REQUIRE_EQUAL(otherTree.NumChildren(), 5);
+}
+
 // Make sure a forest of 5 trees outperforms a single Hoeffding tree on the VC2
 // dataset.
 BOOST_AUTO_TEST_CASE(VC2HoeffdingForestTest)
