@@ -385,7 +385,7 @@ BOOST_AUTO_TEST_CASE(DiscreteHMMLabeledTrainTest)
       arma::vec obs(1);
       obs[0] = row;
       BOOST_REQUIRE_SMALL(hmm.Emission()[col].Probability(obs) -
-          emission[col].Probability(obs), 0.02);
+          emission[col].Probability(obs), 0.04);
     }
   }
 }
@@ -741,7 +741,7 @@ BOOST_AUTO_TEST_CASE(GaussianHMMGenerateTest)
   for (size_t row = 0; row < 3; row++)
     for (size_t col = 0; col < 3; col++)
       BOOST_REQUIRE_SMALL(hmm.Transition()(row, col) - hmm2.Transition()(row,
-          col), 0.03);
+          col), 0.04);
 
   // Check that each Gaussian is the same.
   for (size_t em = 0; em < 3; em++)
