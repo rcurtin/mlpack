@@ -14,6 +14,19 @@ template<typename HoeffdingTreeType>
 HoeffdingForest<HoeffdingTreeType>::HoeffdingForest(const size_t forestSize,
                                                     const size_t numClasses,
                                                     data::DatasetInfo& info) :
+    HoeffdingForest(HoeffdingTreeType(info, numClasses), forestSize, numClasses,
+        info) // Delegate to other constructor.
+{
+  // Nothing to do.
+}
+
+// Construct with tree parameters from other tree.
+template<typename HoeffdingTreeType>
+HoeffdingForest<HoeffdingTreeType>::HoeffdingForest(
+    const HoeffdingTreeType& tree,
+    const size_t forestSize,
+    const size_t numClasses,
+    const data::DatasetInfo& info) :
     info(&info),
     ownsInfo(false),
     numClasses(numClasses)
@@ -50,7 +63,7 @@ HoeffdingForest<HoeffdingTreeType>::HoeffdingForest(const size_t forestSize,
     }
 
     // Now initialize the tree.
-    trees.push_back(HoeffdingTreeType(newInfo, numClasses));
+    trees.push_back(HoeffdingTreeType(newInfo, numClasses, tree));
   }
 }
 

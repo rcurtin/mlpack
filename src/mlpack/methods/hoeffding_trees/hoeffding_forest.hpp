@@ -23,12 +23,17 @@ class HoeffdingForest
 
   /**
    * Create a Hoeffding forest, using the given tree's parameters for each of
-   * the trees in the forest.  The given tree should have the number of classes
-   * set correctly, 
+   * the trees in the forest.
    *
    * @param tree Exemplar tree to take parameters from.
    * @param forestSize Number of trees in the forest.
-   * @param */
+   * @param numClasses Number of classes in the dataset.
+   * @param info Dataset information.
+   */
+  HoeffdingForest(const HoeffdingTreeType& tree,
+                  const size_t forestSize,
+                  const size_t numClasses,
+                  const data::DatasetInfo& info);
 
   ~HoeffdingForest();
 
