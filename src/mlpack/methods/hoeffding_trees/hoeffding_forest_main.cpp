@@ -184,7 +184,7 @@ void PerformActions(const typename TreeType::NumericSplit& numericSplit)
   const string probabilitiesFile = CLI::GetParam<string>("probabilities_file");
   bool batchTraining = CLI::HasParam("batch_mode");
   const size_t passes = (size_t) CLI::GetParam<int>("passes");
-  const size_t forestSize = (size_t) CLI::GetParam<size_t>("forest_size");
+  const size_t forestSize = (size_t) CLI::GetParam<int>("forest_size");
   if (passes > 1)
     batchTraining = false; // We already warned about this earlier.
 
