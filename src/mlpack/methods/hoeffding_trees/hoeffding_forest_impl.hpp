@@ -52,13 +52,15 @@ HoeffdingForest<HoeffdingTreeType>::HoeffdingForest(
     {
       if (selectedDimensions[j] == 1)
       {
-        dimensions[i][currentDim++] = j;
+        dimensions[i][currentDim] = j;
 
         // Extract information about this dimension; if it's categorical, we
         // have to copy the mappings.  If it's numeric, this entire loop gets
         // skipped.
         for (size_t k = 0; k < this->info->NumMappings(j); ++k)
           newInfo.MapString(this->info->UnmapString(k, j), currentDim);
+
+        ++currentDim;
       }
     }
 
