@@ -13,14 +13,19 @@
 namespace mlpack {
 namespace tree {
 
-template<typename FitnessFunction,
-         template<typename> class NumericSplitType,
-         template<typename> class CategoricalSplitType>
+template<
+    typename FitnessFunction,
+    template<typename> class NumericSplitType,
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
+>
 template<typename MatType>
 HoeffdingTree<
     FitnessFunction,
     NumericSplitType,
-    CategoricalSplitType
+    CategoricalSplitType,
+    SplitSelectionStrategyType
 >::HoeffdingTree(const MatType& data,
                  const data::DatasetInfo& datasetInfo,
                  const arma::Row<size_t>& labels,
@@ -30,12 +35,10 @@ HoeffdingTree<
                  const size_t maxSamples,
                  const size_t checkInterval,
                  const size_t minSamples,
-                 const CategoricalSplitType<FitnessFunction>&
-                     categoricalSplitIn,
-                 const NumericSplitType<FitnessFunction>& numericSplitIn) :
-    dimensionMappings(new std::unordered_map<size_t,
-        std::pair<size_t, size_t>>()),
-    ownsMappings(true),
+                 const CategoricalSplit& categoricalSplitIn,
+                 const NumericSplit& numericSplitIn) :
+    split(new SplitSelectionStrategy(datasetInfo, numClasses,
+        categoricalSplitIn, numericSplitIn)),
     numSamples(0),
     numClasses(numClasses),
     maxSamples((maxSamples == 0) ? size_t(-1) : maxSamples),
@@ -45,54 +48,37 @@ HoeffdingTree<
     ownsInfo(false),
     successProbability(successProbability),
     splitDimension(size_t(-1)),
+    classCounts(arma::zeros<arma::Row<size_t>>(numClasses)),
     probabilities(arma::ones<arma::rowvec>(numClasses) / (double) numClasses),
     categoricalSplit(0),
     numericSplit()
 {
-  // Generate dimension mappings and create split objects.
-  for (size_t i = 0; i < datasetInfo.Dimensionality(); ++i)
-  {
-    if (datasetInfo.Type(i) == data::Datatype::categorical)
-    {
-      categoricalSplits.push_back(CategoricalSplitType<FitnessFunction>(
-          datasetInfo.NumMappings(i), numClasses, categoricalSplitIn));
-      (*dimensionMappings)[i] = std::make_pair(data::Datatype::categorical,
-          categoricalSplits.size() - 1);
-    }
-    else
-    {
-      numericSplits.push_back(NumericSplitType<FitnessFunction>(numClasses,
-          numericSplitIn));
-      (*dimensionMappings)[i] = std::make_pair(data::Datatype::numeric,
-          numericSplits.size() - 1);
-    }
-  }
-
   // Now train.
   Train(data, labels, batchTraining);
 }
 
-template<typename FitnessFunction,
-         template<typename> class NumericSplitType,
-         template<typename> class CategoricalSplitType>
+template<
+    typename FitnessFunction,
+    template<typename> class NumericSplitType,
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
+>
 HoeffdingTree<
     FitnessFunction,
     NumericSplitType,
-    CategoricalSplitType
+    CategoricalSplitType,
+    SplitSelectionStrategyType
 >::HoeffdingTree(const data::DatasetInfo& datasetInfo,
                  const size_t numClasses,
                  const double successProbability,
                  const size_t maxSamples,
                  const size_t checkInterval,
                  const size_t minSamples,
-                 const CategoricalSplitType<FitnessFunction>&
-                     categoricalSplitIn,
-                 const NumericSplitType<FitnessFunction>& numericSplitIn,
-                 std::unordered_map<size_t, std::pair<size_t, size_t>>*
-                     dimensionMappingsIn) :
-    dimensionMappings((dimensionMappingsIn != NULL) ? dimensionMappingsIn :
-        new std::unordered_map<size_t, std::pair<size_t, size_t>>()),
-    ownsMappings(dimensionMappingsIn == NULL),
+                 const CategoricalSplit& categoricalSplitIn,
+                 const NumericSplit& numericSplitIn) :
+    split(new SplitSelectionStrategy(datasetInfo, numClasses,
+        categoricalSplitIn, numericSplitIn)),
     numSamples(0),
     numClasses(numClasses),
     maxSamples((maxSamples == 0) ? size_t(-1) : maxSamples),
@@ -102,60 +88,29 @@ HoeffdingTree<
     ownsInfo(false),
     successProbability(successProbability),
     splitDimension(size_t(-1)),
+    classCounts(arma::zeros<arma::Row<size_t>>(numClasses)),
     probabilities(arma::ones<arma::rowvec>(numClasses) / (double) numClasses),
     categoricalSplit(0),
     numericSplit()
 {
-  // Do we need to generate the mappings too?
-  if (ownsMappings)
-  {
-    for (size_t i = 0; i < datasetInfo.Dimensionality(); ++i)
-    {
-      if (datasetInfo.Type(i) == data::Datatype::categorical)
-      {
-        categoricalSplits.push_back(CategoricalSplitType<FitnessFunction>(
-            datasetInfo.NumMappings(i), numClasses, categoricalSplitIn));
-        (*dimensionMappings)[i] = std::make_pair(data::Datatype::categorical,
-            categoricalSplits.size() - 1);
-      }
-      else
-      {
-        numericSplits.push_back(NumericSplitType<FitnessFunction>(numClasses,
-            numericSplitIn));
-        (*dimensionMappings)[i] = std::make_pair(data::Datatype::numeric,
-            numericSplits.size() - 1);
-      }
-    }
-  }
-  else
-  {
-    for (size_t i = 0; i < datasetInfo.Dimensionality(); ++i)
-    {
-      if (datasetInfo.Type(i) == data::Datatype::categorical)
-      {
-        categoricalSplits.push_back(CategoricalSplitType<FitnessFunction>(
-            datasetInfo.NumMappings(i), numClasses, categoricalSplitIn));
-      }
-      else
-      {
-        numericSplits.push_back(NumericSplitType<FitnessFunction>(numClasses,
-            numericSplitIn));
-      }
-    }
-  }
+  // Nothing to do.
 }
 
 // Copy constructor.
-template<typename FitnessFunction,
-         template<typename> class NumericSplitType,
-         template<typename> class CategoricalSplitType>
-HoeffdingTree<FitnessFunction, NumericSplitType, CategoricalSplitType>::
-    HoeffdingTree(const HoeffdingTree& other) :
-    numericSplits(other.numericSplits),
-    categoricalSplits(other.categoricalSplits),
-    dimensionMappings(new std::unordered_map<size_t,
-        std::pair<size_t, size_t>>(*other.dimensionMappings)),
-    ownsMappings(true),
+template<
+    typename FitnessFunction,
+    template<typename> class NumericSplitType,
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
+>
+HoeffdingTree<
+    FitnessFunction,
+    NumericSplitType,
+    CategoricalSplitType,
+    SplitSelectionStrategyType
+>::HoeffdingTree(const HoeffdingTree& other) :
+    split(NULL),
     numSamples(other.numSamples),
     numClasses(other.numClasses),
     maxSamples(other.maxSamples),
@@ -166,26 +121,38 @@ HoeffdingTree<FitnessFunction, NumericSplitType, CategoricalSplitType>::
     successProbability(other.successProbability),
     splitDimension(other.splitDimension),
     majorityClass(other.majorityClass),
+    classCounts(other.classCounts),
     probabilities(other.probabilities),
     categoricalSplit(other.categoricalSplit),
     numericSplit(other.numericSplit)
 {
+  // Only initialize the split if it's necessary.
+  if (other.split)
+    split = new SplitSelectionStrategy(*this->datasetInfo, numClasses,
+        *other.split);
+
   // Copy each of the children.
   for (size_t i = 0; i < other.children.size(); ++i)
     children.push_back(new HoeffdingTree(*other.children[i]));
 }
 
 // Parameter copy constructor.
-template<typename FitnessFunction,
-         template<typename> class NumericSplitType,
-         template<typename> class CategoricalSplitType>
-HoeffdingTree<FitnessFunction, NumericSplitType, CategoricalSplitType>::
-    HoeffdingTree(const data::DatasetInfo& datasetInfo,
-                  const size_t numClasses,
-                  const HoeffdingTree& other) :
-    dimensionMappings(
-        new std::unordered_map<size_t, std::pair<size_t, size_t>>()),
-    ownsMappings(true),
+template<
+    typename FitnessFunction,
+    template<typename> class NumericSplitType,
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
+>
+HoeffdingTree<
+    FitnessFunction,
+    NumericSplitType,
+    CategoricalSplitType,
+    SplitSelectionStrategyType
+>::HoeffdingTree(const data::DatasetInfo& datasetInfo,
+                 const size_t numClasses,
+                 const HoeffdingTree& other) :
+    split(NULL),
     numSamples(0),
     numClasses(numClasses),
     maxSamples(other.maxSamples),
@@ -195,63 +162,38 @@ HoeffdingTree<FitnessFunction, NumericSplitType, CategoricalSplitType>::
     ownsInfo(false),
     successProbability(other.successProbability),
     splitDimension(size_t(-1)),
+    classCounts(arma::zeros<arma::Row<size_t>>(numClasses)),
     probabilities(arma::ones<arma::rowvec>(numClasses) / (double) numClasses),
     categoricalSplit(0),
     numericSplit()
 {
-  // Get a categorical split and numeric split object to construct with.
-  const CategoricalSplitType<FitnessFunction>* catSplit = NULL;
-  const NumericSplitType<FitnessFunction>* numSplit = NULL;
+  // Get a split selection strategy object to use.
   const HoeffdingTree* currentNode = &other;
   while (currentNode->NumChildren() > 0)
     currentNode = &currentNode->Child(0);
 
   // Now that we have a leaf node, it will have valid categorical and numeric
   // split objects.
-  if (currentNode->categoricalSplits.size() > 0)
-    catSplit = &currentNode->categoricalSplits[0];
-  else
-    catSplit = new CategoricalSplitType<FitnessFunction>(1, 1);
-
-  if (currentNode->numericSplits.size() > 0)
-    numSplit = &currentNode->numericSplits[0];
-  else
-    numSplit = new NumericSplitType<FitnessFunction>(1);
-
-  // Generate dimension mappings and create split objects.
-  for (size_t i = 0; i < datasetInfo.Dimensionality(); ++i)
-  {
-    if (datasetInfo.Type(i) == data::Datatype::categorical)
-    {
-      categoricalSplits.push_back(CategoricalSplitType<FitnessFunction>(
-          datasetInfo.NumMappings(i), numClasses, *catSplit));
-      (*dimensionMappings)[i] = std::make_pair(data::Datatype::categorical,
-          categoricalSplits.size() - 1);
-    }
-    else
-    {
-      numericSplits.push_back(NumericSplitType<FitnessFunction>(numClasses,
-          *numSplit));
-      (*dimensionMappings)[i] = std::make_pair(data::Datatype::numeric,
-          numericSplits.size() - 1);
-    }
-  }
-
-  // Clean up memory, if necessary.
-  if (currentNode->categoricalSplits.size() == 0)
-    delete catSplit;
-  if (currentNode->numericSplits.size() == 0)
-    delete numSplit;
+  split = new SplitSelectionStrategy(datasetInfo, numClasses,
+      *currentNode->split);
 }
 
-template<typename FitnessFunction,
-         template<typename> class NumericSplitType,
-         template<typename> class CategoricalSplitType>
-HoeffdingTree<FitnessFunction, NumericSplitType, CategoricalSplitType>::
-    ~HoeffdingTree()
+template<
+    typename FitnessFunction,
+    template<typename> class NumericSplitType,
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
+>
+HoeffdingTree<
+    FitnessFunction,
+    NumericSplitType,
+    CategoricalSplitType,
+    SplitSelectionStrategyType
+>::~HoeffdingTree()
 {
-  if (ownsMappings)
-    delete dimensionMappings;
+  if (split != NULL)
+    delete split;
   if (ownsInfo)
     delete datasetInfo;
   for (size_t i = 0; i < children.size(); ++i)
@@ -259,14 +201,19 @@ HoeffdingTree<FitnessFunction, NumericSplitType, CategoricalSplitType>::
 }
 
 //! Train on a set of points.
-template<typename FitnessFunction,
-         template<typename> class NumericSplitType,
-         template<typename> class CategoricalSplitType>
+template<
+    typename FitnessFunction,
+    template<typename> class NumericSplitType,
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
+>
 template<typename MatType>
 void HoeffdingTree<
     FitnessFunction,
     NumericSplitType,
-    CategoricalSplitType
+    CategoricalSplitType,
+    SplitSelectionStrategyType
 >::Train(const MatType& data,
          const arma::Row<size_t>& labels,
          const bool batchTraining)
@@ -337,51 +284,71 @@ void HoeffdingTree<
 }
 
 //! Train on one point.
-template<typename FitnessFunction,
-         template<typename> class NumericSplitType,
-         template<typename> class CategoricalSplitType>
+template<
+    typename FitnessFunction,
+    template<typename> class NumericSplitType,
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
+>
 template<typename VecType>
 void HoeffdingTree<
     FitnessFunction,
     NumericSplitType,
-    CategoricalSplitType
+    CategoricalSplitType,
+    SplitSelectionStrategyType
 >::Train(const VecType& point, const size_t label)
 {
-  if (splitDimension == size_t(-1))
+  if (split)
   {
+    // Let the split do the training.
     ++numSamples;
-    size_t numericIndex = 0;
-    size_t categoricalIndex = 0;
-    for (size_t i = 0; i < point.n_rows; ++i)
-    {
-      if (datasetInfo->Type(i) == data::Datatype::categorical)
-        categoricalSplits[categoricalIndex++].Train(point[i], label);
-      else if (datasetInfo->Type(i) == data::Datatype::numeric)
-        numericSplits[numericIndex++].Train(point[i], label);
-    }
+    split->Train(point, label);
 
-    // Grab majority class from splits.
-    if (categoricalSplits.size() > 0)
-    {
-      majorityClass = categoricalSplits[0].MajorityClass();
-      categoricalSplits[0].Probabilities(probabilities);
-    }
-    else
-    {
-      majorityClass = numericSplits[0].MajorityClass();
-      numericSplits[0].Probabilities(probabilities);
-    }
+    // Update class counts and majority class and probabilities.
+    classCounts[label]++;
+    arma::uword max;
+    classCounts.max(max);
+    majorityClass = max;
+    probabilities = arma::conv_to<arma::rowvec>::from(classCounts) /
+        (double) numSamples;
 
     // Check for a split, if we should.
-    if (numSamples % checkInterval == 0)
+    if ((numSamples % checkInterval == 0) &&
+        (numSamples > minSamples))
     {
-      const size_t numChildren = SplitCheck();
+      // Calculate epsilon, the value we need things to be greater than.
+      const double rSquared = std::pow(FitnessFunction::Range(numClasses), 2.0);
+      const double epsilon = std::sqrt(rSquared *
+          std::log(1.0 / (1.0 - successProbability)) / (2 * numSamples));
+      const bool force = (numSamples >= maxSamples);
+
+      arma::Mat<size_t> childCounts;
+      const size_t numChildren = split->SplitCheck(epsilon, force, childCounts,
+            splitDimension, categoricalSplit, numericSplit);
       if (numChildren > 0)
       {
         // We need to add a bunch of children.
         // Delete children, if we have them.
         children.clear();
-        CreateChildren();
+        for (size_t i = 0; i < numChildren; ++i)
+        {
+          // We need to also give parameters to the new children, so we use the
+          // constructor that takes another Hoeffding tree to copy settings
+          // from.
+          children.push_back(new HoeffdingTree(*datasetInfo, numClasses,
+              *this));
+
+          // Set the class counts and the majority class correctly.
+          children[i]->classCounts = childCounts.col(i).t();
+          arma::uword max;
+          children[i]->classCounts.max(max);
+          children[i]->MajorityClass() = (size_t) max;
+        }
+
+        // Clean up the split object.
+        delete split;
+        split = NULL;
       }
     }
   }
@@ -393,104 +360,18 @@ void HoeffdingTree<
   }
 }
 
-template<typename FitnessFunction,
-         template<typename> class NumericSplitType,
-         template<typename> class CategoricalSplitType>
-size_t HoeffdingTree<
-    FitnessFunction,
-    NumericSplitType,
-    CategoricalSplitType
->::SplitCheck()
-{
-  // Do nothing if we've already split.
-  if (splitDimension != size_t(-1))
-    return 0;
-
-  // If not enough points have been seen, we cannot split.
-  if (numSamples <= minSamples)
-    return 0;
-
-  // Check the fitness of each dimension.  Then we'll use a Hoeffding bound
-  // somehow.
-
-  // Calculate epsilon, the value we need things to be greater than.
-  const double rSquared = std::pow(FitnessFunction::Range(numClasses), 2.0);
-  const double epsilon = std::sqrt(rSquared *
-      std::log(1.0 / (1.0 - successProbability)) / (2 * numSamples));
-
-  // Find the best and second best possible splits.
-  double largest = -DBL_MAX;
-  size_t largestIndex = 0;
-  double secondLargest = -DBL_MAX;
-  for (size_t i = 0; i < categoricalSplits.size() + numericSplits.size(); ++i)
-  {
-    size_t type = dimensionMappings->at(i).first;
-    size_t index = dimensionMappings->at(i).second;
-
-    // Some split procedures can split multiple ways, but we only care about the
-    // best two splits that can be done in every network.
-    double bestGain = 0.0;
-    double secondBestGain = 0.0;
-    if (type == data::Datatype::categorical)
-      categoricalSplits[index].EvaluateFitnessFunction(bestGain,
-          secondBestGain);
-    else if (type == data::Datatype::numeric)
-      numericSplits[index].EvaluateFitnessFunction(bestGain, secondBestGain);
-
-    // See if these gains are better than the previous.
-    if (bestGain > largest)
-    {
-      secondLargest = largest;
-      largest = bestGain;
-      largestIndex = i;
-    }
-    else if (bestGain > secondLargest)
-    {
-      secondLargest = bestGain;
-    }
-
-    if (secondBestGain > secondLargest)
-    {
-      secondLargest = secondBestGain;
-    }
-  }
-
-  // Are these far enough apart to split?
-  if ((largest > 0.0) &&
-      ((largest - secondLargest > epsilon) || (numSamples > maxSamples) ||
-       (epsilon <= 0.05)))
-  {
-    // Split!
-    splitDimension = largestIndex;
-    const size_t type = dimensionMappings->at(largestIndex).first;
-    const size_t index = dimensionMappings->at(largestIndex).second;
-    if (type == data::Datatype::categorical)
-    {
-      // I don't know if this should be here.
-      majorityClass = categoricalSplits[index].MajorityClass();
-      return categoricalSplits[index].NumChildren();
-    }
-    else
-    {
-      majorityClass = numericSplits[index].MajorityClass();
-      return numericSplits[index].NumChildren();
-    }
-  }
-  else
-  {
-    return 0; // Don't split.
-  }
-}
-
 template<
     typename FitnessFunction,
     template<typename> class NumericSplitType,
-    template<typename> class CategoricalSplitType
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
 >
 void HoeffdingTree<
     FitnessFunction,
     NumericSplitType,
-    CategoricalSplitType
+    CategoricalSplitType,
+    SplitSelectionStrategyType
 >::SuccessProbability(const double successProbability)
 {
   this->successProbability = successProbability;
@@ -501,12 +382,15 @@ void HoeffdingTree<
 template<
     typename FitnessFunction,
     template<typename> class NumericSplitType,
-    template<typename> class CategoricalSplitType
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
 >
 void HoeffdingTree<
     FitnessFunction,
     NumericSplitType,
-    CategoricalSplitType
+    CategoricalSplitType,
+    SplitSelectionStrategyType
 >::MinSamples(const size_t minSamples)
 {
   this->minSamples = minSamples;
@@ -517,12 +401,15 @@ void HoeffdingTree<
 template<
     typename FitnessFunction,
     template<typename> class NumericSplitType,
-    template<typename> class CategoricalSplitType
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
 >
 void HoeffdingTree<
     FitnessFunction,
     NumericSplitType,
-    CategoricalSplitType
+    CategoricalSplitType,
+    SplitSelectionStrategyType
 >::MaxSamples(const size_t maxSamples)
 {
   this->maxSamples = maxSamples;
@@ -533,12 +420,15 @@ void HoeffdingTree<
 template<
     typename FitnessFunction,
     template<typename> class NumericSplitType,
-    template<typename> class CategoricalSplitType
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
 >
 void HoeffdingTree<
     FitnessFunction,
     NumericSplitType,
-    CategoricalSplitType
+    CategoricalSplitType,
+    SplitSelectionStrategyType
 >::CheckInterval(const size_t checkInterval)
 {
   this->checkInterval = checkInterval;
@@ -549,13 +439,16 @@ void HoeffdingTree<
 template<
     typename FitnessFunction,
     template<typename> class NumericSplitType,
-    template<typename> class CategoricalSplitType
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
 >
 template<typename VecType>
 size_t HoeffdingTree<
     FitnessFunction,
     NumericSplitType,
-    CategoricalSplitType
+    CategoricalSplitType,
+    SplitSelectionStrategyType
 >::CalculateDirection(const VecType& point) const
 {
   // Don't call this before the node is split...
@@ -570,13 +463,16 @@ size_t HoeffdingTree<
 template<
     typename FitnessFunction,
     template<typename> class NumericSplitType,
-    template<typename> class CategoricalSplitType
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
 >
 template<typename VecType>
 size_t HoeffdingTree<
     FitnessFunction,
     NumericSplitType,
-    CategoricalSplitType
+    CategoricalSplitType,
+    SplitSelectionStrategyType
 >::Classify(const VecType& point) const
 {
   if (children.size() == 0)
@@ -595,13 +491,16 @@ size_t HoeffdingTree<
 template<
     typename FitnessFunction,
     template<typename> class NumericSplitType,
-    template<typename> class CategoricalSplitType
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
 >
 template<typename VecType>
 void HoeffdingTree<
     FitnessFunction,
     NumericSplitType,
-    CategoricalSplitType
+    CategoricalSplitType,
+    SplitSelectionStrategyType
 >::Classify(const VecType& point,
             size_t& prediction,
             double& probability) const
@@ -624,13 +523,16 @@ void HoeffdingTree<
 template<
     typename FitnessFunction,
     template<typename> class NumericSplitType,
-    template<typename> class CategoricalSplitType
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
 >
 template<typename MatType>
 void HoeffdingTree<
     FitnessFunction,
     NumericSplitType,
-    CategoricalSplitType
+    CategoricalSplitType,
+    SplitSelectionStrategyType
 >::Classify(const MatType& data, arma::Row<size_t>& predictions) const
 {
   predictions.set_size(data.n_cols);
@@ -642,13 +544,16 @@ void HoeffdingTree<
 template<
     typename FitnessFunction,
     template<typename> class NumericSplitType,
-    template<typename> class CategoricalSplitType
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
 >
 template<typename MatType>
 void HoeffdingTree<
     FitnessFunction,
     NumericSplitType,
-    CategoricalSplitType
+    CategoricalSplitType,
+    SplitSelectionStrategyType
 >::Classify(const MatType& data,
             arma::Row<size_t>& predictions,
             arma::rowvec& probabilities) const
@@ -663,13 +568,16 @@ void HoeffdingTree<
 template<
     typename FitnessFunction,
     template<typename> class NumericSplitType,
-    template<typename> class CategoricalSplitType
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
 >
 template<typename VecType>
 void HoeffdingTree<
     FitnessFunction,
     NumericSplitType,
-    CategoricalSplitType
+    CategoricalSplitType,
+    SplitSelectionStrategyType
 >::Probabilities(const VecType& point, arma::rowvec& probabilities) const
 {
   if (children.size() == 0)
@@ -687,92 +595,22 @@ void HoeffdingTree<
 template<
     typename FitnessFunction,
     template<typename> class NumericSplitType,
-    template<typename> class CategoricalSplitType
->
-void HoeffdingTree<
-    FitnessFunction,
-    NumericSplitType,
-    CategoricalSplitType
->::CreateChildren()
-{
-  // Create the children.
-  arma::Col<size_t> childMajorities;
-  arma::mat childProbabilities;
-  if (dimensionMappings->at(splitDimension).first ==
-      data::Datatype::categorical)
-  {
-    categoricalSplits[dimensionMappings->at(splitDimension).second].Split(
-        childMajorities, childProbabilities, categoricalSplit);
-  }
-  else if (dimensionMappings->at(splitDimension).first ==
-           data::Datatype::numeric)
-  {
-    numericSplits[dimensionMappings->at(splitDimension).second].Split(
-        childMajorities, childProbabilities, numericSplit);
-  }
-
-  // We already know what the splitDimension will be.
-  for (size_t i = 0; i < childMajorities.n_elem; ++i)
-  {
-    // We need to also give our split objects to the new children, so that
-    // parameters for the splits can be passed down.  But if we have no
-    // categorical or numeric features, we can't pass anything but the
-    // defaults...
-    if (categoricalSplits.size() == 0)
-    {
-      // Pass a default categorical split.
-      children.push_back(new HoeffdingTree(*datasetInfo, numClasses,
-          successProbability, maxSamples, checkInterval, minSamples,
-          CategoricalSplitType<FitnessFunction>(0, numClasses),
-          numericSplits[0], dimensionMappings));
-    }
-    else if (numericSplits.size() == 0)
-    {
-      // Pass a default numeric split.
-      children.push_back(new HoeffdingTree(*datasetInfo, numClasses,
-          successProbability, maxSamples, checkInterval, minSamples,
-          categoricalSplits[0], NumericSplitType<FitnessFunction>(numClasses),
-          dimensionMappings));
-    }
-    else
-    {
-      // Pass both splits that we already have.
-      children.push_back(new HoeffdingTree(*datasetInfo, numClasses,
-          successProbability, maxSamples, checkInterval, minSamples,
-          categoricalSplits[0], numericSplits[0], dimensionMappings));
-
-    }
-
-    children[i]->MajorityClass() = childMajorities[i];
-    children[i]->probabilities = childProbabilities.col(i).t();
-  }
-
-  // Eliminate now-unnecessary split information.
-  numericSplits.clear();
-  categoricalSplits.clear();
-}
-
-template<
-    typename FitnessFunction,
-    template<typename> class NumericSplitType,
-    template<typename> class CategoricalSplitType
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
 >
 template<typename Archive>
 void HoeffdingTree<
     FitnessFunction,
     NumericSplitType,
-    CategoricalSplitType
->::Serialize(Archive& ar, const unsigned int /* version */)
+    CategoricalSplitType,
+    SplitSelectionStrategyType
+>::Serialize(Archive& /* ar */, const unsigned int /* version */)
 {
+  /*
   using data::CreateNVP;
 
   ar & CreateNVP(splitDimension, "splitDimension");
-
-  // Clear memory for the mappings if necessary.
-  if (Archive::is_loading::value && ownsMappings && dimensionMappings)
-    delete dimensionMappings;
-
-  ar & CreateNVP(dimensionMappings, "dimensionMappings");
 
   // Special handling for const object.
   data::DatasetInfo* d = NULL;
@@ -796,6 +634,30 @@ void HoeffdingTree<
 
   ar & CreateNVP(majorityClass, "majorityClass");
   ar & CreateNVP(probabilities, "probabilities");
+
+  // I think we have to handle older cases here...
+  if (new version)
+  {
+    if (splitDimension == size_t(-1))
+    {
+      // We have not yet split.  So we have to serialize the splits.
+      ar & CreateNVP(numSamples, "numSamples");
+      ar & CreateNVP(numClasses, "numClasses");
+      ar & CreateNVP(maxSamples, "maxSamples");
+      ar & CreateNVP(successProbability, "successProbability");
+
+      if (Archive::is_loading::value && split)
+        delete split;
+      ar & CreateNVP(split, "split");
+    }
+    else
+    {
+
+    }
+  }
+  else
+  {
+
 
   // Depending on whether or not we have split yet, we may need to save
   // different things.
@@ -894,6 +756,7 @@ void HoeffdingTree<
       successProbability = 0.0;
     }
   }
+  */
 }
 
 } // namespace tree

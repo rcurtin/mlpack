@@ -1323,58 +1323,18 @@ BOOST_AUTO_TEST_CASE(HoeffdingNumericSplitTest)
   BOOST_REQUIRE_CLOSE(bestSplit, baseBestSplit, 1e-5);
   BOOST_REQUIRE_SMALL(secondBestSplit, 1e-10);
 
-  arma::Col<size_t> childMajorities, xmlChildMajorities, textChildMajorities,
-      binaryChildMajorities;
-  arma::mat childProbabilities, xmlChildProbabilities, textChildProbabilities,
-      binaryChildProbabilities;
+  arma::Mat<size_t> childCounts, xmlChildCounts, textChildCounts,
+      binaryChildCounts;
   NumericSplitInfo<double> splitInfo, xmlSplitInfo, textSplitInfo,
       binarySplitInfo;
 
-  split.Split(childMajorities, childProbabilities, splitInfo);
-  xmlSplit.Split(xmlChildMajorities, xmlChildProbabilities, xmlSplitInfo);
-  binarySplit.Split(binaryChildMajorities, binaryChildProbabilities,
-      binarySplitInfo);
-  textSplit.Split(textChildMajorities, textChildProbabilities, textSplitInfo);
+  split.Split(childCounts, splitInfo);
+  xmlSplit.Split(xmlChildCounts, xmlSplitInfo);
+  binarySplit.Split(binaryChildCounts, binarySplitInfo);
+  textSplit.Split(textChildCounts, textSplitInfo);
 
-  BOOST_REQUIRE_EQUAL(childMajorities.size(), xmlChildMajorities.size());
-  BOOST_REQUIRE_EQUAL(childMajorities.size(), textChildMajorities.size());
-  BOOST_REQUIRE_EQUAL(childMajorities.size(), binaryChildMajorities.size());
-
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_rows, xmlChildProbabilities.n_rows);
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_rows, textChildProbabilities.n_rows);
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_rows,
-      binaryChildProbabilities.n_rows);
-
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_cols, xmlChildProbabilities.n_cols);
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_cols, textChildProbabilities.n_cols);
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_cols,
-      binaryChildProbabilities.n_cols);
-
-  for (size_t i = 0; i < childMajorities.n_elem; ++i)
-  {
-    BOOST_REQUIRE_EQUAL(childMajorities[i], xmlChildMajorities[i]);
-    BOOST_REQUIRE_EQUAL(childMajorities[i], textChildMajorities[i]);
-    BOOST_REQUIRE_EQUAL(childMajorities[i], binaryChildMajorities[i]);
-  }
-
-  for (size_t i = 0; i < childProbabilities.n_elem; ++i)
-  {
-    if (std::abs(childProbabilities[i]) > 1e-5)
-    {
-      BOOST_REQUIRE_CLOSE(childProbabilities[i], xmlChildProbabilities[i],
-          1e-5);
-      BOOST_REQUIRE_CLOSE(childProbabilities[i], textChildProbabilities[i],
-          1e-5);
-      BOOST_REQUIRE_CLOSE(childProbabilities[i], binaryChildProbabilities[i],
-          1e-5);
-    }
-    else
-    {
-      BOOST_REQUIRE_SMALL(xmlChildProbabilities[i], 1e-5);
-      BOOST_REQUIRE_SMALL(textChildProbabilities[i], 1e-5);
-      BOOST_REQUIRE_SMALL(binaryChildProbabilities[i], 1e-5);
-    }
-  }
+  CheckMatrices(childCounts, xmlChildCounts, textChildCounts,
+      binaryChildCounts);
 
   // Random checks.
   for (size_t i = 0; i < 200; ++i)
@@ -1454,10 +1414,6 @@ BOOST_AUTO_TEST_CASE(HoeffdingCategoricalSplitTest)
 
   SerializeObjectAll(split, xmlSplit, textSplit, binarySplit);
 
-  BOOST_REQUIRE_EQUAL(split.MajorityClass(), xmlSplit.MajorityClass());
-  BOOST_REQUIRE_EQUAL(split.MajorityClass(), textSplit.MajorityClass());
-  BOOST_REQUIRE_EQUAL(split.MajorityClass(), binarySplit.MajorityClass());
-
   double bestSplit, secondBestSplit;
   double baseBestSplit, baseSecondBestSplit;
   split.EvaluateFitnessFunction(baseBestSplit, baseSecondBestSplit);
@@ -1474,56 +1430,17 @@ BOOST_AUTO_TEST_CASE(HoeffdingCategoricalSplitTest)
   BOOST_REQUIRE_CLOSE(bestSplit, baseBestSplit, 1e-5);
   BOOST_REQUIRE_SMALL(secondBestSplit, 1e-10);
 
-  arma::Col<size_t> childMajorities, xmlChildMajorities, textChildMajorities,
-      binaryChildMajorities;
-  arma::mat childProbabilities, xmlChildProbabilities, textChildProbabilities,
-      binaryChildProbabilities;
+  arma::Mat<size_t> childCounts, xmlChildCounts, textChildCounts,
+      binaryChildCounts;
   CategoricalSplitInfo splitInfo(1); // I don't care about this.
 
-  split.Split(childMajorities, childProbabilities, splitInfo);
-  xmlSplit.Split(xmlChildMajorities, xmlChildProbabilities, splitInfo);
-  binarySplit.Split(binaryChildMajorities, binaryChildProbabilities, splitInfo);
-  textSplit.Split(textChildMajorities, textChildProbabilities, splitInfo);
+  split.Split(childCounts, splitInfo);
+  xmlSplit.Split(xmlChildCounts, splitInfo);
+  binarySplit.Split(binaryChildCounts, splitInfo);
+  textSplit.Split(textChildCounts, splitInfo);
 
-  BOOST_REQUIRE_EQUAL(childMajorities.size(), xmlChildMajorities.size());
-  BOOST_REQUIRE_EQUAL(childMajorities.size(), textChildMajorities.size());
-  BOOST_REQUIRE_EQUAL(childMajorities.size(), binaryChildMajorities.size());
-
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_rows, xmlChildProbabilities.n_rows);
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_rows, textChildProbabilities.n_rows);
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_rows,
-      binaryChildProbabilities.n_rows);
-
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_cols, xmlChildProbabilities.n_cols);
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_cols, textChildProbabilities.n_cols);
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_cols,
-      binaryChildProbabilities.n_cols);
-
-  for (size_t i = 0; i < childMajorities.n_elem; ++i)
-  {
-    BOOST_REQUIRE_EQUAL(childMajorities[i], xmlChildMajorities[i]);
-    BOOST_REQUIRE_EQUAL(childMajorities[i], textChildMajorities[i]);
-    BOOST_REQUIRE_EQUAL(childMajorities[i], binaryChildMajorities[i]);
-  }
-
-  for (size_t i = 0; i < childProbabilities.n_elem; ++i)
-  {
-    if (std::abs(childProbabilities[i]) > 1e-5)
-    {
-      BOOST_REQUIRE_CLOSE(childProbabilities[i], xmlChildProbabilities[i],
-          1e-5);
-      BOOST_REQUIRE_CLOSE(childProbabilities[i], textChildProbabilities[i],
-          1e-5);
-      BOOST_REQUIRE_CLOSE(childProbabilities[i], binaryChildProbabilities[i],
-          1e-5);
-    }
-    else
-    {
-      BOOST_REQUIRE_SMALL(xmlChildProbabilities[i], 1e-5);
-      BOOST_REQUIRE_SMALL(textChildProbabilities[i], 1e-5);
-      BOOST_REQUIRE_SMALL(binaryChildProbabilities[i], 1e-5);
-    }
-  }
+  CheckMatrices(childCounts, xmlChildCounts, binaryChildCounts,
+      textChildCounts);
 }
 
 /**
@@ -1571,10 +1488,6 @@ BOOST_AUTO_TEST_CASE(HoeffdingTreeBeforeSplitTest)
   BOOST_REQUIRE_EQUAL(split.MajorityClass(), xmlSplit.MajorityClass());
   BOOST_REQUIRE_EQUAL(split.MajorityClass(), binarySplit.MajorityClass());
   BOOST_REQUIRE_EQUAL(split.MajorityClass(), textSplit.MajorityClass());
-
-  BOOST_REQUIRE_EQUAL(split.SplitCheck(), xmlSplit.SplitCheck());
-  BOOST_REQUIRE_EQUAL(split.SplitCheck(), binarySplit.SplitCheck());
-  BOOST_REQUIRE_EQUAL(split.SplitCheck(), textSplit.SplitCheck());
 }
 
 /**
@@ -1620,12 +1533,6 @@ BOOST_AUTO_TEST_CASE(HoeffdingTreeAfterSplitTest)
   BOOST_REQUIRE_EQUAL(split.SplitDimension(), xmlSplit.SplitDimension());
   BOOST_REQUIRE_EQUAL(split.SplitDimension(), binarySplit.SplitDimension());
   BOOST_REQUIRE_EQUAL(split.SplitDimension(), textSplit.SplitDimension());
-
-  // If splitting has already happened, then SplitCheck() should return 0.
-  BOOST_REQUIRE_EQUAL(split.SplitCheck(), 0);
-  BOOST_REQUIRE_EQUAL(split.SplitCheck(), xmlSplit.SplitCheck());
-  BOOST_REQUIRE_EQUAL(split.SplitCheck(), binarySplit.SplitCheck());
-  BOOST_REQUIRE_EQUAL(split.SplitCheck(), textSplit.SplitCheck());
 
   BOOST_REQUIRE_EQUAL(split.MajorityClass(), xmlSplit.MajorityClass());
   BOOST_REQUIRE_EQUAL(split.MajorityClass(), binarySplit.MajorityClass());

@@ -102,8 +102,7 @@ void BinaryNumericSplit<FitnessFunction, ObservationType>::
 
 template<typename FitnessFunction, typename ObservationType>
 void BinaryNumericSplit<FitnessFunction, ObservationType>::Split(
-    arma::Col<size_t>& childMajorities,
-    arma::mat& childProbabilities,
+    arma::Mat<size_t>& childCounts,
     SplitInfo& splitInfo)
 {
   if (!isAccurate)
@@ -113,11 +112,9 @@ void BinaryNumericSplit<FitnessFunction, ObservationType>::Split(
   }
 
   // Make one child for each side of the split.
-  childMajorities.set_size(2);
-
-  arma::Mat<size_t> counts(classCounts.n_elem, 2);
-  counts.col(0).zeros();
-  counts.col(1) = classCounts;
+  childCounts.set_size(classCounts.n_elem, 2);
+  childCounts.col(0).zeros();
+  childCounts.col(1) = classCounts;
 
   double min = DBL_MAX;
   double max = -DBL_MAX;
@@ -128,8 +125,8 @@ void BinaryNumericSplit<FitnessFunction, ObservationType>::Split(
     // Move the point to the correct side of the split.
     if ((*it).first < bestSplit)
     {
-      --counts((*it).second, 1);
-      ++counts((*it).second, 0);
+      --childCounts((*it).second, 1);
+      ++childCounts((*it).second, 0);
     }
     if ((*it).first < min)
       min = (*it).first;
@@ -137,43 +134,8 @@ void BinaryNumericSplit<FitnessFunction, ObservationType>::Split(
       max = (*it).first;
   }
 
-  // Calculate the majority classes of the children.
-  arma::uword maxIndex;
-  counts.unsafe_col(0).max(maxIndex);
-  childMajorities[0] = size_t(maxIndex);
-  counts.unsafe_col(1).max(maxIndex);
-  childMajorities[1] = size_t(maxIndex);
-
-  // Calculate the probabilities.
-  childProbabilities = arma::conv_to<arma::mat>::from(counts);
-  for (size_t i = 0; i < childProbabilities.n_cols; ++i)
-  {
-    const double colsum = arma::accu(childProbabilities.col(i));
-    if (std::abs(colsum) > 0.0)
-      childProbabilities.col(i) /= arma::accu(childProbabilities.col(i));
-    else
-      childProbabilities.col(i).fill(1.0 / ((double) counts.n_rows));
-  }
-
   // Create the according SplitInfo object.
   splitInfo = SplitInfo(bestSplit);
-}
-
-template<typename FitnessFunction, typename ObservationType>
-size_t BinaryNumericSplit<FitnessFunction, ObservationType>::MajorityClass()
-    const
-{
-  arma::uword maxIndex;
-  classCounts.max(maxIndex);
-  return size_t(maxIndex);
-}
-
-template<typename FitnessFunction, typename ObservationType>
-void BinaryNumericSplit<FitnessFunction, ObservationType>::
-    Probabilities(arma::rowvec& probabilities) const
-{
-  probabilities = arma::conv_to<arma::rowvec>::from(classCounts) /
-      arma::accu(classCounts);
 }
 
 template<typename FitnessFunction, typename ObservationType>

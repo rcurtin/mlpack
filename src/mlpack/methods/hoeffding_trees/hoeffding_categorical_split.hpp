@@ -89,20 +89,17 @@ class HoeffdingCategoricalSplit
 
   /**
    * Gather the information for a split: get the labels of the child majorities,
-   * and initialize the SplitInfo object.
+   * and initialize the SplitInfo object.  The childCounts matrix will be set to
+   * have number of rows equal to the number of classes and number of columns
+   * equal to the number of children.  Each element will represent the number of
+   * points for the given class seen by the given child.
    *
-   * @param childMajorities Majorities of child nodes to be created.
-   * @param childProbabilities Probabilities of each class for each child.
+   * @param childCounts Counts of the number of points in each class seen by
+   *      each child.
    * @param splitInfo Information for splitting.
    */
-  void Split(arma::Col<size_t>& childMajorities,
-             arma::mat& childProbabilities,
+  void Split(arma::Mat<size_t>& childCounts,
              SplitInfo& splitInfo);
-
-  //! Get the majority class seen so far.
-  size_t MajorityClass() const;
-  //! Get the probability of each class given the points seen so far.
-  void Probabilities(arma::rowvec& probabilities) const;
 
   //! Serialize the categorical split.
   template<typename Archive>

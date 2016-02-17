@@ -104,14 +104,8 @@ class HoeffdingNumericSplit
    * Return the majority class of each child to be created, if a split on this
    * dimension was performed.  Also create the split object.
    */
-  void Split(arma::Col<size_t>& childMajorities,
-             arma::mat& childProbabilities,
+  void Split(arma::Mat<size_t>& childCounts,
              SplitInfo& splitInfo) const;
-
-  //! Return the majority class.
-  size_t MajorityClass() const;
-  //! Get the probabilities of each class.
-  void Probabilities(arma::rowvec& probabilities) const;
 
   //! Return the number of bins.
   size_t Bins() const { return bins; }

@@ -112,79 +112,13 @@ void HoeffdingNumericSplit<FitnessFunction, ObservationType>::
 
 template<typename FitnessFunction, typename ObservationType>
 void HoeffdingNumericSplit<FitnessFunction, ObservationType>::Split(
-    arma::Col<size_t>& childMajorities,
-    arma::mat& childProbabilities,
+    arma::Mat<size_t>& childCounts,
     SplitInfo& splitInfo) const
 {
-  childMajorities.set_size(sufficientStatistics.n_cols);
-  childProbabilities = arma::conv_to<arma::mat>::from(sufficientStatistics);
-  for (size_t i = 0; i < sufficientStatistics.n_cols; ++i)
-  {
-    arma::uword maxIndex = 0;
-    sufficientStatistics.unsafe_col(i).max(maxIndex);
-    childMajorities[i] = size_t(maxIndex);
-
-    const double colsum = arma::accu(childProbabilities.col(i));
-    if (std::abs(colsum) > 0.0)
-      childProbabilities.col(i) /= arma::accu(childProbabilities.col(i));
-    else
-      childProbabilities.col(i).fill(1.0 /
-          (double) sufficientStatistics.n_rows);
-  }
+  childCounts = sufficientStatistics;
 
   // Create the SplitInfo object.
   splitInfo = SplitInfo(splitPoints);
-}
-
-template<typename FitnessFunction, typename ObservationType>
-size_t HoeffdingNumericSplit<FitnessFunction, ObservationType>::
-    MajorityClass() const
-{
-  // If we haven't yet determined the bins, we must calculate this by hand.
-  if (samplesSeen < observationsBeforeBinning)
-  {
-    arma::Col<size_t> classes(sufficientStatistics.n_rows);
-    classes.zeros();
-
-    for (size_t i = 0; i < samplesSeen; ++i)
-      classes[labels[i]]++;
-
-    arma::uword majorityClass;
-    classes.max(majorityClass);
-    return size_t(majorityClass);
-  }
-  else
-  {
-    // We've calculated the bins, so we can just sum over the sufficient
-    // statistics.
-    arma::Col<size_t> classCounts = arma::sum(sufficientStatistics, 1);
-
-    arma::uword maxIndex = 0;
-    classCounts.max(maxIndex);
-    return size_t(maxIndex);
-  }
-}
-
-template<typename FitnessFunction, typename ObservationType>
-void HoeffdingNumericSplit<FitnessFunction, ObservationType>::
-    Probabilities(arma::rowvec& probabilities) const
-{
-  // If we haven't yet determined the bins, we must calculate this by hand.
-  if (samplesSeen < observationsBeforeBinning)
-  {
-    probabilities.zeros(sufficientStatistics.n_rows);
-    for (size_t i = 0; i < samplesSeen; ++i)
-      probabilities[labels[i]]++;
-  }
-  else
-  {
-    // We've calculated the bins, so we can just sum over the sufficient
-    // statistics.
-    probabilities =
-        arma::conv_to<arma::rowvec>::from(arma::sum(sufficientStatistics, 1));
-  }
-
-  probabilities /= arma::accu(probabilities);
 }
 
 template<typename FitnessFunction, typename ObservationType>

@@ -12,6 +12,7 @@
 #include "gini_impurity.hpp"
 #include "hoeffding_numeric_split.hpp"
 #include "hoeffding_categorical_split.hpp"
+#include "all_dimension_split.hpp"
 
 namespace mlpack {
 namespace tree {
@@ -50,7 +51,9 @@ template<typename FitnessFunction = GiniImpurity,
          template<typename> class NumericSplitType =
              HoeffdingDoubleNumericSplit,
          template<typename> class CategoricalSplitType =
-             HoeffdingCategoricalSplit
+             HoeffdingCategoricalSplit,
+         template<typename, template<typename> class, template<typename> class>
+             class SplitSelectionStrategyType = AllDimensionSplit
 >
 class HoeffdingTree
 {
@@ -59,6 +62,9 @@ class HoeffdingTree
   typedef NumericSplitType<FitnessFunction> NumericSplit;
   //! Allow access to the categorical split type.
   typedef CategoricalSplitType<FitnessFunction> CategoricalSplit;
+  //! Allow access to the split selection strategy type.
+  typedef SplitSelectionStrategyType<FitnessFunction, NumericSplitType,
+      CategoricalSplitType> SplitSelectionStrategy;
 
   /**
    * Construct the Hoeffding tree with the given parameters and given training
@@ -92,10 +98,9 @@ class HoeffdingTree
                 const size_t maxSamples = 0,
                 const size_t checkInterval = 100,
                 const size_t minSamples = 100,
-                const CategoricalSplitType<FitnessFunction>& categoricalSplitIn
-                    = CategoricalSplitType<FitnessFunction>(0, 0),
-                const NumericSplitType<FitnessFunction>& numericSplitIn =
-                    NumericSplitType<FitnessFunction>(0));
+                const CategoricalSplit& categoricalSplitIn =
+                    CategoricalSplit(0, 0),
+                const NumericSplit& numericSplitIn = NumericSplit(0));
 
   /**
    * Construct the Hoeffding tree with the given parameters, but training on no
@@ -122,12 +127,9 @@ class HoeffdingTree
                 const size_t maxSamples = 0,
                 const size_t checkInterval = 100,
                 const size_t minSamples = 100,
-                const CategoricalSplitType<FitnessFunction>& categoricalSplitIn
-                    = CategoricalSplitType<FitnessFunction>(0, 0),
-                const NumericSplitType<FitnessFunction>& numericSplitIn =
-                    NumericSplitType<FitnessFunction>(0),
-                std::unordered_map<size_t, std::pair<size_t, size_t>>*
-                    dimensionMappings = NULL);
+                const CategoricalSplit& categoricalSplitIn =
+                    CategoricalSplit(0, 0),
+                const NumericSplit& numericSplitIn = NumericSplit(0));
 
   /**
    * Copy another tree (warning: this will duplicate the tree entirely, and may
@@ -176,13 +178,6 @@ class HoeffdingTree
   template<typename VecType>
   void Train(const VecType& point, const size_t label);
 
-  /**
-   * Check if a split would satisfy the conditions of the Hoeffding bound with
-   * the node's specified success probability.  If so, the number of children
-   * that would be created is returned.  If not, 0 is returned.
-   */
-  size_t SplitCheck();
-
   //! Get the splitting dimension (size_t(-1) if no split).
   size_t SplitDimension() const { return splitDimension; }
 
@@ -191,6 +186,8 @@ class HoeffdingTree
   //! Modify the majority class.
   size_t& MajorityClass() { return majorityClass; }
 
+  //! Get the counts of each class (based on training samples).
+  const arma::Row<size_t>& ClassCounts() const { return classCounts; }
   //! Get the probabilities of each class (based on training samples).
   const arma::rowvec& Probabilities() const { return probabilities; }
 
@@ -293,27 +290,13 @@ class HoeffdingTree
   template<typename VecType>
   void Probabilities(const VecType& point, arma::rowvec& probabilities) const;
 
-  /**
-   * Given that this node should split, create the children.
-   */
-  void CreateChildren();
-
   //! Serialize the split.
   template<typename Archive>
   void Serialize(Archive& ar, const unsigned int /* version */);
 
  private:
-  // We need to keep some information for before we have split.
-
-  //! Information for splitting of numeric features (used before split).
-  std::vector<NumericSplitType<FitnessFunction>> numericSplits;
-  //! Information for splitting of categorical features (used before split).
-  std::vector<CategoricalSplitType<FitnessFunction>> categoricalSplits;
-
-  //! This structure is owned by this node only if it is the root of the tree.
-  std::unordered_map<size_t, std::pair<size_t, size_t>>* dimensionMappings;
-  //! Indicates whether or not we own the mappings.
-  bool ownsMappings;
+  // Information for splitting.  NULL if we've already split.
+  SplitSelectionStrategy* split;
 
   //! The number of samples seen so far by this node.
   size_t numSamples;
@@ -338,12 +321,15 @@ class HoeffdingTree
   size_t splitDimension;
   //! The majority class of this node.
   size_t majorityClass;
-  //! The empirical probability of a point this node saw having each class.
+  //! The counts of every class this node has seen.  As doubles, for easy
+  //! division.
+  arma::Row<size_t> classCounts;
+  //! The probabilities of every class.
   arma::rowvec probabilities;
   //! If the split is categorical, this holds the splitting information.
-  typename CategoricalSplitType<FitnessFunction>::SplitInfo categoricalSplit;
+  typename CategoricalSplit::SplitInfo categoricalSplit;
   //! If the split is numeric, this holds the splitting information.
-  typename NumericSplitType<FitnessFunction>::SplitInfo numericSplit;
+  typename NumericSplit::SplitInfo numericSplit;
   //! If the split has occurred, these are the children.
   std::vector<HoeffdingTree*> children;
 };

@@ -234,15 +234,29 @@ BOOST_AUTO_TEST_CASE(InformationGainRangeTest)
  * Feed the HoeffdingCategoricalSplit class many examples, all from the same
  * class, and verify that the majority class is correct.
  */
-BOOST_AUTO_TEST_CASE(HoeffdingCategoricalSplitMajorityClassTest)
+BOOST_AUTO_TEST_CASE(HoeffdingTreeCategoricalSplitMajorityClassTest)
 {
   // Ten categories, three classes.
-  HoeffdingCategoricalSplit<GiniImpurity> split(10, 3);
+  data::DatasetInfo info(1);
+  info.MapString("0", 0);
+  info.MapString("1", 0);
+  info.MapString("2", 0);
+  info.MapString("3", 0);
+  info.MapString("4", 0);
+  info.MapString("5", 0);
+  info.MapString("6", 0);
+  info.MapString("7", 0);
+  info.MapString("8", 0);
+  info.MapString("9", 0);
+
+  HoeffdingTree<> tree(info, 3);
 
   for (size_t i = 0; i < 500; ++i)
   {
-    split.Train(mlpack::math::RandInt(0, 10), 1);
-    BOOST_REQUIRE_EQUAL(split.MajorityClass(), 1);
+    arma::vec point(1);
+    point[0] = mlpack::math::RandInt(0, 10);
+    tree.Train(point, 1);
+    BOOST_REQUIRE_EQUAL(tree.MajorityClass(), 1);
   }
 }
 
@@ -252,14 +266,30 @@ BOOST_AUTO_TEST_CASE(HoeffdingCategoricalSplitMajorityClassTest)
 BOOST_AUTO_TEST_CASE(HoeffdingCategoricalSplitHarderMajorityClassTest)
 {
   // Ten categories, three classes.
-  HoeffdingCategoricalSplit<GiniImpurity> split(10, 3);
+  data::DatasetInfo info(1);
+  info.MapString("0", 0);
+  info.MapString("1", 0);
+  info.MapString("2", 0);
+  info.MapString("3", 0);
+  info.MapString("4", 0);
+  info.MapString("5", 0);
+  info.MapString("6", 0);
+  info.MapString("7", 0);
+  info.MapString("8", 0);
+  info.MapString("9", 0);
 
-  split.Train(mlpack::math::RandInt(0, 10), 1);
+  HoeffdingTree<> tree(info, 3);
+
+  arma::vec point(1);
+  point[0] = mlpack::math::RandInt(0, 10);
+  tree.Train(point, 1);
   for (size_t i = 0; i < 250; ++i)
   {
-    split.Train(mlpack::math::RandInt(0, 10), 1);
-    split.Train(mlpack::math::RandInt(0, 10), 2);
-    BOOST_REQUIRE_EQUAL(split.MajorityClass(), 1);
+    point[0] = mlpack::math::RandInt(0, 10);
+    tree.Train(point, 1);
+    point[0] = mlpack::math::RandInt(0, 10);
+    tree.Train(point, 2);
+    BOOST_REQUIRE_EQUAL(tree.MajorityClass(), 1);
   }
 }
 
@@ -326,24 +356,21 @@ BOOST_AUTO_TEST_CASE(HoeffdingCategoricalSplitSplitTest)
   HoeffdingCategoricalSplit<GiniImpurity>::SplitInfo splitInfo(3);
 
   // Create the children.
-  arma::Col<size_t> childMajorities;
-  arma::mat childProbabilities;
-  split.Split(childMajorities, childProbabilities, splitInfo);
+  arma::Mat<size_t> childCounts;
+  split.Split(childCounts, splitInfo);
 
-  BOOST_REQUIRE_EQUAL(childMajorities.n_elem, 3);
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_cols, 3);
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_rows, 3);
-  BOOST_REQUIRE_CLOSE(arma::accu(childProbabilities), 3.0, 1e-5);
+  BOOST_REQUIRE_EQUAL(childCounts.n_cols, 3);
+  BOOST_REQUIRE_EQUAL(childCounts.n_rows, 3);
   BOOST_REQUIRE_EQUAL(splitInfo.CalculateDirection(0), 0);
   BOOST_REQUIRE_EQUAL(splitInfo.CalculateDirection(1), 1);
   BOOST_REQUIRE_EQUAL(splitInfo.CalculateDirection(2), 2);
 }
 
 /**
- * If we feed the HoeffdingTree a ton of points of the same class, it should
+ * If we feed the AllDimensionSplit a ton of points of the same class, it should
  * not suggest that we split.
  */
-BOOST_AUTO_TEST_CASE(HoeffdingTreeNoSplitTest)
+BOOST_AUTO_TEST_CASE(AllDimensionSplitNoSplitTest)
 {
   // Make all dimensions categorical.
   data::DatasetInfo info(3);
@@ -357,7 +384,7 @@ BOOST_AUTO_TEST_CASE(HoeffdingTreeNoSplitTest)
   info.MapString("cat1", 2);
   info.MapString("cat2", 2);
 
-  HoeffdingTree<> split(info, 2, 0.95, 5000, 1);
+  AllDimensionSplit<> split(info, 2);
 
   // Feed it samples.
   for (size_t i = 0; i < 1000; ++i)
@@ -369,15 +396,28 @@ BOOST_AUTO_TEST_CASE(HoeffdingTreeNoSplitTest)
     testPoint(2) = mlpack::math::RandInt(0, 2);
     split.Train(testPoint, 0); // Always label 0.
 
-    BOOST_REQUIRE_EQUAL(split.SplitCheck(), 0);
+    arma::Mat<size_t> childCounts;
+    CategoricalSplitInfo catInfo(1);
+    NumericSplitInfo<double> numInfo;
+    size_t splitDimension;
+    BOOST_REQUIRE_EQUAL(split.SplitCheck(1e-5, false, childCounts,
+        splitDimension, catInfo, numInfo), 0);
   }
+
+  // Even if we force it, it should still refuse to split!
+  arma::Mat<size_t> childCounts;
+  CategoricalSplitInfo catInfo(1);
+  NumericSplitInfo<double> numInfo;
+  size_t splitDimension;
+  BOOST_REQUIRE_EQUAL(split.SplitCheck(1e-5, true, childCounts, splitDimension,
+      catInfo, numInfo), 0);
 }
 
 /**
  * If we feed the HoeffdingTree a ton of points of two different classes, it
  * should very clearly suggest that we split (eventually).
  */
-BOOST_AUTO_TEST_CASE(HoeffdingTreeEasySplitTest)
+BOOST_AUTO_TEST_CASE(AllDimensionSplitEasySplitTest)
 {
   // It'll be a two-dimensional dataset with two categories each.  In the first
   // dimension, category 0 will only receive points with class 0, and category 1
@@ -388,46 +428,56 @@ BOOST_AUTO_TEST_CASE(HoeffdingTreeEasySplitTest)
   info.MapString("cat1", 0);
   info.MapString("cat0", 1);
 
-  HoeffdingTree<> tree(info, 2, 0.95, 5000, 5000 /* never check for splits */);
+  AllDimensionSplit<> split(info, 2);
 
   // Feed samples from each class.
   for (size_t i = 0; i < 500; ++i)
-  {
-    tree.Train(arma::Col<size_t>("0 0"), 0);
-    tree.Train(arma::Col<size_t>("1 0"), 1);
-  }
-
-  // Now it should be ready to split.
-  BOOST_REQUIRE_EQUAL(tree.SplitCheck(), 2);
-  BOOST_REQUIRE_EQUAL(tree.SplitDimension(), 0);
-}
-
-/**
- * If we force a success probability of 1, it should never split.
- */
-BOOST_AUTO_TEST_CASE(HoeffdingTreeProbability1SplitTest)
-{
-  // It'll be a two-dimensional dataset with two categories each.  In the first
-  // dimension, category 0 will only receive points with class 0, and category 1
-  // will only receive points with class 1.  In the second dimension, all points
-  // will have category 0 (so it is useless).
-  data::DatasetInfo info(2);
-  info.MapString("cat0", 0);
-  info.MapString("cat1", 0);
-  info.MapString("cat0", 1);
-
-  HoeffdingTree<> split(info, 2, 1.0, 12000, 1 /* always check for splits */);
-
-  // Feed samples from each class.
-  for (size_t i = 0; i < 5000; ++i)
   {
     split.Train(arma::Col<size_t>("0 0"), 0);
     split.Train(arma::Col<size_t>("1 0"), 1);
   }
 
-  // But because the success probability is 1, it should never split.
-  BOOST_REQUIRE_EQUAL(split.SplitCheck(), 0);
-  BOOST_REQUIRE_EQUAL(split.SplitDimension(), size_t(-1));
+  // Now it should be ready to split.
+  arma::Mat<size_t> childCounts;
+  CategoricalSplitInfo catInfo(1);
+  NumericSplitInfo<double> numInfo;
+  size_t splitDimension;
+  BOOST_REQUIRE_EQUAL(split.SplitCheck(1e-5, false, childCounts, splitDimension,
+      catInfo, numInfo), 2);
+  BOOST_REQUIRE_EQUAL(splitDimension, 0);
+}
+
+/**
+ * If we force a success probability of 1, it should never split.
+ */
+BOOST_AUTO_TEST_CASE(AllDimensionSplitProbability1SplitTest)
+{
+  // It'll be a two-dimensional dataset with two categories each.  In the first
+  // dimension, category 0 will only receive points with class 0, and category 1
+  // will only receive points with class 1.  In the second dimension, all points
+  // will have category 0 (so it is useless).
+  data::DatasetInfo info(2);
+  info.MapString("cat0", 0);
+  info.MapString("cat1", 0);
+  info.MapString("cat0", 1);
+
+  AllDimensionSplit<> split(info, 2);
+
+  // Feed samples from each class.
+  arma::Mat<size_t> childCounts;
+  size_t splitDimension = size_t(-1);
+  CategoricalSplitInfo catInfo(1);
+  NumericSplitInfo<double> numInfo;
+  for (size_t i = 0; i < 5000; ++i)
+  {
+    split.Train(arma::Col<size_t>("0 0"), 0);
+    split.Train(arma::Col<size_t>("1 0"), 1);
+
+    // But because the success probability is 1, it should never split.
+    BOOST_REQUIRE_EQUAL(split.SplitCheck(std::numeric_limits<double>::max(),
+        false, childCounts, splitDimension, catInfo, numInfo), 0);
+    BOOST_REQUIRE_EQUAL(splitDimension, size_t(-1));
+  }
 }
 
 /**
@@ -444,7 +494,7 @@ BOOST_AUTO_TEST_CASE(HoeffdingTreeAlmostPerfectSplit)
   info.MapString("cat0", 1);
   info.MapString("cat1", 1);
 
-  HoeffdingTree<> split(info, 2, 0.95, 5000, 5000 /* never check for splits */);
+  AllDimensionSplit<> split(info, 2);
 
   // Feed samples.
   for (size_t i = 0; i < 500; ++i)
@@ -460,10 +510,16 @@ BOOST_AUTO_TEST_CASE(HoeffdingTreeAlmostPerfectSplit)
       split.Train(arma::Col<size_t>("0 1"), 1);
   }
 
+  arma::Mat<size_t> childCounts;
+  size_t splitDimension = size_t(-1);
+  CategoricalSplitInfo catInfo(1);
+  NumericSplitInfo<double> numInfo;
+
   // Ensure that splitting should happen.
-  BOOST_REQUIRE_EQUAL(split.SplitCheck(), 2);
+  BOOST_REQUIRE_EQUAL(split.SplitCheck(0.027367 /* alpha = 0.95 */, false,
+      childCounts, splitDimension, catInfo, numInfo), 2);
   // Make sure that it's split on the correct dimension.
-  BOOST_REQUIRE_EQUAL(split.SplitDimension(), 1);
+  BOOST_REQUIRE_EQUAL(splitDimension, 1);
 }
 
 /**
@@ -479,7 +535,7 @@ BOOST_AUTO_TEST_CASE(HoeffdingTreeEqualSplitTest)
   info.MapString("cat0", 1);
   info.MapString("cat1", 1);
 
-  HoeffdingTree<> split(info, 2, 0.95, 5000, 1);
+  AllDimensionSplit<> split(info, 2);
 
   // Feed samples.
   for (size_t i = 0; i < 500; ++i)
@@ -488,8 +544,14 @@ BOOST_AUTO_TEST_CASE(HoeffdingTreeEqualSplitTest)
     split.Train(arma::Col<size_t>("1 1"), 1);
   }
 
+  arma::Mat<size_t> childCounts;
+  size_t splitDimension = size_t(-1);
+  CategoricalSplitInfo catInfo(1);
+  NumericSplitInfo<double> numInfo;
+
   // Ensure that splitting should not happen.
-  BOOST_REQUIRE_EQUAL(split.SplitCheck(), 0);
+  BOOST_REQUIRE_EQUAL(split.SplitCheck(0.027367 /* alpha = 0.95 */, false,
+      childCounts, splitDimension, catInfo, numInfo), 0);
 }
 
 // This is used in the next test.
@@ -592,14 +654,17 @@ BOOST_AUTO_TEST_CASE(HoeffdingNumericSplitFitnessFunctionTest)
 /**
  * Make sure the majority class is correct in the samples before binning.
  */
-BOOST_AUTO_TEST_CASE(HoeffdingNumericSplitPreBinningMajorityClassTest)
+BOOST_AUTO_TEST_CASE(HoeffdingTreeNumericSplitPreBinningMajorityClassTest)
 {
-  HoeffdingNumericSplit<GiniImpurity> split(3, 10, 100);
+  data::DatasetInfo info(1);
+  HoeffdingTree<> tree(info, 3, 10);
 
   for (size_t i = 0; i < 100; ++i)
   {
-    split.Train(mlpack::math::Random(), 1);
-    BOOST_REQUIRE_EQUAL(split.MajorityClass(), 1);
+    arma::vec point(1);
+    point[0] = mlpack::math::Random();
+    tree.Train(point, 1);
+    BOOST_REQUIRE_EQUAL(tree.MajorityClass(), 1);
   }
 }
 
@@ -619,15 +684,6 @@ BOOST_AUTO_TEST_CASE(HoeffdingNumericSplitBimodalTest)
     split.Train(-mlpack::math::Random() - 0.3, 1);
   }
 
-  // Push the majority class to 1.
-  split.Train(-mlpack::math::Random() - 0.3, 1);
-  BOOST_REQUIRE_EQUAL(split.MajorityClass(), 1);
-
-  // Push the majority class back to 0.
-  split.Train(mlpack::math::Random() + 0.3, 0);
-  split.Train(mlpack::math::Random() + 0.3, 0);
-  BOOST_REQUIRE_EQUAL(split.MajorityClass(), 0);
-
   // Now the binning should be complete, and so the impurity should be
   // (0.5 * (1 - 0.5)) * 2 = 0.50 (it will be 0 in the two created children).
   double bestGain, secondBestGain;
@@ -638,13 +694,10 @@ BOOST_AUTO_TEST_CASE(HoeffdingNumericSplitBimodalTest)
   // Make sure that if we do create children, that the correct number of
   // children is created, and that the bins end up in the right place.
   NumericSplitInfo<> info;
-  arma::Col<size_t> childMajorities;
-  arma::mat childProbabilities;
-  split.Split(childMajorities, childProbabilities, info);
-  BOOST_REQUIRE_EQUAL(childMajorities.n_elem, 2);
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_cols, 2);
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_rows, 2);
-  BOOST_REQUIRE_CLOSE(arma::accu(childProbabilities), 2.0, 1e-5);
+  arma::Mat<size_t> childCounts;
+  split.Split(childCounts, info);
+  BOOST_REQUIRE_EQUAL(childCounts.n_cols, 2);
+  BOOST_REQUIRE_EQUAL(childCounts.n_rows, 2);
 
   // Now check the split info.
   for (size_t i = 0; i < 10; ++i)
@@ -679,16 +732,14 @@ BOOST_AUTO_TEST_CASE(BinaryNumericSplitSimpleSplitTest)
   }
 
   // Now, when we ask it to split, ensure that the split value is reasonable.
-  arma::Col<size_t> childMajorities;
-  arma::mat childProbabilities;
+  arma::Mat<size_t> childCounts;
   BinaryNumericSplitInfo<> splitInfo;
-  split.Split(childMajorities, childProbabilities, splitInfo);
+  split.Split(childCounts, splitInfo);
 
-  BOOST_REQUIRE_EQUAL(childMajorities[0], 0);
-  BOOST_REQUIRE_EQUAL(childMajorities[1], 1);
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_cols, 2);
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_rows, 2);
-  BOOST_REQUIRE_CLOSE(arma::accu(childProbabilities), 2.0, 1e-5);
+  BOOST_REQUIRE_EQUAL(childCounts.n_cols, 2);
+  BOOST_REQUIRE_EQUAL(childCounts.n_rows, 2);
+  BOOST_REQUIRE_GT(childCounts(0, 0), childCounts(1, 0));
+  BOOST_REQUIRE_GT(childCounts(1, 1), childCounts(0, 1));
   BOOST_REQUIRE_EQUAL(splitInfo.CalculateDirection(0.5), 0);
   BOOST_REQUIRE_EQUAL(splitInfo.CalculateDirection(1.5), 1);
   BOOST_REQUIRE_EQUAL(splitInfo.CalculateDirection(0.0), 0);
@@ -723,17 +774,14 @@ BOOST_AUTO_TEST_CASE(BinaryNumericSplitSimpleFourClassSplitTest)
   }
 
   // Now, when we ask it to split, ensure that the split value is reasonable.
-  arma::Col<size_t> childMajorities;
-  arma::mat childProbabilities;
+  arma::Mat<size_t> childCounts;
   BinaryNumericSplitInfo<> splitInfo;
-  split.Split(childMajorities, childProbabilities, splitInfo);
+  split.Split(childCounts, splitInfo);
 
   // We don't really care where it splits -- it can split anywhere.  But it has
   // to split in only two directions.
-  BOOST_REQUIRE_EQUAL(childMajorities.n_elem, 2);
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_cols, 2);
-  BOOST_REQUIRE_EQUAL(childProbabilities.n_rows, 4);
-  BOOST_REQUIRE_CLOSE(arma::accu(childProbabilities), 2.0, 1e-5);
+  BOOST_REQUIRE_EQUAL(childCounts.n_cols, 2);
+  BOOST_REQUIRE_EQUAL(childCounts.n_rows, 4);
 }
 
 /**
@@ -834,10 +882,12 @@ BOOST_AUTO_TEST_CASE(BinaryNumericHoeffdingTreeTest)
   }
 
   // Now train two streaming decision trees; one on the whole dataset, and one
-  // on streaming data.
+  // on streaming data.  The name "batchTree" is misleading since we're not
+  // training in batch mode.  Set the maximum number of samples to 1000.
   typedef HoeffdingTree<GiniImpurity, BinaryDoubleNumericSplit> TreeType;
-  TreeType batchTree(dataset, info, labels, 3, false);
-  TreeType streamTree(info, 3);
+  TreeType batchTree(dataset, info, labels, 3, false /* not batch mode */,
+      0.95, 1000);
+  TreeType streamTree(info, 3, 0.95, 1000);
   for (size_t i = 0; i < 9000; ++i)
     streamTree.Train(dataset.col(i), labels[i]);
 
@@ -1167,11 +1217,16 @@ BOOST_AUTO_TEST_CASE(CopyConstructorTest)
     BOOST_REQUIRE_EQUAL(node->MajorityClass(), otherNode->MajorityClass());
     BOOST_REQUIRE_EQUAL(node->NumChildren(), otherNode->NumChildren());
 
+    BOOST_REQUIRE_EQUAL(node->ClassCounts().n_elem,
+        otherNode->ClassCounts().n_elem);
     BOOST_REQUIRE_EQUAL(node->Probabilities().n_elem,
         otherNode->Probabilities().n_elem);
     for (size_t i = 0; i < node->Probabilities().n_elem; ++i)
+    {
+      BOOST_REQUIRE_EQUAL(node->ClassCounts()[i], otherNode->ClassCounts()[i]);
       BOOST_REQUIRE_CLOSE(node->Probabilities()[i],
           otherNode->Probabilities()[i], 1e-5);
+    }
 
     BOOST_REQUIRE_EQUAL(node->SplitDimension(), otherNode->SplitDimension());
 

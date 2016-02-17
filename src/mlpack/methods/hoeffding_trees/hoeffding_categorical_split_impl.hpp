@@ -53,50 +53,14 @@ void HoeffdingCategoricalSplit<FitnessFunction>::EvaluateFitnessFunction(
 
 template<typename FitnessFunction>
 void HoeffdingCategoricalSplit<FitnessFunction>::Split(
-    arma::Col<size_t>& childMajorities,
-    arma::mat& childProbabilities,
+    arma::Mat<size_t>& childCounts,
     SplitInfo& splitInfo)
 {
   // We'll make one child for each category.
-  childMajorities.set_size(sufficientStatistics.n_cols);
-  childProbabilities = arma::conv_to<arma::mat>::from(sufficientStatistics);
-  for (size_t i = 0; i < sufficientStatistics.n_cols; ++i)
-  {
-    arma::uword maxIndex = 0;
-    sufficientStatistics.unsafe_col(i).max(maxIndex);
-    childMajorities[i] = size_t(maxIndex);
-
-    const double colsum = arma::accu(childProbabilities.col(i));
-    if (std::abs(colsum) > 0.0)
-      childProbabilities.col(i) /= arma::accu(childProbabilities.col(i));
-    else
-      childProbabilities.col(i).fill(1.0 /
-          ((double) childProbabilities.n_rows));
-  }
+  childCounts = sufficientStatistics;
 
   // Create the according SplitInfo object.
   splitInfo = SplitInfo(sufficientStatistics.n_cols);
-}
-
-template<typename FitnessFunction>
-size_t HoeffdingCategoricalSplit<FitnessFunction>::MajorityClass() const
-{
-  // Calculate the class that we have seen the most of.
-  arma::Col<size_t> classCounts = arma::sum(sufficientStatistics, 1);
-
-  arma::uword maxIndex = 0;
-  classCounts.max(maxIndex);
-
-  return size_t(maxIndex);
-}
-
-template<typename FitnessFunction>
-void HoeffdingCategoricalSplit<FitnessFunction>::Probabilities(
-    arma::rowvec& probabilities) const
-{
-  probabilities = arma::conv_to<arma::rowvec>::from(
-      arma::sum(sufficientStatistics, 1));
-  probabilities /= arma::accu(probabilities);
 }
 
 } // namespace tree
