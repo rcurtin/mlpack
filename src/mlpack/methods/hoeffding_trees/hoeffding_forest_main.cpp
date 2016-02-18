@@ -9,6 +9,7 @@
 #include <mlpack/methods/hoeffding_trees/hoeffding_forest.hpp>
 #include <mlpack/methods/hoeffding_trees/binary_numeric_split.hpp>
 #include <mlpack/methods/hoeffding_trees/information_gain.hpp>
+#include <mlpack/methods/hoeffding_trees/single_random_dimension_split.hpp>
 #include <queue>
 
 using namespace std;
@@ -128,12 +129,12 @@ int main(int argc, char** argv)
       HoeffdingDoubleNumericSplit<InformationGain> ns(0, bins,
           observationsBeforeBinning);
       PerformActions<HoeffdingTree<InformationGain, HoeffdingDoubleNumericSplit,
-          HoeffdingCategoricalSplit>>(ns);
+          HoeffdingCategoricalSplit, SingleRandomDimensionSplit>>(ns);
     }
     else if (numericSplitStrategy == "binary")
     {
       PerformActions<HoeffdingTree<InformationGain, BinaryDoubleNumericSplit,
-          HoeffdingCategoricalSplit>>();
+          HoeffdingCategoricalSplit, SingleRandomDimensionSplit>>();
     }
     else
     {
@@ -152,12 +153,12 @@ int main(int argc, char** argv)
       HoeffdingDoubleNumericSplit<GiniImpurity> ns(0, bins,
           observationsBeforeBinning);
       PerformActions<HoeffdingTree<GiniImpurity, HoeffdingDoubleNumericSplit,
-          HoeffdingCategoricalSplit>>(ns);
+          HoeffdingCategoricalSplit, SingleRandomDimensionSplit>>(ns);
     }
     else if (numericSplitStrategy == "binary")
     {
       PerformActions<HoeffdingTree<GiniImpurity, BinaryDoubleNumericSplit,
-          HoeffdingCategoricalSplit>>();
+          HoeffdingCategoricalSplit, SingleRandomDimensionSplit>>();
     }
     else
     {
