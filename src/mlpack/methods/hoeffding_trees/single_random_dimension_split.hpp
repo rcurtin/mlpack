@@ -70,7 +70,7 @@ class SingleRandomDimensionSplit
    */
   SingleRandomDimensionSplit(const data::DatasetInfo& datasetInfo,
                              const size_t numClasses,
-                             SingleRandomDimensionSplit& other);
+                             const SingleRandomDimensionSplit& other);
 
   /**
    * Create the SingleRandomDimensionSplit object.  This will choose the random
@@ -137,15 +137,15 @@ class SingleRandomDimensionSplit
   void Serialize(Archive& ar, const unsigned int /* version */);
 
  private:
-  //! The random dimension.
-  size_t dimension;
   //! The dataset information.  We never own this.
   const data::DatasetInfo* datasetInfo;
+  //! The random dimension.
+  size_t dimension;
 
-  //! The numeric split info.
-  NumericSplitType<FitnessFunction> numericSplit;
   //! The categorical split info.
   CategoricalSplitType<FitnessFunction> categoricalSplit;
+  //! The numeric split info.
+  NumericSplitType<FitnessFunction> numericSplit;
 };
 
 } // namespace tree

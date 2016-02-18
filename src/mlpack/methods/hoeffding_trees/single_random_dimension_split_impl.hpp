@@ -25,7 +25,7 @@ SingleRandomDimensionSplit<
 >::SingleRandomDimensionSplit(const data::DatasetInfo& datasetInfo,
                               const size_t numClasses) :
     datasetInfo(&datasetInfo),
-    dimension(math::RandInt(0, datasetInfo.Dimensionality()),
+    dimension(math::RandInt(0, datasetInfo.Dimensionality())),
     categoricalSplit(datasetInfo.NumMappings(dimension), numClasses),
     numericSplit(numClasses)
 {
@@ -45,11 +45,10 @@ SingleRandomDimensionSplit<
                               const size_t numClasses,
                               const SingleRandomDimensionSplit& other) :
     datasetInfo(&datasetInfo),
-    dimension(math::RandInt(0, datasetInfo.Dimensionality()),
+    dimension(math::RandInt(0, datasetInfo.Dimensionality())),
     categoricalSplit(datasetInfo.NumMappings(dimension), numClasses,
         other.categoricalSplit),
-    numericSplit(datasetInfo.NumMappings(dimension), numClasses,
-        other.numericSplit)
+    numericSplit(numClasses, other.numericSplit)
 {
   // Nothing to do.
 }
@@ -70,11 +69,10 @@ SingleRandomDimensionSplit<
                               const NumericSplitType<FitnessFunction>&
                                   numericSplitIn) :
     datasetInfo(&datasetInfo),
-    dimension(math::RandInt(0, datasetInfo.Dimensionality()),
+    dimension(math::RandInt(0, datasetInfo.Dimensionality())),
     categoricalSplit(datasetInfo.NumMappings(dimension), numClasses,
         categoricalSplitIn),
-    numericSplit(datasetInfo.NumMappings(dimension), numClasses,
-        numericSplitIn)
+    numericSplit(numClasses, numericSplitIn)
 {
   // Nothing to do.
 }
@@ -124,7 +122,7 @@ size_t SingleRandomDimensionSplit<
     numericSplit.EvaluateFitnessFunction(largest, secondLargest);
 
   if ((largest > 0.0) &&
-      (largest - secondLargest > epsilon) || (forceSplit))
+      ((largest - secondLargest > epsilon) || (forceSplit)))
   {
     // We should split, so fill the necessary information and return the number
     // of children.
@@ -134,6 +132,7 @@ size_t SingleRandomDimensionSplit<
     else if (datasetInfo->Type(dimension) == data::Datatype::numeric)
       numericSplit.Split(childCounts, numericSplitInfo);
 
+    numChildren = childCounts.n_cols;
     splitDimension = dimension;
 
     return numChildren;
