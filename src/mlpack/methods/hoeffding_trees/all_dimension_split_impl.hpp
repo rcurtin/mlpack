@@ -211,6 +211,53 @@ size_t AllDimensionSplit<
   }
 }
 
+//! Serialize the object.
+template<typename FitnessFunction,
+         template<typename> class NumericSplitType,
+         template<typename> class CategoricalSplitType>
+template<typename Archive>
+void AllDimensionSplit<
+    FitnessFunction,
+    NumericSplitType,
+    CategoricalSplitType
+>::Serialize(Archive& ar, const unsigned int /* version */)
+{
+  using data::CreateNVP;
+
+  // We never own the dataset info.  We assume that the node that owns us will
+  // set the dataset info... before Serialize() is called!
+  if (Archive::is_loading::value)
+  {
+    // Re-initialize all of the splits.
+    numericSplits.clear();
+    categoricalSplits.clear();
+    for (size_t i = 0; i < datasetInfo->Dimensionality(); ++i)
+    {
+      if (datasetInfo->Type(i) == data::Datatype::categorical)
+        categoricalSplits.push_back(CategoricalSplitType<FitnessFunction>(
+            datasetInfo->NumMappings(i), 1));
+      else
+        numericSplits.push_back(NumericSplitType<FitnessFunction>(1));
+    }
+  }
+
+  // Serialize numeric splits.
+  for (size_t i = 0; i < numericSplits.size(); ++i)
+  {
+    std::ostringstream name;
+    name << "numericSplit" << i;
+    ar & CreateNVP(numericSplits[i], name.str());
+  }
+
+  // Serialize categorical splits.
+  for (size_t i = 0; i < categoricalSplits.size(); ++i)
+  {
+    std::ostringstream name;
+    name << "categoricalSplit" << i;
+    ar & CreateNVP(categoricalSplits[i], name.str());
+  }
+}
+
 } // namespace tree
 } // namespace mlpack
 

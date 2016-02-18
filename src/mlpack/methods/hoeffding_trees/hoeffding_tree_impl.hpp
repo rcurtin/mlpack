@@ -605,9 +605,8 @@ void HoeffdingTree<
     NumericSplitType,
     CategoricalSplitType,
     SplitSelectionStrategyType
->::Serialize(Archive& /* ar */, const unsigned int /* version */)
+>::Serialize(Archive& ar, const unsigned int /* version */)
 {
-  /*
   using data::CreateNVP;
 
   ar & CreateNVP(splitDimension, "splitDimension");
@@ -624,7 +623,6 @@ void HoeffdingTree<
 
     datasetInfo = d;
     ownsInfo = true;
-    ownsMappings = true; // We also own the mappings we loaded.
 
     // Clear the children.
     for (size_t i = 0; i < children.size(); ++i)
@@ -633,85 +631,34 @@ void HoeffdingTree<
   }
 
   ar & CreateNVP(majorityClass, "majorityClass");
+  ar & CreateNVP(classCounts, "classCounts");
   ar & CreateNVP(probabilities, "probabilities");
 
+  ar & CreateNVP(numSamples, "numSamples");
+  ar & CreateNVP(numClasses, "numClasses");
+  ar & CreateNVP(maxSamples, "maxSamples");
+  ar & CreateNVP(successProbability, "successProbability");
+
   // I think we have to handle older cases here...
-  if (new version)
-  {
-    if (splitDimension == size_t(-1))
-    {
-      // We have not yet split.  So we have to serialize the splits.
-      ar & CreateNVP(numSamples, "numSamples");
-      ar & CreateNVP(numClasses, "numClasses");
-      ar & CreateNVP(maxSamples, "maxSamples");
-      ar & CreateNVP(successProbability, "successProbability");
-
-      if (Archive::is_loading::value && split)
-        delete split;
-      ar & CreateNVP(split, "split");
-    }
-    else
-    {
-
-    }
-  }
-  else
-  {
-
-
-  // Depending on whether or not we have split yet, we may need to save
-  // different things.
   if (splitDimension == size_t(-1))
   {
-    // We have not yet split.  So we have to serialize the splits.
-    ar & CreateNVP(numSamples, "numSamples");
-    ar & CreateNVP(numClasses, "numClasses");
-    ar & CreateNVP(maxSamples, "maxSamples");
-    ar & CreateNVP(successProbability, "successProbability");
-
-    // Serialize the splits, but not if we haven't seen any samples yet (in
-    // which case we can just reinitialize).
+    // We have not yet split.  So we have to serialize the splits.  If we make a
+    // new split object, we *must* initialize the datasetInfo correctly before
+    // the object is serialized.
     if (Archive::is_loading::value)
     {
-      // Re-initialize all of the splits.
-      numericSplits.clear();
-      categoricalSplits.clear();
-      for (size_t i = 0; i < datasetInfo->Dimensionality(); ++i)
-      {
-        if (datasetInfo->Type(i) == data::Datatype::categorical)
-          categoricalSplits.push_back(CategoricalSplitType<FitnessFunction>(
-              datasetInfo->NumMappings(i), numClasses));
-        else
-          numericSplits.push_back(
-              NumericSplitType<FitnessFunction>(numClasses));
-      }
-
-      // Clear things we don't need.
-      categoricalSplit = typename CategoricalSplitType<FitnessFunction>::
-          SplitInfo(numClasses);
-      numericSplit = typename NumericSplitType<FitnessFunction>::SplitInfo();
+      if (split)
+        delete split;
+      split = new SplitSelectionStrategy(*datasetInfo, numClasses);
     }
+    ar & CreateNVP(*split, "split");
+    if (Archive::is_loading::value && split)
+      split->DatasetInfo() = datasetInfo;
 
-    // There's no need to serialize if there's no information contained in the
-    // splits.
-    if (numSamples == 0)
-      return;
-
-    // Serialize numeric splits.
-    for (size_t i = 0; i < numericSplits.size(); ++i)
-    {
-      std::ostringstream name;
-      name << "numericSplit" << i;
-      ar & CreateNVP(numericSplits[i], name.str());
-    }
-
-    // Serialize categorical splits.
-    for (size_t i = 0; i < categoricalSplits.size(); ++i)
-    {
-      std::ostringstream name;
-      name << "categoricalSplit" << i;
-      ar & CreateNVP(categoricalSplits[i], name.str());
-    }
+    // Clear things we don't need.
+    categoricalSplit = typename CategoricalSplitType<FitnessFunction>::
+        SplitInfo(numClasses);
+    numericSplit = typename NumericSplitType<FitnessFunction>::SplitInfo();
   }
   else
   {
@@ -739,24 +686,10 @@ void HoeffdingTree<
       name << "child" << i;
       ar & data::CreateNVP(*children[i], name.str());
 
-      // The child doesn't actually own its own DatasetInfo.  We do.  The same
-      // applies for the dimension mappings.
+      // The child doesn't actually own its own DatasetInfo.  We do.
       children[i]->ownsInfo = false;
-      children[i]->ownsMappings = false;
-    }
-
-    if (Archive::is_loading::value)
-    {
-      numericSplits.clear();
-      categoricalSplits.clear();
-
-      numSamples = 0;
-      numClasses = 0;
-      maxSamples = 0;
-      successProbability = 0.0;
     }
   }
-  */
 }
 
 } // namespace tree

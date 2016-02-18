@@ -35,6 +35,9 @@ class AllDimensionSplit
                         categoricalSplit,
                     const NumericSplitType<FitnessFunction>& numericSplit);
 
+  //! Set the datasetInfo object.
+  const data::DatasetInfo*& DatasetInfo() { return datasetInfo; }
+
   /**
    * Train the splits on a given point.
    */
