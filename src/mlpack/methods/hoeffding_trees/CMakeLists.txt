@@ -18,6 +18,8 @@ set(SOURCES
   hoeffding_tree_impl.hpp
   information_gain.hpp
   numeric_split_info.hpp
+  single_random_dimension_split.hpp
+  single_random_dimension_split_impl.hpp
 )
 
 # Add directory name to sources.
