@@ -112,7 +112,6 @@ void AllDimensionSplit<
   // Loop through each dimension of the point.
   size_t numericIndex = 0;
   size_t categoricalIndex = 0;
-//  std::cout << "train point on label " << label << ".\n";
 
   for (size_t i = 0; i < point.n_rows; ++i)
   {

@@ -57,7 +57,7 @@ class AllDimensionSplit
 
   /**
    * Create the AllDimensionSplit object.  This will initialize all the possible
-   * splits with the parameters of the splits in the other object.
+   * splits with the parameters of the splits in the given other objects.
    *
    * @param datasetInfo Dataset information.
    * @param numClasses Number of classes in dataset.
@@ -81,7 +81,23 @@ class AllDimensionSplit
 
   /**
    * Given the data we have currently collected, determine whether or not a
-   * split should be performed.  Returns the split dimension.
+   * split should be performed.  Returns the number of children if a split
+   * should be performed, and 0 otherwise.  If no split should be performed, the
+   * non-const parameters will not be modified.
+   *
+   * @param epsilon Amount by which the best gain must be better than the second
+   *     best gain to split.
+   * @param forceSplit If true, force a split regardless of the gain (as long as
+   *     the gain is positive).
+   * @param childCounts If the node should be split, this will be filled with
+   *     the counts of each class that belong to each child.  Each column
+   *     corresponds to a single child.
+   * @param splitDimension If the node should be split, this will be set to the
+   *     dimension on which the tree should be split.
+   * @param categoricalSplitInfo If the split is on a categorical dimension,
+   *     this will be filled with the split information.
+   * @param numericSplitInfo If the split is on a numeric dimension, this will
+   *     be filled with the split information.
    */
   size_t SplitCheck(
       const double epsilon,
@@ -93,7 +109,8 @@ class AllDimensionSplit
       typename NumericSplitType<FitnessFunction>::SplitInfo& numericSplitInfo);
 
   /**
-   * Serialize the object.
+   * Serialize the object.  Before this is called for loading, datasetInfo must
+   * be set to the desired dataset info!
    */
   template<typename Archive>
   void Serialize(Archive& ar, const unsigned int /* version */);
