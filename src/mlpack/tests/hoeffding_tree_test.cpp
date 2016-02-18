@@ -11,6 +11,7 @@
 #include <mlpack/methods/hoeffding_trees/hoeffding_categorical_split.hpp>
 #include <mlpack/methods/hoeffding_trees/binary_numeric_split.hpp>
 #include <mlpack/methods/hoeffding_trees/hoeffding_forest.hpp>
+#include <mlpack/methods/hoeffding_trees/single_random_dimension_split.hpp>
 
 #include <boost/test/unit_test.hpp>
 #include "old_boost_test_definitions.hpp"
@@ -1525,6 +1526,84 @@ BOOST_AUTO_TEST_CASE(HoeffdingForestSerializationTest)
     BOOST_REQUIRE_EQUAL(pred[i], binaryPred[i]);
     BOOST_REQUIRE_EQUAL(pred[i], textPred[i]);
   }
+}
+
+/**
+ * Make sure the SingleRandomDimensionSplit splits as soon as we feed it two
+ * points and the gain is greater than 0.
+ */
+BOOST_AUTO_TEST_CASE(SingleRandomDimensionSplitTest)
+{
+  // One feature, categorical, with two categories.
+  data::DatasetInfo info(1);
+  info.MapString("0", 0);
+  info.MapString("1", 0);
+
+  SingleRandomDimensionSplit<> split(info, 2);
+
+  split.Train(arma::Col<size_t>("0"), 0);
+  split.Train(arma::Col<size_t>("1"), 1);
+
+  const double epsilon = 0.01;
+  const bool force = false;
+  arma::Mat<size_t> childCounts;
+  size_t splitDimension = 2;
+  CategoricalSplitInfo catSplit(1);
+  NumericSplitInfo<double> numSplit;
+
+  const size_t numChildren = split.SplitCheck(epsilon, force, childCounts,
+      splitDimension, catSplit, numSplit);
+
+  BOOST_REQUIRE_EQUAL(numChildren, 2);
+  BOOST_REQUIRE_EQUAL(splitDimension, 0);
+  BOOST_REQUIRE_EQUAL(childCounts.n_rows, 2);
+  BOOST_REQUIRE_EQUAL(childCounts.n_cols, 2);
+  BOOST_REQUIRE_EQUAL(childCounts(0, 0), 1);
+  BOOST_REQUIRE_EQUAL(childCounts(1, 0), 0);
+  BOOST_REQUIRE_EQUAL(childCounts(0, 1), 0);
+  BOOST_REQUIRE_EQUAL(childCounts(1, 1), 1);
+}
+
+/**
+ * Make sure the SingleRandomDimensionSplit doesn't split if there is no gain.
+ */
+BOOST_AUTO_TEST_CASE(SingleRandomDimensionNoSplitTest)
+{
+  // One feature, categorical, with two categories.
+  data::DatasetInfo info(1);
+  info.MapString("0", 0);
+  info.MapString("1", 0);
+
+  SingleRandomDimensionSplit<> split(info, 2);
+
+  split.Train(arma::Col<size_t>("0"), 0);
+  split.Train(arma::Col<size_t>("1"), 0);
+  split.Train(arma::Col<size_t>("0"), 1);
+  split.Train(arma::Col<size_t>("1"), 1);
+
+  const double epsilon = 0.01;
+  const bool force = false;
+  arma::Mat<size_t> childCounts;
+  size_t splitDimension = 2;
+  CategoricalSplitInfo catSplit(1);
+  NumericSplitInfo<double> numSplit;
+
+  size_t numChildren = split.SplitCheck(epsilon, force, childCounts,
+      splitDimension, catSplit, numSplit);
+
+  BOOST_REQUIRE_EQUAL(numChildren, 0);
+  BOOST_REQUIRE_EQUAL(splitDimension, 2); // Should be unchanged.
+  BOOST_REQUIRE_EQUAL(childCounts.n_rows, 0);
+  BOOST_REQUIRE_EQUAL(childCounts.n_cols, 0);
+
+  // And it still should not split, even if we force it.
+  numChildren = split.SplitCheck(epsilon, true, childCounts, splitDimension,
+      catSplit, numSplit);
+
+  BOOST_REQUIRE_EQUAL(numChildren, 0);
+  BOOST_REQUIRE_EQUAL(splitDimension, 2); // Should be unchanged.
+  BOOST_REQUIRE_EQUAL(childCounts.n_rows, 0);
+  BOOST_REQUIRE_EQUAL(childCounts.n_cols, 0);
 }
 
 BOOST_AUTO_TEST_SUITE_END();
