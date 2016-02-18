@@ -20,15 +20,35 @@ class AllDimensionSplit
  public:
   /**
    * Create the AllDimensionSplit object.  This will initialize all the possible
-   * splits.
+   * splits with their default parameters.
+   *
+   * @param datasetInfo Dataset information.
+   * @param numClasses Number of classes in dataset.
    */
   AllDimensionSplit(const data::DatasetInfo& datasetInfo,
                     const size_t numClasses);
 
+  /**
+   * Create the AllDimensionSplit object.  This will initialize all the possible
+   * splits with the parameters of the splits in the other object.
+   *
+   * @param datasetInfo Dataset information.
+   * @param numClasses Number of classes in dataset.
+   * @param other AllDimensionSplit object to copy parameters from.
+   */
   AllDimensionSplit(const data::DatasetInfo& datasetInfo,
                     const size_t numClasses,
                     const AllDimensionSplit& other);
 
+  /**
+   * Create the AllDimensionSplit object.  This will initialize all the possible
+   * splits with the parameters of the splits in the other object.
+   *
+   * @param datasetInfo Dataset information.
+   * @param numClasses Number of classes in dataset.
+   * @param categoricalSplit Categorical split to take parameters from.
+   * @param numericSplit Numeric split to take parameters from.
+   */
   AllDimensionSplit(const data::DatasetInfo& datasetInfo,
                     const size_t numClasses,
                     const CategoricalSplitType<FitnessFunction>&
