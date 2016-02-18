@@ -316,7 +316,7 @@ BOOST_AUTO_TEST_CASE(HoeffdingCategoricalSplitEasyFitnessCheck)
   double bestGain, secondBestGain;
   split.EvaluateFitnessFunction(bestGain, secondBestGain);
   BOOST_REQUIRE_GT(bestGain, 0.0);
-  BOOST_REQUIRE_SMALL(secondBestGain, 1e-10);
+  BOOST_REQUIRE_EQUAL(secondBestGain, -DBL_MAX);
 }
 
 /**
@@ -331,7 +331,7 @@ BOOST_AUTO_TEST_CASE(HoeffdingCategoricalSplitNoImprovementFitnessTest)
   double bestGain, secondBestGain;
   split.EvaluateFitnessFunction(bestGain, secondBestGain);
   BOOST_REQUIRE_SMALL(bestGain, 1e-10);
-  BOOST_REQUIRE_SMALL(secondBestGain, 1e-10);
+  BOOST_REQUIRE_EQUAL(secondBestGain, -DBL_MAX);
 
   split.Train(0, 0);
   split.Train(1, 0);
@@ -341,7 +341,7 @@ BOOST_AUTO_TEST_CASE(HoeffdingCategoricalSplitNoImprovementFitnessTest)
   // Now, a split still gets us only 50% accuracy in each split bin.
   split.EvaluateFitnessFunction(bestGain, secondBestGain);
   BOOST_REQUIRE_SMALL(bestGain, 1e-10);
-  BOOST_REQUIRE_SMALL(secondBestGain, 1e-10);
+  BOOST_REQUIRE_EQUAL(secondBestGain, -DBL_MAX);
 }
 
 /**
@@ -648,7 +648,7 @@ BOOST_AUTO_TEST_CASE(HoeffdingNumericSplitFitnessFunctionTest)
     double bestGain, secondBestGain;
     split.EvaluateFitnessFunction(bestGain, secondBestGain);
     BOOST_REQUIRE_SMALL(bestGain, 1e-10);
-    BOOST_REQUIRE_SMALL(secondBestGain, 1e-10);
+    BOOST_REQUIRE_EQUAL(secondBestGain, -DBL_MAX);
   }
 }
 
@@ -690,7 +690,7 @@ BOOST_AUTO_TEST_CASE(HoeffdingNumericSplitBimodalTest)
   double bestGain, secondBestGain;
   split.EvaluateFitnessFunction(bestGain, secondBestGain);
   BOOST_REQUIRE_CLOSE(bestGain, 0.50, 0.03);
-  BOOST_REQUIRE_SMALL(secondBestGain, 1e-10);
+  BOOST_REQUIRE_EQUAL(secondBestGain, -DBL_MAX);
 
   // Make sure that if we do create children, that the correct number of
   // children is created, and that the bins end up in the right place.

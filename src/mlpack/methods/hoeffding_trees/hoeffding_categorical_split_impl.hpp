@@ -48,7 +48,7 @@ void HoeffdingCategoricalSplit<FitnessFunction>::EvaluateFitnessFunction(
     double& secondBestFitness) const
 {
   bestFitness = FitnessFunction::Evaluate(sufficientStatistics);
-  secondBestFitness = 0.0; // We only split one possible way.
+  secondBestFitness = -DBL_MAX; // We only split one possible way.
 }
 
 template<typename FitnessFunction>

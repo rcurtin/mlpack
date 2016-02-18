@@ -103,7 +103,7 @@ void HoeffdingNumericSplit<FitnessFunction, ObservationType>::
     EvaluateFitnessFunction(double& bestFitness,
                             double& secondBestFitness) const
 {
-  secondBestFitness = 0.0; // We can only split one way.
+  secondBestFitness = -DBL_MAX; // We can only split one way.
   if (samplesSeen < observationsBeforeBinning)
     bestFitness = 0.0;
   else
