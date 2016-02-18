@@ -12,6 +12,7 @@
 #include <mlpack/methods/ann/network_traits.hpp>
 #include <mlpack/methods/ann/layer/layer_traits.hpp>
 #include <mlpack/methods/ann/performance_functions/cee_function.hpp>
+#include <mlpack/methods/ann/performance_functions/sparse_function.hpp>
 
 namespace mlpack {
 namespace ann /** Artificial Neural Network. */ {
@@ -37,12 +38,24 @@ class FFN
    *
    * @param network The network modules used to construct the network.
    * @param outputLayer The outputlayer used to evaluate the network.
-   */
-  FFN(const LayerTypes& network, OutputLayerType& outputLayer)
-    : network(network), outputLayer(outputLayer), trainError(0)
+   * @param performanceFunction Performance strategy used to claculate the error.
+   */  
+  template<typename Layer, typename OutLayer>
+  FFN(Layer &&network, OutLayer &&outputLayer,
+      PerformanceFunction performanceFunction = PerformanceFunction())
+    : network(std::forward<Layer>(network)),
+      outputLayer(std::forward<OutLayer>(outputLayer)),
+      performanceFunc(std::move(performanceFunction)),
+      trainError(0)
   {
-    // Nothing to do here.
-  }
+    static_assert(std::is_same<typename std::decay<Layer>::type,
+                  LayerTypes>::value,
+                  "The type of network must be LayerTypes.");
+
+    static_assert(std::is_same<typename std::decay<OutLayer>::type,
+                  OutputLayerType>::value,
+                  "The type of outputLayer must be OutputLayerType.");
+  }  
 
   /**
    * Run a single iteration of the feed forward algorithm, using the given
@@ -59,7 +72,7 @@ class FFN
                    ErrorType& error)
   {
     deterministic = false;
-    trainError += Evaluate(input, target, error);
+    trainError = Evaluate(input, target, error);
   }
 
   /**
@@ -71,7 +84,7 @@ class FFN
   template <typename InputType, typename ErrorType>
   void FeedBackward(const InputType& /* unused */, const ErrorType& error)
   {
-    Backward(error, network);
+    Backward<>(error, network);
     UpdateGradients<>(network);
   }
 
@@ -119,15 +132,22 @@ class FFN
     deterministic = false;
     ResetParameter(network);
 
-    Forward(input, network);
+    Forward(input, network);    
     return OutputError(target, error, network);
   }
 
   //! Get the error of the network.
-  double Error() const
-  {
-    return trainError;
-  }
+  double Error() const { return trainError; }
+
+  //! Get the constructed network object.
+  LayerTypes const& Model() const { return network; }
+  //! Modify the constructed network object.
+  LayerTypes& Model() { return network; }
+
+  //! Get the output layer object.
+  OutputLayerType const& OutputLayer() const { return outputLayer; }
+  //! Modify the output layer object.
+  OutputLayerType& OutputLayer() { return outputLayer; }
 
  private:
   /**
@@ -188,7 +208,7 @@ class FFN
 
     std::get<I>(t).Forward(std::get<I>(t).InputParameter(),
                            std::get<I>(t).OutputParameter());
-
+    
     ForwardTail<I + 1, Tp...>(t);
   }
 
@@ -205,7 +225,7 @@ class FFN
   {
     std::get<I>(t).Forward(std::get<I - 1>(t).OutputParameter(),
                            std::get<I>(t).OutputParameter());
-
+    
     ForwardTail<I + 1, Tp...>(t);
   }
 
@@ -245,10 +265,9 @@ class FFN
     outputLayer.CalculateError(
         std::get<sizeof...(Tp) - 1>(t).OutputParameter(), target, error);
 
-    // Masures the network's performance with the specified performance
+    // Measures the network's performance with the specified performance
     // function.
-    return PerformanceFunction::Error(
-        std::get<sizeof...(Tp) - 1>(t).OutputParameter(), target);
+    return performanceFunc.Error(network, target, error);
   }
 
   /**
@@ -267,7 +286,7 @@ class FFN
   {
     std::get<sizeof...(Tp) - I>(t).Backward(
         std::get<sizeof...(Tp) - I>(t).OutputParameter(), error,
-        std::get<sizeof...(Tp) - I>(t).Delta());
+        std::get<sizeof...(Tp) - I>(t).Delta());    
 
     BackwardTail<I + 1, DataType, Tp...>(error, t);
   }
@@ -280,11 +299,11 @@ class FFN
   template<size_t I = 1, typename DataType, typename... Tp>
   typename std::enable_if<I < (sizeof...(Tp)), void>::type
   BackwardTail(const DataType& error, std::tuple<Tp...>& t)
-  {
+  {    
     std::get<sizeof...(Tp) - I>(t).Backward(
         std::get<sizeof...(Tp) - I>(t).OutputParameter(),
         std::get<sizeof...(Tp) - I + 1>(t).Delta(),
-        std::get<sizeof...(Tp) - I>(t).Delta());
+        std::get<sizeof...(Tp) - I>(t).Delta());   
 
     BackwardTail<I + 1, DataType, Tp...>(error, t);
   }
@@ -297,18 +316,24 @@ class FFN
    * The general case peels off the first type and recurses, as usual with
    * variadic function templates.
    */
-  template<size_t I = 0, size_t Max = std::tuple_size<LayerTypes>::value - 1,
-      typename... Tp>
+  template<
+      size_t I = 0,
+      size_t Max = std::tuple_size<LayerTypes>::value - 1,
+      typename... Tp
+  >
   typename std::enable_if<I == Max, void>::type
   UpdateGradients(std::tuple<Tp...>& /* unused */) { /* Nothing to do here */ }
 
-  template<size_t I = 0, size_t Max = std::tuple_size<LayerTypes>::value - 1,
-      typename... Tp>
+  template<
+      size_t I = 0,
+      size_t Max = std::tuple_size<LayerTypes>::value - 1,
+      typename... Tp
+  >
   typename std::enable_if<I < Max, void>::type
   UpdateGradients(std::tuple<Tp...>& t)
-  {
+  {   
     Update(std::get<I>(t), std::get<I>(t).OutputParameter(),
-           std::get<I + 1>(t).Delta());
+           std::get<I + 1>(t).Delta());    
 
     UpdateGradients<I + 1, Max, Tp...>(t);
   }
@@ -337,16 +362,22 @@ class FFN
    * The general case peels off the first type and recurses, as usual with
    * variadic function templates.
    */
-  template<size_t I = 0, size_t Max = std::tuple_size<LayerTypes>::value - 1,
-      typename... Tp>
+  template<
+      size_t I = 0,
+      size_t Max = std::tuple_size<LayerTypes>::value - 1,
+      typename... Tp
+  >
   typename std::enable_if<I == Max, void>::type
   ApplyGradients(std::tuple<Tp...>& /* unused */)
   {
     /* Nothing to do here */
   }
 
-  template<size_t I = 0, size_t Max = std::tuple_size<LayerTypes>::value - 1,
-      typename... Tp>
+  template<
+      size_t I = 0,
+      size_t Max = std::tuple_size<LayerTypes>::value - 1,
+      typename... Tp
+  >
   typename std::enable_if<I < Max, void>::type
   ApplyGradients(std::tuple<Tp...>& t)
   {
@@ -388,7 +419,10 @@ class FFN
   LayerTypes network;
 
   //! The outputlayer used to evaluate the network
-  OutputLayerType& outputLayer;
+  OutputLayerType outputLayer;
+
+  //! Performance strategy used to claculate the error.
+  PerformanceFunction performanceFunc;
 
   //! The current training error of the network.
   double trainError;
@@ -410,6 +444,22 @@ class NetworkTraits<
   static const bool IsFNN = true;
   static const bool IsRNN = false;
   static const bool IsCNN = false;
+  static const bool IsSAE = false;
+};
+
+//! Network traits for the FFN network.
+template <
+  typename LayerTypes,
+  typename OutputLayerType
+>
+class NetworkTraits<
+    FFN<LayerTypes, OutputLayerType, SparseErrorFunction<arma::mat> > >
+{
+ public:
+  static const bool IsFNN = false;
+  static const bool IsRNN = false;
+  static const bool IsCNN = false;
+  static const bool IsSAE = true;
 };
 
 } // namespace ann

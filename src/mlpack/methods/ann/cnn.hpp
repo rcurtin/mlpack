@@ -38,9 +38,13 @@ class CNN
    *
    * @param network The network modules used to construct the network.
    * @param outputLayer The outputlayer used to evaluate the network.
+   * @param performanceFunction Performance strategy used to claculate the error.
    */
-  CNN(const LayerTypes& network, OutputLayerType& outputLayer)
-    : network(network), outputLayer(outputLayer), trainError(0)
+  CNN(const LayerTypes& network, OutputLayerType& outputLayer,
+      PerformanceFunction performanceFunction = PerformanceFunction())
+    : network(network), outputLayer(outputLayer),
+      performanceFunction(std::move(performanceFunction)),
+      trainError(0)
   {
     // Nothing to do here.
   }
@@ -125,10 +129,7 @@ class CNN
   }
 
   //! Get the error of the network.
-  double Error() const
-  {
-    return trainError;
-  }
+  double Error() const { return trainError; }
 
  private:
   /**
@@ -248,8 +249,7 @@ class CNN
 
     // Masures the network's performance with the specified performance
     // function.
-    return PerformanceFunction::Error(
-        std::get<sizeof...(Tp) - 1>(t).OutputParameter(), target);
+    return performanceFunction.Error(network, target, error);
   }
 
   /**
@@ -298,13 +298,19 @@ class CNN
    * The general case peels off the first type and recurses, as usual with
    * variadic function templates.
    */
-  template<size_t I = 0, size_t Max = std::tuple_size<LayerTypes>::value - 1,
-      typename... Tp>
+  template<
+      size_t I = 0,
+      size_t Max = std::tuple_size<LayerTypes>::value - 1,
+      typename... Tp
+  >
   typename std::enable_if<I == Max, void>::type
   UpdateGradients(std::tuple<Tp...>& /* unused */) { /* Nothing to do here */ }
 
-  template<size_t I = 0, size_t Max = std::tuple_size<LayerTypes>::value - 1,
-      typename... Tp>
+  template<
+      size_t I = 0,
+      size_t Max = std::tuple_size<LayerTypes>::value - 1,
+      typename... Tp
+  >
   typename std::enable_if<I < Max, void>::type
   UpdateGradients(std::tuple<Tp...>& t)
   {
@@ -338,16 +344,22 @@ class CNN
    * The general case peels off the first type and recurses, as usual with
    * variadic function templates.
    */
-  template<size_t I = 0, size_t Max = std::tuple_size<LayerTypes>::value - 1,
-      typename... Tp>
+  template<
+      size_t I = 0,
+      size_t Max = std::tuple_size<LayerTypes>::value - 1,
+      typename... Tp
+  >
   typename std::enable_if<I == Max, void>::type
   ApplyGradients(std::tuple<Tp...>& /* unused */)
   {
     /* Nothing to do here */
   }
 
-  template<size_t I = 0, size_t Max = std::tuple_size<LayerTypes>::value - 1,
-      typename... Tp>
+  template<
+      size_t I = 0,
+      size_t Max = std::tuple_size<LayerTypes>::value - 1,
+      typename... Tp
+  >
   typename std::enable_if<I < Max, void>::type
   ApplyGradients(std::tuple<Tp...>& t)
   {
@@ -391,6 +403,9 @@ class CNN
   //! The outputlayer used to evaluate the network
   OutputLayerType& outputLayer;
 
+  //! The class used to evaluate the performance of the network
+  PerformanceFunction performanceFunction;
+
   //! The current training error of the network.
   double trainError;
 
@@ -411,6 +426,7 @@ class NetworkTraits<
   static const bool IsFNN = false;
   static const bool IsRNN = false;
   static const bool IsCNN = true;
+  static const bool IsSAE = false;
 };
 
 } // namespace ann

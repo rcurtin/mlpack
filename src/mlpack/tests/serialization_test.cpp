@@ -51,6 +51,26 @@ using namespace std;
 BOOST_AUTO_TEST_SUITE(SerializationTest);
 
 /**
+ * Serialize a random cube.
+ */
+BOOST_AUTO_TEST_CASE(CubeSerializeTest)
+{
+  arma::cube m;
+  m.randu(2, 50, 50);
+  TestAllArmadilloSerialization(m);
+}
+
+/**
+ * Serialize an empty cube.
+ */
+BOOST_AUTO_TEST_CASE(EmptyCubeSerializeTest)
+{
+  arma::cube c;
+  TestAllArmadilloSerialization(c);
+}
+
+
+/**
  * Can we load and save an Armadillo matrix?
  */
 BOOST_AUTO_TEST_CASE(MatrixSerializeXMLTest)
@@ -63,7 +83,7 @@ BOOST_AUTO_TEST_CASE(MatrixSerializeXMLTest)
 /**
  * How about columns?
  */
-BOOST_AUTO_TEST_CASE(ColSerializeXMLTest)
+BOOST_AUTO_TEST_CASE(ColSerializeTest)
 {
   arma::vec m;
   m.randu(50, 1);
@@ -73,7 +93,7 @@ BOOST_AUTO_TEST_CASE(ColSerializeXMLTest)
 /**
  * How about rows?
  */
-BOOST_AUTO_TEST_CASE(RowSerializeXMLTest)
+BOOST_AUTO_TEST_CASE(RowSerializeTest)
 {
   arma::rowvec m;
   m.randu(1, 50);
@@ -90,7 +110,7 @@ BOOST_AUTO_TEST_CASE(EmptyMatrixSerializeTest)
 /**
  * Can we load and save a sparse Armadillo matrix?
  */
-BOOST_AUTO_TEST_CASE(SparseMatrixSerializeXMLTest)
+BOOST_AUTO_TEST_CASE(SparseMatrixSerializeTest)
 {
   arma::sp_mat m;
   m.sprandu(50, 50, 0.3);
@@ -100,7 +120,7 @@ BOOST_AUTO_TEST_CASE(SparseMatrixSerializeXMLTest)
 /**
  * How about columns?
  */
-BOOST_AUTO_TEST_CASE(SparseColSerializeXMLTest)
+BOOST_AUTO_TEST_CASE(SparseColSerializeTest)
 {
   arma::sp_vec m;
   m.sprandu(50, 1, 0.3);
@@ -110,7 +130,7 @@ BOOST_AUTO_TEST_CASE(SparseColSerializeXMLTest)
 /**
  * How about rows?
  */
-BOOST_AUTO_TEST_CASE(SparseRowSerializeXMLTest)
+BOOST_AUTO_TEST_CASE(SparseRowSerializeTest)
 {
   arma::sp_rowvec m;
   m.sprandu(1, 50, 0.3);
