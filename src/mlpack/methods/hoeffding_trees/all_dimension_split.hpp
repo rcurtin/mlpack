@@ -7,9 +7,24 @@
 #ifndef __MLPACK_METHODS_HOEFFDING_TREE_ALL_DIMENSION_SPLIT_HPP
 #define __MLPACK_METHODS_HOEFFDING_TREE_ALL_DIMENSION_SPLIT_HPP
 
+#include <mlpack/core.hpp>
+#include "gini_impurity.hpp"
+#include "hoeffding_numeric_split.hpp"
+#include "hoeffding_categorical_split.hpp"
+
 namespace mlpack {
 namespace tree {
 
+/**
+ * The AllDimensionSplit class is a split selection strategy for the
+ * HoeffdingTree class that considers all dimensions for splitting.  It is the
+ * standard decision tree split strategy, and will select the best of all
+ * possible splits.
+ *
+ * @tparam FitnessFunction Fitness function to evaluate gains with.
+ * @tparam NumericSplitType Type to use for numeric splits.
+ * @tparam CategoricalSplitType Type to use for categorical splits.
+ */
 template<typename FitnessFunction = GiniImpurity,
          template<typename> class NumericSplitType =
              HoeffdingDoubleNumericSplit,
