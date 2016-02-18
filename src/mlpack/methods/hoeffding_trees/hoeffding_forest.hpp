@@ -69,9 +69,6 @@ class HoeffdingForest
  private:
   std::vector<HoeffdingTreeType> trees;
 
-  std::vector<arma::Col<size_t>> dimensions;
-  arma::Col<size_t> dimensionCounts;
-
   const data::DatasetInfo* info;
   bool ownsInfo;
 

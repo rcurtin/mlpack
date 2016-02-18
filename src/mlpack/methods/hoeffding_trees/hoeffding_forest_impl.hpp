@@ -31,41 +31,10 @@ HoeffdingForest<HoeffdingTreeType>::HoeffdingForest(
     ownsInfo(false),
     numClasses(numClasses)
 {
-  dimensionCounts.zeros(forestSize);
+  // Initialize each tree.
   for (size_t i = 0; i < forestSize; ++i)
   {
-    // Generate dimensions for the tree.  We can't select zero dimensions.
-    arma::Col<size_t> selectedDimensions;
-    selectedDimensions.zeros(this->info->Dimensionality());
-    while ((dimensionCounts[i] = arma::sum(selectedDimensions)) == 0)
-    {
-      for (size_t d = 0; d < this->info->Dimensionality(); ++d)
-        selectedDimensions[d] = (size_t) math::RandInt(2);
-    }
-
-    // Now, assemble a new DatasetInfo to pass to the tree that we'll build.
-    data::DatasetInfo newInfo(dimensionCounts[i]);
-    dimensions.push_back(arma::Col<size_t>(dimensionCounts[i]));
-    size_t currentDim = 0;
-
-    for (size_t j = 0; j < this->info->Dimensionality(); ++j)
-    {
-      if (selectedDimensions[j] == 1)
-      {
-        dimensions[i][currentDim] = j;
-
-        // Extract information about this dimension; if it's categorical, we
-        // have to copy the mappings.  If it's numeric, this entire loop gets
-        // skipped.
-        for (size_t k = 0; k < this->info->NumMappings(j); ++k)
-          newInfo.MapString(this->info->UnmapString(k, j), currentDim);
-
-        ++currentDim;
-      }
-    }
-
-    // Now initialize the tree.
-    trees.push_back(HoeffdingTreeType(newInfo, numClasses, tree));
+    trees.push_back(HoeffdingTreeType(info, numClasses, tree));
   }
 }
 
@@ -81,14 +50,9 @@ template<typename VecType>
 void HoeffdingForest<HoeffdingTreeType>::Train(const VecType& point,
                                                const size_t label)
 {
+  // Train each tree in the forest.
   for (size_t i = 0; i < trees.size(); ++i)
-  {
-    arma::vec newPoint(dimensionCounts[i]);
-    for (size_t j = 0; j < dimensionCounts[i]; ++j)
-      newPoint[j] = point[dimensions[i][j]];
-
-    trees[i].Train(newPoint, label);
-  }
+    trees[i].Train(point, label);
 }
 
 template<typename HoeffdingTreeType>
@@ -97,14 +61,9 @@ void HoeffdingForest<HoeffdingTreeType>::Train(const MatType& data,
                                                const arma::Row<size_t>& labels,
                                                const bool batchTraining)
 {
+  // Train each tree in the forest.
   for (size_t i = 0; i < trees.size(); ++i)
-  {
-    arma::mat newData(dimensionCounts[i], data.n_cols);
-    for (size_t j = 0; j < dimensionCounts[i]; ++j)
-      newData.row(j) = data.row(dimensions[i][j]);
-
-    trees[i].Train(newData, labels, batchTraining);
-  }
+    trees[i].Train(data, labels, batchTraining);
 }
 
 template<typename HoeffdingTreeType>
@@ -119,12 +78,8 @@ size_t HoeffdingForest<HoeffdingTreeType>::Classify(const VecType& point) const
   // Add the probability contribution of each point.
   for (size_t i = 0; i < trees.size(); ++i)
   {
-    arma::vec newPoint(dimensionCounts[i]);
-    for (size_t j = 0; j < dimensionCounts[i]; ++j)
-      newPoint(j) = point(dimensions[i][j]);
-
     arma::rowvec treeProbs;
-    trees[i].Probabilities(newPoint, treeProbs);
+    trees[i].Probabilities(point, treeProbs);
 
     probabilities += treeProbs;
   }
@@ -149,12 +104,8 @@ void HoeffdingForest<HoeffdingTreeType>::Classify(const VecType& point,
   // Add the probability contribution of each point.
   for (size_t i = 0; i < trees.size(); ++i)
   {
-    arma::vec newPoint(dimensionCounts[i]);
-    for (size_t j = 0; j < dimensionCounts[i]; ++j)
-      newPoint(j) = point(dimensions[i][j]);
-
     arma::rowvec treeProbs;
-    trees[i].Probabilities(newPoint, treeProbs);
+    trees[i].Probabilities(point, treeProbs);
 
     probabilities += treeProbs;
   }
@@ -222,14 +173,6 @@ void HoeffdingForest<HoeffdingTreeType>::Serialize(
     oss << "tree" << i;
     ar & CreateNVP(trees[i], oss.str());
   }
-
-  // Load the dimensions used for each tree.  We don't have to loop here because
-  // the std::vector support works correctly for classes that have serialize()
-  // not Serialize() (which Armadillo classes do).
-  if (Archive::is_loading::value)
-    dimensions.clear();
-  ar & CreateNVP(dimensions, "dimensions");
-  ar & CreateNVP(dimensionCounts, "dimensionCounts");
 
   // Special handling for const object.
   data::DatasetInfo* d = NULL;
