@@ -80,6 +80,9 @@ PARAM_INT("observations_before_binning", "If the 'domingos' split strategy is "
     "used, this specifies the number of samples observed before binning is "
     "performed.", "o", 100);
 
+PARAM_INT("seed", "Random seed (if not specified, std::time(NULL) will be "
+    "used).", "s", 0);
+
 // Helper function for once we have chosen a tree type.
 template<typename TreeType>
 void PerformActions(const typename TreeType::NumericSplit& numericSplit =
@@ -88,6 +91,11 @@ void PerformActions(const typename TreeType::NumericSplit& numericSplit =
 int main(int argc, char** argv)
 {
   CLI::ParseCommandLine(argc, argv);
+
+  if (CLI::GetParam<int>("seed") == 0)
+    math::RandomSeed(std::time(NULL));
+  else
+    math::RandomSeed((size_t) CLI::GetParam<int>("seed"));
 
   // Check input parameters for validity.
   const string trainingFile = CLI::GetParam<string>("training_file");
