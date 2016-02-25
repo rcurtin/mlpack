@@ -102,10 +102,9 @@ class SingleRandomDimensionSplit
   /**
    * Given the data we have currently collected, determine whether or not a
    * split should be performed.  If only one split is possible on the random
-   * split dimension, this will always split as long as the gain is greater than
-   * 0.  If a split should be performed, the number of children will be
-   * returned; otherwise, 0 is returned.  If no split should be performed, the
-   * non-const parameters will not be modified.
+   * split dimension, this will always split.  If a split should be performed,
+   * the number of children will be returned; otherwise, 0 is returned.  If no
+   * split should be performed, the non-const parameters will not be modified.
    *
    * @param epsilon Amount by which the best gain must be better than the second
    *     best gain to split.
