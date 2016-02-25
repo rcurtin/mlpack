@@ -3,6 +3,9 @@
   * Refactor HoeffdingTree to allow different types of splits; a template
     parameter is added, but the API is otherwise identical.
 
+  * Add math::RandomUniqueArray() function for random sampling without
+    replacement.
+
 ### mlpack 2.0.1
 ###### 2016-02-04
   * Fix CMake to properly detect when MKL is being used with Armadillo.

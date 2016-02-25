@@ -6,6 +6,7 @@
  */
 #include <mlpack/core/math/clamp.hpp>
 #include <mlpack/core/math/random.hpp>
+#include <mlpack/core/math/random_unique_array.hpp>
 #include <mlpack/core/math/range.hpp>
 #include <boost/test/unit_test.hpp>
 #include "old_boost_test_definitions.hpp"
@@ -576,6 +577,45 @@ BOOST_AUTO_TEST_CASE(RangeContainsRange)
 
   BOOST_REQUIRE_EQUAL(a.Contains(b), true);
   BOOST_REQUIRE_EQUAL(b.Contains(a), true);
+}
+
+/**
+ * Fill a unique array entirely, so every element should be completely
+ * different.
+ */
+BOOST_AUTO_TEST_CASE(RandomUniqueArrayExhaustiveTest)
+{
+  arma::Col<size_t> array;
+  RandomUniqueArray(0, 10, 10, array);
+
+  for (size_t i = 0; i < 10; ++i)
+  {
+    BOOST_REQUIRE_LT(array[i], 10);
+    for (size_t j = 0; j < i; ++j)
+      BOOST_REQUIRE_NE(array[i], array[j]);
+  }
+}
+
+/**
+ * Fill a unique array, make sure no elements are the same.
+ */
+BOOST_AUTO_TEST_CASE(RandomUniqueArrayTest)
+{
+  arma::Col<size_t> array;
+
+  for (size_t iteration = 0; iteration < 10; ++iteration)
+  {
+    const size_t max = 100 + iteration * 200;
+
+    RandomUniqueArray(0, max, 20, array);
+
+    for (size_t i = 0; i < 20; ++i)
+    {
+      BOOST_REQUIRE_LT(array[i], max);
+      for (size_t j = 0; j < i; ++j)
+        BOOST_REQUIRE_NE(array[i], array[j]);
+    }
+  }
 }
 
 BOOST_AUTO_TEST_SUITE_END();
