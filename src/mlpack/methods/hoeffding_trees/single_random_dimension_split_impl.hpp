@@ -121,8 +121,7 @@ size_t SingleRandomDimensionSplit<
   else if (datasetInfo->Type(dimension) == data::Datatype::numeric)
     numericSplit.EvaluateFitnessFunction(largest, secondLargest);
 
-  if ((largest > 0.0) &&
-      ((largest - secondLargest > epsilon) || (forceSplit)))
+  if ((largest - secondLargest > epsilon) || forceSplit)
   {
     // We should split, so fill the necessary information and return the number
     // of children.

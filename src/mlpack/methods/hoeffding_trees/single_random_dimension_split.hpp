@@ -35,7 +35,8 @@ namespace tree {
  *
  * If the split type only has one possible split (i.e. categorical splits that
  * split in every direction), then SplitCheck() will return nonzero (indicating
- * the node should be split) as soon as the gain from splitting is positive.
+ * the node should be split) always.  This split does not guarantee positive
+ * gain when the split happens!
  *
  * @tparam FitnessFunction Fitness function to evaluate gains with.
  * @tparam NumericSplitType Type to use for numeric splits.
