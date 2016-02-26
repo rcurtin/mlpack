@@ -12,6 +12,7 @@
 #include <mlpack/methods/hoeffding_trees/binary_numeric_split.hpp>
 #include <mlpack/methods/hoeffding_trees/hoeffding_forest.hpp>
 #include <mlpack/methods/hoeffding_trees/single_random_dimension_split.hpp>
+#include <mlpack/methods/hoeffding_trees/multiple_random_dimension_split.hpp>
 
 #include <boost/test/unit_test.hpp>
 #include "old_boost_test_definitions.hpp"
@@ -1565,9 +1566,9 @@ BOOST_AUTO_TEST_CASE(SingleRandomDimensionSplitTest)
 }
 
 /**
- * Make sure the SingleRandomDimensionSplit doesn't split if there is no gain.
+ * Make sure the SingleRandomDimensionSplit does split if there is no gain.
  */
-BOOST_AUTO_TEST_CASE(SingleRandomDimensionNoSplitTest)
+BOOST_AUTO_TEST_CASE(SingleRandomDimensionNoGainSplitTest)
 {
   // One feature, categorical, with two categories.
   data::DatasetInfo info(1);
@@ -1591,19 +1592,81 @@ BOOST_AUTO_TEST_CASE(SingleRandomDimensionNoSplitTest)
   size_t numChildren = split.SplitCheck(epsilon, force, childCounts,
       splitDimension, catSplit, numSplit);
 
-  BOOST_REQUIRE_EQUAL(numChildren, 0);
-  BOOST_REQUIRE_EQUAL(splitDimension, 2); // Should be unchanged.
-  BOOST_REQUIRE_EQUAL(childCounts.n_rows, 0);
-  BOOST_REQUIRE_EQUAL(childCounts.n_cols, 0);
+  BOOST_REQUIRE_EQUAL(numChildren, 2);
+  BOOST_REQUIRE_EQUAL(splitDimension, 0); // Should be unchanged.
+  BOOST_REQUIRE_EQUAL(childCounts.n_rows, 2);
+  BOOST_REQUIRE_EQUAL(childCounts.n_cols, 2);
+}
 
-  // And it still should not split, even if we force it.
-  numChildren = split.SplitCheck(epsilon, true, childCounts, splitDimension,
-      catSplit, numSplit);
+/**
+ * Make sure that the MultipleRandomDimensionSplit does the same thing as the
+ * SingleRandomDimensionSplit when there is only one dimension.
+ */
+BOOST_AUTO_TEST_CASE(MultipleRandomDimensionSingleDimensionSplitTest)
+{
+  // One feature, categorical, with two categories.
+  data::DatasetInfo info(1);
+  info.MapString("0", 0);
+  info.MapString("1", 0);
 
-  BOOST_REQUIRE_EQUAL(numChildren, 0);
-  BOOST_REQUIRE_EQUAL(splitDimension, 2); // Should be unchanged.
-  BOOST_REQUIRE_EQUAL(childCounts.n_rows, 0);
-  BOOST_REQUIRE_EQUAL(childCounts.n_cols, 0);
+  MultipleRandomDimensionSplit<> split(info, 2, 1);
+
+  split.Train(arma::Col<double>("0"), 0);
+  split.Train(arma::Col<double>("1"), 0);
+  split.Train(arma::Col<double>("0"), 1);
+  split.Train(arma::Col<double>("1"), 1);
+
+  const double epsilon = 0.01;
+  const bool force = false;
+  arma::Mat<size_t> childCounts;
+  size_t splitDimension = 2;
+  CategoricalSplitInfo catSplit(1);
+  NumericSplitInfo<double> numSplit;
+
+  size_t numChildren = split.SplitCheck(epsilon, force, childCounts,
+      splitDimension, catSplit, numSplit);
+
+  BOOST_REQUIRE_EQUAL(numChildren, 2);
+  BOOST_REQUIRE_EQUAL(splitDimension, 0);
+  BOOST_REQUIRE_EQUAL(childCounts.n_rows, 2);
+  BOOST_REQUIRE_EQUAL(childCounts.n_cols, 2);
+}
+
+/**
+ * Make sure that the MultipleRandomDimensionSplit never splits when the two
+ * dimensions give identical gain.
+ */
+BOOST_AUTO_TEST_CASE(MultipleRandomDimensionNoSplitTest)
+{
+  // Two features, categorical, with two categories each.
+  data::DatasetInfo info(2);
+  info.MapString("0", 0);
+  info.MapString("1", 0);
+  info.MapString("0", 1);
+  info.MapString("1", 1);
+
+  MultipleRandomDimensionSplit<> split(info, 2, 2);
+
+  for (size_t i = 0; i < 20; ++i)
+  {
+    split.Train(arma::Col<double>("0 0"), 0);
+    split.Train(arma::Col<double>("1 1"), 1);
+
+    const double epsilon = 0.01;
+    const double force = false;
+    arma::Mat<size_t> childCounts;
+    size_t splitDimension = 2;
+    CategoricalSplitInfo catSplit(1);
+    NumericSplitInfo<double> numSplit;
+
+    size_t numChildren = split.SplitCheck(epsilon, force, childCounts,
+        splitDimension, catSplit, numSplit);
+
+    BOOST_REQUIRE_EQUAL(numChildren, 0);
+    BOOST_REQUIRE_EQUAL(splitDimension, 2);
+    BOOST_REQUIRE_EQUAL(childCounts.n_rows, 0);
+    BOOST_REQUIRE_EQUAL(childCounts.n_cols, 0);
+  }
 }
 
 BOOST_AUTO_TEST_SUITE_END();
