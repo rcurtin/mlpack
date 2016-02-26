@@ -51,8 +51,8 @@ class MultipleRandomDimensionSplit
    * number of random splits and initialize them with the default parameters.
    *
    * If numRandomSplits is set to 0, then
-   * floor(log2(datasetInfo.Dimensionality())) will be used instead, just like
-   * in Breiman's paper.
+   * floor(log2(datasetInfo.Dimensionality())) will be used instead (with a
+   * minimum of 1 dimension), just like in Breiman's paper.
    *
    * @param datasetInfo Dataset information.
    * @param numClasses Number of classes in the dataset.
@@ -89,6 +89,12 @@ class MultipleRandomDimensionSplit
    * number of random splits specified by the other MultipleRandomDimensionSplit
    * object and initialize them using the split objects from the given other
    * MultipleRandomDimensionSplit.
+   *
+   * Note that if the given other MultipleRandomDimensionSplit object was
+   * initialized with numRandomSplits == 0, then this random split object will
+   * use the same dimensions as the other MultipleRandomDimensionSplit actually
+   * chose to, instead of recalculating
+   * floor(log2(datasetInfo.Dimensionality())).
    */
   MultipleRandomDimensionSplit(const data::DatasetInfo& datasetInfo,
                                const size_t numClasses,

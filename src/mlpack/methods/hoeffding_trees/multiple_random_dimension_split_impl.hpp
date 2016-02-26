@@ -28,7 +28,7 @@ MultipleRandomDimensionSplit<
     // Delegate to the other constructor.
     MultipleRandomDimensionSplit(info, numClasses, numRandomSplits,
         CategoricalSplitType<FitnessFunction>(1, 1),
-        NumericSplitType<FitnessFunction>(1)
+        NumericSplitType<FitnessFunction>(1))
 {
   // Nothing else to do.
 }
@@ -44,7 +44,7 @@ MultipleRandomDimensionSplit<
     CategoricalSplitType
 >::MultipleRandomDimensionSplit(const data::DatasetInfo& info,
                                 const size_t numClasses,
-                                const size_t numRandomDimensions,
+                                const size_t numRandomSplits,
                                 const CategoricalSplitType<FitnessFunction>&
                                     categoricalSplit,
                                 const NumericSplitType<FitnessFunction>&
@@ -53,11 +53,17 @@ MultipleRandomDimensionSplit<
 {
   // Select a number of random dimensions.
   if (numRandomSplits == 0)
-    math::RandomUniqueArray(0, info.Dimensionality(),
-        std::floor(std::log2(info.Dimensionality())), dimensions);
+  {
+    const size_t numDimensions = std::max(1.0,
+        std::floor(std::log2(info.Dimensionality())));
+    math::RandomUniqueArray(0, info.Dimensionality(), numDimensions,
+        dimensions);
+  }
   else
+  {
     math::RandomUniqueArray(0, info.Dimensionality(), numRandomSplits,
         dimensions);
+  }
 
   // Now, create the necessary split objects and mappings.
   for (size_t i = 0; i < dimensions.n_elem; ++i)
@@ -66,12 +72,13 @@ MultipleRandomDimensionSplit<
     {
       dimensionMappings[dimensions[i]] = categoricalSplits.size();
       categoricalSplits.push_back(CategoricalSplitType<FitnessFunction>(
-          info.NumMappings(dimensions[i]), numClasses));
+          info.NumMappings(dimensions[i]), numClasses, categoricalSplit));
     }
     else if (info.Type(dimensions[i]) == data::Datatype::numeric)
     {
       dimensionMappings[dimensions[i]] = numericSplits.size();
-      numericSplits.push_back(NumericSplitType<FitnessFunction>(numClasses));
+      numericSplits.push_back(NumericSplitType<FitnessFunction>(numClasses,
+          numericSplit));
     }
   }
 
@@ -94,10 +101,9 @@ MultipleRandomDimensionSplit<
     CategoricalSplitType
 >::MultipleRandomDimensionSplit(const data::DatasetInfo& info,
                                 const size_t numClasses,
-                                const size_t numRandomDimensions,
-                                const MultipleRandomSplitType& other) :
+                                const MultipleRandomDimensionSplit& other) :
     // Delegate to the other constructor.
-    MultipleRandomSplitType(info, numClasses, numRandomSplits,
+    MultipleRandomDimensionSplit(info, numClasses, other.dimensions.n_elem,
         other.categoricalSplits[0], other.numericSplits[0])
 {
   // Nothing else to do.
@@ -122,9 +128,11 @@ void MultipleRandomDimensionSplit<
   for (size_t i = 0; i < dimensions.n_elem; ++i)
   {
     if (datasetInfo->Type(dimensions[i]) == data::Datatype::categorical)
-      categoricalSplits[dimensionMappings[dimensions[i]]].Train(point, label);
+      categoricalSplits[dimensionMappings[dimensions[i]]].Train(
+          point[dimensions[i]], label);
     else if (datasetInfo->Type(dimensions[i]) == data::Datatype::numeric)
-      numericSplits[dimensionMappings[dimensions[i]]].Train(point, label);
+      numericSplits[dimensionMappings[dimensions[i]]].Train(
+          point[dimensions[i]], label);
   }
 }
 
@@ -155,7 +163,6 @@ size_t MultipleRandomDimensionSplit<
   for (size_t i = 0; i < dimensions.n_elem; ++i)
   {
     double dimLargest, dimSecondLargest;
-    data::Datatype dimType;
 
     if (datasetInfo->Type(dimensions[i]) == data::Datatype::categorical)
     {
@@ -176,7 +183,6 @@ size_t MultipleRandomDimensionSplit<
       secondLargest = largest;
 
       // We have to save the type too.
-      bestType = dimType;
       bestDimension = i; // Unmapped.
       largest = dimLargest;
     }
@@ -201,14 +207,14 @@ size_t MultipleRandomDimensionSplit<
     if (datasetInfo->Type(dimensions[bestDimension]) ==
         data::Datatype::categorical)
     {
-      const size_t index = dimensionMappings[dimensions[i]];
+      const size_t index = dimensionMappings[dimensions[bestDimension]];
       numChildren = categoricalSplits[index].NumChildren();
       categoricalSplits[index].Split(childCounts, categoricalSplitInfo);
     }
-    else if (datasetInfo->Type(dimension[bestDimension]) ==
+    else if (datasetInfo->Type(dimensions[bestDimension]) ==
         data::Datatype::numeric)
     {
-      const size_t index = dimensionMappings[dimensions[i]];
+      const size_t index = dimensionMappings[dimensions[bestDimension]];
       numChildren = numericSplits[index].NumChildren();
       numericSplits[index].Split(childCounts, numericSplitInfo);
     }
