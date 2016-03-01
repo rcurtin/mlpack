@@ -78,11 +78,11 @@ class MultipleRandomDimensionSplit
    */
   MultipleRandomDimensionSplit(const data::DatasetInfo& datasetInfo,
                                const size_t numClasses,
-                               const size_t numRandomSplits,
                                const CategoricalSplitType<FitnessFunction>&
                                    categoricalSplit,
                                const NumericSplitType<FitnessFunction>&
-                                   numericSplit);
+                                   numericSplit,
+                               const size_t numRandomSplits = 0);
 
   /**
    * Create the MultipleRandomDimensionSplit object.  This will choose the given

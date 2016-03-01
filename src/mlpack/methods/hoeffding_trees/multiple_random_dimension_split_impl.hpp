@@ -26,9 +26,10 @@ MultipleRandomDimensionSplit<
                                 const size_t numClasses,
                                 const size_t numRandomSplits) :
     // Delegate to the other constructor.
-    MultipleRandomDimensionSplit(info, numClasses, numRandomSplits,
+    MultipleRandomDimensionSplit(info, numClasses,
         CategoricalSplitType<FitnessFunction>(1, 1),
-        NumericSplitType<FitnessFunction>(1))
+        NumericSplitType<FitnessFunction>(1),
+        numRandomSplits)
 {
   // Nothing else to do.
 }
@@ -44,11 +45,11 @@ MultipleRandomDimensionSplit<
     CategoricalSplitType
 >::MultipleRandomDimensionSplit(const data::DatasetInfo& info,
                                 const size_t numClasses,
-                                const size_t numRandomSplits,
                                 const CategoricalSplitType<FitnessFunction>&
                                     categoricalSplit,
                                 const NumericSplitType<FitnessFunction>&
-                                    numericSplit) :
+                                    numericSplit,
+                                const size_t numRandomSplits) :
     datasetInfo(&info)
 {
   // Select a number of random dimensions.
@@ -103,8 +104,8 @@ MultipleRandomDimensionSplit<
                                 const size_t numClasses,
                                 const MultipleRandomDimensionSplit& other) :
     // Delegate to the other constructor.
-    MultipleRandomDimensionSplit(info, numClasses, other.dimensions.n_elem,
-        other.categoricalSplits[0], other.numericSplits[0])
+    MultipleRandomDimensionSplit(info, numClasses, other.categoricalSplits[0],
+        other.numericSplits[0], other.dimensions.n_elem)
 {
   // Nothing else to do.
 }
