@@ -13,7 +13,7 @@ namespace tree {
 template<typename HoeffdingTreeType>
 HoeffdingForest<HoeffdingTreeType>::HoeffdingForest(const size_t forestSize,
                                                     const size_t numClasses,
-                                                    data::DatasetInfo& info) :
+                                                    const data::DatasetInfo& info) :
     HoeffdingForest(HoeffdingTreeType(info, numClasses), forestSize, numClasses,
         info) // Delegate to other constructor.
 {

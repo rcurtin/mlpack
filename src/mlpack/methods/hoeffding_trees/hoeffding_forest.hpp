@@ -19,7 +19,7 @@ class HoeffdingForest
  public:
   HoeffdingForest(const size_t forestSize,
                   const size_t numClasses,
-                  data::DatasetInfo& info);
+                  const data::DatasetInfo& info);
 
   /**
    * Create a Hoeffding forest, using the given tree's parameters for each of

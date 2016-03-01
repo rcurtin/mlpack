@@ -1,5 +1,5 @@
 /**
- * @file hoeffding_tree_main.cpp
+ * @file hoeffding_forest_main.cpp
  * @author Ryan Curtin
  *
  * A command-line executable that can build a streaming decision tree.
@@ -10,6 +10,7 @@
 #include <mlpack/methods/hoeffding_trees/binary_numeric_split.hpp>
 #include <mlpack/methods/hoeffding_trees/information_gain.hpp>
 #include <mlpack/methods/hoeffding_trees/single_random_dimension_split.hpp>
+#include <mlpack/methods/hoeffding_trees/multiple_random_dimension_split.hpp>
 #include <queue>
 
 using namespace std;
@@ -49,7 +50,7 @@ PARAM_STRING("labels_file", "Labels for training dataset.", "l", "");
 
 PARAM_DOUBLE("confidence", "Confidence before splitting (between 0 and 1).",
     "c", 0.95);
-PARAM_INT("max_samples", "Maximum number of samples before splitting.", "n",
+PARAM_INT("max_samples", "Maximum number of samples before splitting.", "A",
     5000);
 PARAM_INT("min_samples", "Minimum number of samples before splitting.", "I",
     100);
@@ -72,7 +73,7 @@ PARAM_FLAG("batch_mode", "If true, samples will be considered in batch instead "
     " memory usage and runtime.", "b");
 PARAM_FLAG("info_gain", "If set, information gain is used instead of Gini "
     "impurity for calculating Hoeffding bounds.", "i");
-PARAM_INT("passes", "Number of passes to take over the dataset.", "s", 1);
+PARAM_INT("passes", "Number of passes to take over the dataset.", "n", 1);
 
 PARAM_INT("bins", "If the 'domingos' split strategy is used, this specifies "
     "the number of bins for each numeric split.", "B", 10);
@@ -80,13 +81,50 @@ PARAM_INT("observations_before_binning", "If the 'domingos' split strategy is "
     "used, this specifies the number of samples observed before binning is "
     "performed.", "o", 100);
 
+PARAM_STRING("selection_strategy", "Strategy to use for selecting random "
+    "dimensions to split on: 'single' or 'multiple'.", "S", "multiple");
+PARAM_INT("dimensions_per_split", "Number of dimensions to use at each split. "
+    "If 0, the largest integer less than log2(dimensionality) will be used.",
+    "d", 0);
+
 PARAM_INT("seed", "Random seed (if not specified, std::time(NULL) will be "
     "used).", "s", 0);
 
+// Helper function to choose fitness function.
+void SelectFitnessFunction(const arma::mat& trainingData,
+                           const data::DatasetInfo& info);
+
+// Helper function to choose categorical split strategy.
+template<typename FitnessFunction>
+void SelectCategoricalSplitType(const arma::mat& trainingData,
+                                const data::DatasetInfo& info);
+
+// Helper function to choose numeric split strategy.
+template<typename FitnessFunction,
+         template<typename> class CategoricalSplitType>
+void SelectNumericSplitType(
+    const arma::mat& trainingData,
+    const data::DatasetInfo& info,
+    const CategoricalSplitType<FitnessFunction>& cs =
+        CategoricalSplitType<FitnessFunction>(1, 1));
+
+// Helper function to choose split selection strategy.
+template<typename FitnessFunction,
+         template<typename> class CategoricalSplitType,
+         template<typename> class NumericSplitType>
+void SelectSplitSelectionStrategy(
+    const arma::mat& trainingData,
+    const data::DatasetInfo& info,
+    const CategoricalSplitType<FitnessFunction>& cs,
+    const NumericSplitType<FitnessFunction>& ns =
+        NumericSplitType<FitnessFunction>(0));
+
 // Helper function for once we have chosen a tree type.
 template<typename TreeType>
-void PerformActions(const typename TreeType::NumericSplit& numericSplit =
-    typename TreeType::NumericSplit(0));
+void PerformActions(
+    const arma::mat& trainingData,
+    const data::DatasetInfo& info,
+    const typename TreeType::SplitSelectionStrategy& strategy);
 
 int main(int argc, char** argv)
 {
@@ -106,6 +144,7 @@ int main(int argc, char** argv)
   const string probabilitiesFile = CLI::GetParam<string>("probabilities_file");
   const string numericSplitStrategy =
       CLI::GetParam<string>("numeric_split_strategy");
+  const string selectionStrategy = CLI::GetParam<string>("selection_strategy");
 
   if ((!predictionsFile.empty() || !probabilitiesFile.empty()) &&
       testFile.empty())
@@ -127,61 +166,133 @@ int main(int argc, char** argv)
     Log::Warn << "--batch_mode (-b) ignored because --passes was specified."
         << endl;
 
-  if (CLI::HasParam("info_gain"))
+  if (selectionStrategy != "single" && selectionStrategy != "multiple" &&
+      selectionStrategy != "all")
+    Log::Fatal << "Invalid selection strategy '" << selectionStrategy << "' "
+        << "specified.  Must be 'single', 'multiple', or 'all'." << endl;
+
+  // Now, we have to build the type of tree we're using from the options.
+  if (!trainingFile.empty())
   {
-    if (numericSplitStrategy == "domingos")
-    {
-      const size_t bins = (size_t) CLI::GetParam<int>("bins");
-      const size_t observationsBeforeBinning = (size_t)
-          CLI::GetParam<int>("observations_before_binning");
-      HoeffdingDoubleNumericSplit<InformationGain> ns(0, bins,
-          observationsBeforeBinning);
-      PerformActions<HoeffdingTree<InformationGain, HoeffdingDoubleNumericSplit,
-          HoeffdingCategoricalSplit, SingleRandomDimensionSplit>>(ns);
-    }
-    else if (numericSplitStrategy == "binary")
-    {
-      PerformActions<HoeffdingTree<InformationGain, BinaryDoubleNumericSplit,
-          HoeffdingCategoricalSplit, SingleRandomDimensionSplit>>();
-    }
-    else
-    {
-      Log::Fatal << "Unrecognized numeric split strategy ("
-          << numericSplitStrategy << ")!  Must be 'domingos' or 'binary'."
-          << endl;
-    }
+    // We have to start with the correct dataset information to build the
+    // MultipleRandomDimensionSplit correctly (if necessary), so we have to load
+    // the training set now.
+    arma::mat trainingSet;
+    data::DatasetInfo datasetInfo;
+    data::Load(trainingFile, trainingSet, datasetInfo, true);
+    for (size_t i = 0; i < trainingSet.n_rows; ++i)
+      Log::Info << datasetInfo.NumMappings(i) << " mappings in dimension "
+          << i << "." << endl;
+
+    SelectFitnessFunction(trainingSet, datasetInfo);
   }
   else
   {
-    if (numericSplitStrategy == "domingos")
-    {
-      const size_t bins = (size_t) CLI::GetParam<int>("bins");
-      const size_t observationsBeforeBinning = (size_t)
-          CLI::GetParam<int>("observations_before_binning");
-      HoeffdingDoubleNumericSplit<GiniImpurity> ns(0, bins,
-          observationsBeforeBinning);
-      PerformActions<HoeffdingTree<GiniImpurity, HoeffdingDoubleNumericSplit,
-          HoeffdingCategoricalSplit, SingleRandomDimensionSplit>>(ns);
-    }
-    else if (numericSplitStrategy == "binary")
-    {
-      PerformActions<HoeffdingTree<GiniImpurity, BinaryDoubleNumericSplit,
-          HoeffdingCategoricalSplit, SingleRandomDimensionSplit>>();
-    }
-    else
-    {
-      Log::Fatal << "Unrecognized numeric split strategy ("
-          << numericSplitStrategy << ")!  Must be 'domingos' or 'binary'."
-          << endl;
-    }
+    // We'll be loading from a model, so we don't need a "real" training set or
+    // dataset information.
+    arma::mat trainingSet;
+    data::DatasetInfo datasetInfo;
+
+    SelectFitnessFunction(trainingSet, datasetInfo);
+  }
+}
+
+// Helper function to choose fitness function.
+void SelectFitnessFunction(const arma::mat& trainingSet,
+                           const data::DatasetInfo& info)
+{
+  if (CLI::HasParam("info_gain"))
+    SelectCategoricalSplitType<InformationGain>(trainingSet, info);
+  else
+    SelectCategoricalSplitType<GiniImpurity>(trainingSet, info);
+}
+
+// Helper function to choose categorical split strategy.
+template<typename FitnessFunction>
+void SelectCategoricalSplitType(const arma::mat& trainingSet,
+                                const data::DatasetInfo& info)
+{
+  // There's only one possibility here, but it could be more later...
+  SelectNumericSplitType<FitnessFunction,
+      HoeffdingCategoricalSplit>(trainingSet, info,
+      HoeffdingCategoricalSplit<FitnessFunction>(1, 1));
+}
+
+// Helper function to choose numeric split strategy.
+template<typename FitnessFunction,
+         template<typename> class CategoricalSplitType>
+void SelectNumericSplitType(const arma::mat& trainingSet,
+                            const data::DatasetInfo& info,
+                            const CategoricalSplitType<FitnessFunction>& cs)
+{
+  const string numericSplitStrategy =
+      CLI::GetParam<string>("numeric_split_strategy");
+  if (numericSplitStrategy == "domingos")
+  {
+    const size_t bins = (size_t) CLI::GetParam<int>("bins");
+    const size_t observationsBeforeBinning = (size_t)
+        CLI::GetParam<int>("observations_before_binning");
+    HoeffdingDoubleNumericSplit<FitnessFunction> ns(0, bins,
+        observationsBeforeBinning);
+    SelectSplitSelectionStrategy<FitnessFunction, CategoricalSplitType,
+        HoeffdingDoubleNumericSplit>(trainingSet, info, cs, ns);
+  }
+  else if (numericSplitStrategy == "binary")
+  {
+    SelectSplitSelectionStrategy<FitnessFunction, CategoricalSplitType,
+        BinaryDoubleNumericSplit>(trainingSet, info, cs);
+  }
+}
+
+// Helper function to choose split selection strategy.
+template<typename FitnessFunction,
+         template<typename> class CategoricalSplitType,
+         template<typename> class NumericSplitType>
+void SelectSplitSelectionStrategy(
+    const arma::mat& trainingSet,
+    const data::DatasetInfo& info,
+    const CategoricalSplitType<FitnessFunction>& cs,
+    const NumericSplitType<FitnessFunction>& ns)
+{
+  const string selectionStrategy = CLI::GetParam<string>("selection_strategy");
+  if (selectionStrategy == "single")
+  {
+    typedef HoeffdingTree<FitnessFunction, NumericSplitType,
+        CategoricalSplitType, SingleRandomDimensionSplit> TreeType;
+    SingleRandomDimensionSplit<FitnessFunction, NumericSplitType,
+        CategoricalSplitType> split(info, 1, cs, ns);
+
+    PerformActions<TreeType>(trainingSet, info, split);
+  }
+  else if (selectionStrategy == "multiple")
+  {
+    typedef HoeffdingTree<FitnessFunction, NumericSplitType,
+        CategoricalSplitType, MultipleRandomDimensionSplit> TreeType;
+
+    const size_t dimsPerSplit =
+        (size_t) CLI::GetParam<int>("dimensions_per_split");
+    MultipleRandomDimensionSplit<FitnessFunction, NumericSplitType,
+        CategoricalSplitType> mr(info, 1, cs, ns, dimsPerSplit);
+
+    PerformActions<TreeType>(trainingSet, info, mr);
+  }
+  else if (selectionStrategy == "all")
+  {
+    typedef HoeffdingTree<FitnessFunction, NumericSplitType,
+        CategoricalSplitType, AllDimensionSplit> TreeType;
+    AllDimensionSplit<FitnessFunction, NumericSplitType, CategoricalSplitType>
+        split(info, 1, cs, ns);
+
+    PerformActions<TreeType>(trainingSet, info, split);
   }
 }
 
 template<typename TreeType>
-void PerformActions(const typename TreeType::NumericSplit& numericSplit)
+void PerformActions(const arma::mat& trainingSet,
+                    const data::DatasetInfo& datasetInfo,
+                    const typename TreeType::SplitSelectionStrategy& strategy)
 {
   // Load necessary parameters.
-  const string trainingFile = CLI::GetParam<string>("training_file");
   const string labelsFile = CLI::GetParam<string>("labels_file");
   const double confidence = CLI::GetParam<double>("confidence");
   const size_t maxSamples = (size_t) CLI::GetParam<int>("max_samples");
@@ -198,15 +309,8 @@ void PerformActions(const typename TreeType::NumericSplit& numericSplit)
     batchTraining = false; // We already warned about this earlier.
 
   HoeffdingForest<TreeType>* forest = NULL;
-  DatasetInfo datasetInfo;
   if (inputModelFile.empty())
   {
-    arma::mat trainingSet;
-    data::Load(trainingFile, trainingSet, datasetInfo, true);
-    for (size_t i = 0; i < trainingSet.n_rows; ++i)
-      Log::Info << datasetInfo.NumMappings(i) << " mappings in dimension "
-          << i << "." << endl;
-
     arma::Col<size_t> labelsIn;
     data::Load(labelsFile, labelsIn, true, false);
     arma::Row<size_t> labels = labelsIn.t();
@@ -216,8 +320,8 @@ void PerformActions(const typename TreeType::NumericSplit& numericSplit)
 
     // Make example TreeType that will capture all of the necessary parameters.
     const size_t numClasses = max(labels) + 1;
-    TreeType exampleTree(datasetInfo, numClasses, confidence, maxSamples, 100,
-        minSamples, typename TreeType::CategoricalSplit(0, 0), numericSplit);
+    TreeType exampleTree(datasetInfo, numClasses, strategy, confidence,
+        maxSamples, 100, minSamples);
 
     forest = new HoeffdingForest<TreeType>(exampleTree, forestSize, numClasses,
         datasetInfo);
@@ -239,14 +343,8 @@ void PerformActions(const typename TreeType::NumericSplit& numericSplit)
     forest = new HoeffdingForest<TreeType>(1, 1, datasetInfo);
     data::Load(inputModelFile, "hoeffdingForest", *forest, true);
 
-    if (!trainingFile.empty())
+    if (trainingSet.n_elem != 0)
     {
-      arma::mat trainingSet;
-      data::Load(trainingFile, trainingSet, datasetInfo, true);
-      for (size_t i = 0; i < trainingSet.n_rows; ++i)
-        Log::Info << datasetInfo.NumMappings(i) << " mappings in dimension "
-            << i << "." << endl;
-
       arma::Col<size_t> labelsIn;
       data::Load(labelsFile, labelsIn, true, false);
       arma::Row<size_t> labels = labelsIn.t();
@@ -267,11 +365,9 @@ void PerformActions(const typename TreeType::NumericSplit& numericSplit)
     }
   }
 
-  if (!trainingFile.empty())
+  if (trainingSet.n_elem != 0)
   {
     // Get training error.
-    arma::mat trainingSet;
-    data::Load(trainingFile, trainingSet, datasetInfo, true);
     arma::Row<size_t> predictions;
     forest->Classify(trainingSet, predictions);
 
@@ -293,7 +389,8 @@ void PerformActions(const typename TreeType::NumericSplit& numericSplit)
   if (!testFile.empty())
   {
     arma::mat testSet;
-    data::Load(testFile, testSet, datasetInfo, true);
+    data::Load(testFile, testSet, const_cast<data::DatasetInfo&>(datasetInfo),
+        true);
 
     arma::Row<size_t> predictions;
     arma::rowvec probabilities;
