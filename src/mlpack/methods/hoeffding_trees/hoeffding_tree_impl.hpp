@@ -96,6 +96,87 @@ HoeffdingTree<
   // Nothing to do.
 }
 
+// Construct with a custom split selection strategy and training data.
+template<
+    typename FitnessFunction,
+    template<typename> class NumericSplitType,
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
+>
+template<typename MatType>
+HoeffdingTree<
+    FitnessFunction,
+    NumericSplitType,
+    CategoricalSplitType,
+    SplitSelectionStrategyType
+>::HoeffdingTree(const MatType& data,
+                 const data::DatasetInfo& datasetInfo,
+                 const arma::Row<size_t>& labels,
+                 const size_t numClasses,
+                 const SplitSelectionStrategy& strategyIn,
+                 const bool batchTraining,
+                 const double successProbability,
+                 const size_t maxSamples,
+                 const size_t checkInterval,
+                 const size_t minSamples) :
+    split(new SplitSelectionStrategy(datasetInfo, numClasses, strategyIn)),
+    numSamples(0),
+    numClasses(numClasses),
+    maxSamples((maxSamples == 0) ? size_t(-1) : maxSamples),
+    checkInterval(checkInterval),
+    minSamples(minSamples),
+    datasetInfo(&datasetInfo),
+    ownsInfo(false),
+    successProbability(successProbability),
+    splitDimension(size_t(-1)),
+    classCounts(arma::zeros<arma::Row<size_t>>(numClasses)),
+    probabilities(arma::ones<arma::rowvec>(numClasses) / (double) numClasses),
+    categoricalSplit(0),
+    numericSplit()
+{
+  // Now train.
+  Train(data, labels, batchTraining);
+}
+
+// Construct with a custom split selection strategy but no training data.
+template<
+    typename FitnessFunction,
+    template<typename> class NumericSplitType,
+    template<typename> class CategoricalSplitType,
+    template<typename, template<typename> class, template<typename> class>
+        class SplitSelectionStrategyType
+>
+HoeffdingTree<
+    FitnessFunction,
+    NumericSplitType,
+    CategoricalSplitType,
+    SplitSelectionStrategyType
+>::HoeffdingTree(const data::DatasetInfo& datasetInfo,
+                 const size_t numClasses,
+                 const SplitSelectionStrategy& strategyIn,
+                 const double successProbability,
+                 const size_t maxSamples,
+                 const size_t checkInterval,
+                 const size_t minSamples) :
+    split(new SplitSelectionStrategy(datasetInfo, numClasses, strategyIn)),
+    numSamples(0),
+    numClasses(numClasses),
+    maxSamples((maxSamples == 0) ? size_t(-1) : maxSamples),
+    checkInterval(checkInterval),
+    minSamples(minSamples),
+    datasetInfo(&datasetInfo),
+    ownsInfo(false),
+    successProbability(successProbability),
+    splitDimension(size_t(-1)),
+    classCounts(arma::zeros<arma::Row<size_t>>(numClasses)),
+    probabilities(arma::ones<arma::rowvec>(numClasses) / (double) numClasses),
+    categoricalSplit(0),
+    numericSplit()
+{
+  // Nothing to do.
+}
+
 // Copy constructor.
 template<
     typename FitnessFunction,
@@ -303,6 +384,8 @@ void HoeffdingTree<
   {
     // Let the split do the training.
     ++numSamples;
+    if (numSamples == 1)
+      classCounts.zeros();
     split->Train(point, label);
 
     // Update class counts and majority class and probabilities.
@@ -311,7 +394,7 @@ void HoeffdingTree<
     classCounts.max(max);
     majorityClass = max;
     probabilities = arma::conv_to<arma::rowvec>::from(classCounts) /
-        (double) numSamples;
+        (double) arma::accu(classCounts);
 
     // Check for a split, if we should.
     if ((numSamples % checkInterval == 0) &&

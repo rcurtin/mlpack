@@ -104,22 +104,16 @@ class HoeffdingTree
 
   /**
    * Construct the Hoeffding tree with the given parameters, but training on no
-   * data.  The dimensionMappings parameter is only used if it is desired that
-   * this node does not create its own dimensionMappings object (for instance,
-   * if this is a child of another node in the tree).
+   * data.
    *
-   * @param dimensionality Dimensionality of the dataset.
-   * @param numClasses Number of classes in the dataset.
    * @param datasetInfo Information on the dataset (types of each feature).
+   * @param numClasses Number of classes in the dataset.
    * @param successProbability Probability of success required in Hoeffding
    *      bound before a split can happen.
    * @param maxSamples Maximum number of samples before a split is forced.
    * @param checkInterval Number of samples required before each split check.
    * @param minSamples If the node has seen this many points or fewer, no split
    *      will be allowed.
-   * @param dimensionMappings Mappings from dimension indices to positions in
-   *      numeric and categorical split vectors.  If left NULL, a new one will
-   *      be created.
    */
   HoeffdingTree(const data::DatasetInfo& datasetInfo,
                 const size_t numClasses,
@@ -130,6 +124,66 @@ class HoeffdingTree
                 const CategoricalSplit& categoricalSplitIn =
                     CategoricalSplit(0, 0),
                 const NumericSplit& numericSplitIn = NumericSplit(0));
+
+  /**
+   * Construct the Hoeffding tree with the given parameters and training data,
+   * and specify the given split selection strategy.  A custom categorical split
+   * or numeric split cannot be specified with this constructor because the
+   * split strategy encapsulates the configuration of a categorical and numeric
+   * split.
+   *
+   * @param data Dataset to train on.
+   * @param datasetInfo Information on the dataset (types of each feature).
+   * @param labels Labels of each point in the dataset.
+   * @param numClasses Number of classes in the dataset.
+   * @param strategy Instantiated split strategy object.
+   * @param batchTraining Whether or not to train in batch.
+   * @param successProbability Probability of success required in Hoeffding
+   *      bounds before a split can happen.
+   * @param maxSamples Maximum number of samples before a split is forced (0
+   *      never forces a split); ignored in batch training mode.
+   * @param checkInterval Number of samples required before each split; ignored
+   *      in batch training mode.
+   * @param minSamples If the node has seen this many points or fewer, no split
+   *      will be allowed.
+   */
+  template<typename MatType>
+  HoeffdingTree(const MatType& data,
+                const data::DatasetInfo& datasetInfo,
+                const arma::Row<size_t>& labels,
+                const size_t numClasses,
+                const SplitSelectionStrategy& strategyIn,
+                const bool batchTraining = true,
+                const double successProbability = 0.95,
+                const size_t maxSamples = 0,
+                const size_t checkInterval = 100,
+                const size_t minSamples = 100);
+
+  /**
+   * Construct the Hoeffding tree with the given parameters, and specify the
+   * given split selection strategy.  This constructor will not train the tree
+   * at all, so be sure to call Train() before attempting to classify points.  A
+   * custom categorical split or numeric split cannot be specified with this
+   * constructor because the splti strategy encapsulates the configuration of a
+   * categorical and numeric split.
+   *
+   * @param datasetInfo Information on the dataset (types of each feature).
+   * @param numClasses Number of classes in the dataset.
+   * @param strategy Instantiated split strategy object.
+   * @param successProbability Probability of success required in Hoeffding
+   *      bound before a split can happen.
+   * @param maxSamples Maximum number of samples before a split is forced.
+   * @param checkInterval Number of samples required before each split check.
+   * @param minSamples If the node has seen this many points or fewer, no split
+   *      will be allowed.
+   */
+  HoeffdingTree(const data::DatasetInfo& datasetInfo,
+                const size_t numClasses,
+                const SplitSelectionStrategy& strategyIn,
+                const double successProbability = 0.95,
+                const size_t maxSamples = 0,
+                const size_t checkInterval = 100,
+                const size_t minSamples = 100);
 
   /**
    * Copy another tree (warning: this will duplicate the tree entirely, and may
