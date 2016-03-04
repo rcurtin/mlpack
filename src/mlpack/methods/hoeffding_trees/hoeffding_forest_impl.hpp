@@ -53,9 +53,16 @@ template<typename VecType>
 void HoeffdingForest<HoeffdingTreeType>::Train(const VecType& point,
                                                const size_t label)
 {
-  // Train each tree in the forest.
+  // Train each tree in the forest.  But we need to do bootstrapping (or, more
+  // specifically, online bootstrapping).
+  std::poisson_distribution<size_t> dist; // lambda = 1.
   for (size_t i = 0; i < trees.size(); ++i)
-    trees[i].Train(point, label);
+  {
+    // How many times will we show this point to the given tree?
+    size_t times = dist(mlpack::math::randGen);
+    for (size_t i = 0; i < times; ++i)
+      trees[i].Train(point, label);
+  }
 }
 
 template<typename HoeffdingTreeType>

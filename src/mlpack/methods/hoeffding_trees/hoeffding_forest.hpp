@@ -13,6 +13,39 @@
 namespace mlpack {
 namespace tree {
 
+/**
+ * The HoeffdingForest class is an implementation of a bagged random forest of
+ * Hoeffding trees, based on the methodology of Leo Breiman in his seminal
+ * paper:
+ *
+ * @code
+ * @article{breiman2001random,
+ *   title={Random forests},
+ *   author={Breiman, L.},
+ *   journal={Machine Learning},
+ *   volume={45},
+ *   number={1},
+ *   pages={5--32},
+ *   year={2001}
+ * }
+ * @endcode
+ *
+ * This algorithm differs from Breiman's in that it does not use a typical
+ * batch-mode decision tree but instead a streaming decision tree.  This means
+ * that for the bootstrapping process, online bootstrapping must be used.  For
+ * this, we use the technique described in the following paper:
+ *
+ * @code
+ * @inproceedings{oza2001online,
+ *   author = {Nikunj C. Oza and Stuart Russell},
+ *   title = {Online Bagging and Boosting},
+ *   booktitle = {Proceedings of the Eighth International Workshop on Artificial
+ *       Intelligence and Statistics (AISTATS 2001)},
+ *   year = {2001},
+ *   pages = {105--112}
+ * }
+ * @endcode
+ */
 template<typename HoeffdingTreeType>
 class HoeffdingForest
 {
