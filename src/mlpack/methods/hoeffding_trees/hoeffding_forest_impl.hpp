@@ -7,6 +7,9 @@
 #ifndef __MLPACK_METHODS_HOEFFDING_TREE_HOEFFDING_FOREST_IMPL_HPP
 #define __MLPACK_METHODS_HOEFFDING_TREE_HOEFFDING_FOREST_IMPL_HPP
 
+// In case it hasn't been included yet.
+#include "hoeffding_forest.hpp"
+
 namespace mlpack {
 namespace tree {
 
