@@ -9,8 +9,6 @@
 
 #include <mlpack/core.hpp>
 #include <mlpack/methods/ann/layer/layer_traits.hpp>
-#include <mlpack/methods/ann/init_rules/zero_init.hpp>
-#include <mlpack/methods/ann/optimizer/rmsprop.hpp>
 
 namespace mlpack {
 namespace ann /** Artificial Neural Network. */ {
@@ -19,16 +17,12 @@ namespace ann /** Artificial Neural Network. */ {
  * An implementation of a bias layer design for sparse autoencoder.
  * The BiasLayer class represents a single layer of a neural network.
  *
- * @tparam OptimizerType Type of the optimizer used to update the weights.
- * @tparam WeightInitRule Rule used to initialize the weight matrix.
  * @tparam InputDataType Type of the input data (arma::colvec, arma::mat,
  *         arma::sp_mat or arma::cube).
  * @tparam OutputDataType Type of the output data (arma::colvec, arma::mat,
  *         arma::sp_mat or arma::cube).
  */
 template <
-    template<typename, typename> class OptimizerType = mlpack::ann::RMSPROP,
-    class WeightInitRule = ZeroInitialization,
     typename InputDataType = arma::mat,
     typename OutputDataType = arma::mat
 >
@@ -42,59 +36,13 @@ class SparseBiasLayer
    * @param outSize The number of output units.
    * @param batchSize The batch size used to train the network.
    * @param bias The bias value.
-   * @param WeightInitRule The weight initialization rule used to initialize the
-   *        weight matrix.
    */
-  SparseBiasLayer(const size_t outSize,
-                  const size_t batchSize,
-                  WeightInitRule weightInitRule = WeightInitRule()) :
+  SparseBiasLayer(const size_t outSize, const size_t batchSize) :
       outSize(outSize),
-      batchSize(batchSize),
-      optimizer(new OptimizerType<SparseBiasLayer<OptimizerType,
-                                                  WeightInitRule,
-                                                  InputDataType,
-                                                  OutputDataType>,
-                                                  InputDataType>(*this)),
-      ownsOptimizer(true)
+      batchSize(batchSize)
   {
-    weightInitRule.Initialize(weights, outSize, 1);
-  }
-  
-  SparseBiasLayer(SparseBiasLayer &&layer) noexcept
-  {
-    *this = std::move(layer);
-  }
-
-  SparseBiasLayer& operator=(SparseBiasLayer &&layer) noexcept
-  {
-    optimizer = new OptimizerType<SparseBiasLayer<OptimizerType,
-                                                  WeightInitRule,
-                                                  InputDataType,
-                                                  OutputDataType>,
-                                                  InputDataType>(*this);
-    ownsOptimizer = layer.ownsOptimizer;
-    layer.optimizer = nullptr;
-    layer.ownsOptimizer = false;
-
-    outSize = layer.outSize;
-    batchSize = layer.batchSize;
-    weights.swap(layer.weights);
-    delta.swap(layer.delta);
-    gradient.swap(layer.gradient);
-    inputParameter.swap(layer.inputParameter);
-    outputParameter.swap(layer.outputParameter);
-
-    return *this;
-  }
-
-  /**
-   * Delete the bias layer object and its optimizer.
-   */
-  ~SparseBiasLayer()
-  {
-    if (ownsOptimizer)
-      delete optimizer;
-  }
+    weights.set_size(outSize, 1);
+  }  
 
   /**
    * Ordinary feed forward pass of a neural network, evaluating the function
@@ -135,24 +83,8 @@ class SparseBiasLayer
   template<typename eT>
   void Gradient(const arma::Mat<eT>& d, InputDataType& g)
   {    
-    g = arma::sum(d, 1) / static_cast<typename InputDataType::value_type>(batchSize);
-  }
-
-  //! Get the optimizer.
-  OptimizerType<SparseBiasLayer<OptimizerType,
-                          WeightInitRule,
-                          InputDataType,
-                          OutputDataType>, InputDataType>& Optimizer() const
-  {
-    return *optimizer;
-  }
-  //! Modify the optimizer.
-  OptimizerType<SparseBiasLayer<OptimizerType,
-                          WeightInitRule,
-                          InputDataType,
-                          OutputDataType>, InputDataType>& Optimizer()
-  {
-    return *optimizer;
+    g = arma::sum(d, 1) / static_cast<typename InputDataType::value_type>(
+        batchSize);
   }
 
   //! Get the batch size
@@ -166,24 +98,34 @@ class SparseBiasLayer
   InputDataType& Weights() { return weights; }
 
   //! Get the input parameter.
-  InputDataType const& InputParameter() const {return inputParameter; }
+  InputDataType const& InputParameter() const { return inputParameter; }
   //! Modify the input parameter.
   InputDataType& InputParameter() { return inputParameter; }
 
   //! Get the output parameter.
-  OutputDataType const& OutputParameter() const {return outputParameter; }
+  OutputDataType const& OutputParameter() const { return outputParameter; }
   //! Modify the output parameter.
   OutputDataType& OutputParameter() { return outputParameter; }
 
   //! Get the delta.
-  OutputDataType const& Delta() const {return delta; }
+  OutputDataType const& Delta() const { return delta; }
   //! Modify the delta.
   OutputDataType& Delta() { return delta; }
 
   //! Get the gradient.
-  InputDataType const& Gradient() const {return gradient; }
+  InputDataType const& Gradient() const { return gradient; }
   //! Modify the gradient.
   InputDataType& Gradient() { return gradient; }
+  
+  /**
+   * Serialize the layer.
+   */
+  template<typename Archive>
+  void Serialize(Archive& ar, const unsigned int /* version */)
+  {
+    ar & data::CreateNVP(weights, "weights");
+    ar & data::CreateNVP(batchSize, "batchSize");
+  }
 
  private:
   //! Locally-stored number of output units.
@@ -206,26 +148,12 @@ class SparseBiasLayer
 
   //! Locally-stored output parameter object.
   OutputDataType outputParameter;
-
-  //! Locally-stored pointer to the optimzer object.
-  OptimizerType<SparseBiasLayer<OptimizerType,
-                                WeightInitRule,
-                                InputDataType,
-                                OutputDataType>, InputDataType>* optimizer;
-
-  //! Parameter that indicates if the class owns a optimizer object.
-  bool ownsOptimizer;
 }; // class SparseBiasLayer
 
 //! Layer traits for the bias layer.
-template<
-  template<typename, typename> class OptimizerType,
-  typename WeightInitRule,
-  typename InputDataType,
-  typename OutputDataType
+template<typename InputDataType, typename OutputDataType
 >
-class LayerTraits<SparseBiasLayer<
-    OptimizerType, WeightInitRule, InputDataType, OutputDataType> >
+class LayerTraits<SparseBiasLayer<InputDataType, OutputDataType> >
 {
  public:
   static const bool IsBinary = false;

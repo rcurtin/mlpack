@@ -589,7 +589,8 @@ BOOST_AUTO_TEST_CASE(LogisticRegressionLBFGSGaussianTest)
   }
 
   // Now train a logistic regression object on it.
-  LogisticRegression<> lr(data, responses, 0.5);
+  LogisticRegression<> lr(data.n_rows, 0.5);
+  lr.Train<L_BFGS>(data, responses);
 
   // Ensure that the error is close to zero.
   const double acc = lr.ComputeAccuracy(data, responses);
@@ -601,7 +602,7 @@ BOOST_AUTO_TEST_CASE(LogisticRegressionLBFGSGaussianTest)
     data.col(i) = g1.Random();
     responses[i] = 0;
   }
-  for (size_t i = 501; i < 1000; ++i)
+  for (size_t i = 500; i < 1000; ++i)
   {
     data.col(i) = g2.Random();
     responses[i] = 1;
@@ -628,14 +629,15 @@ BOOST_AUTO_TEST_CASE(LogisticRegressionSGDGaussianTest)
     data.col(i) = g1.Random();
     responses[i] = 0;
   }
-  for (size_t i = 501; i < 1000; ++i)
+  for (size_t i = 500; i < 1000; ++i)
   {
     data.col(i) = g2.Random();
     responses[i] = 1;
   }
 
   // Now train a logistic regression object on it.
-  LogisticRegression<> lr(data, responses, 0.5);
+  LogisticRegression<> lr(data.n_rows, 0.5);
+  lr.Train<SGD>(data, responses);
 
   // Ensure that the error is close to zero.
   const double acc = lr.ComputeAccuracy(data, responses);
@@ -648,7 +650,7 @@ BOOST_AUTO_TEST_CASE(LogisticRegressionSGDGaussianTest)
     data.col(i) = g1.Random();
     responses[i] = 0;
   }
-  for (size_t i = 501; i < 1000; ++i)
+  for (size_t i = 500; i < 1000; ++i)
   {
     data.col(i) = g2.Random();
     responses[i] = 1;

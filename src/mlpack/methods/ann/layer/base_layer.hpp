@@ -50,20 +50,6 @@ class BaseLayer
   {
     // Nothing to do here.
   }
-  
-  BaseLayer(BaseLayer &&layer) noexcept
-  {
-    *this = std::move(layer);
-  }
-
-  BaseLayer& operator=(BaseLayer &&layer) noexcept
-  {
-    delta.swap(layer.delta);
-    inputParameter.swap(layer.inputParameter);
-    outputParameter.swap(layer.outputParameter);
-
-    return *this;
-  }
 
   /**
    * Ordinary feed forward pass of a neural network, evaluating the function
@@ -134,19 +120,28 @@ class BaseLayer
   }
 
   //! Get the input parameter.
-  InputDataType const& InputParameter() const {return inputParameter; }
+  InputDataType const& InputParameter() const { return inputParameter; }
   //! Modify the input parameter.
   InputDataType& InputParameter() { return inputParameter; }
 
   //! Get the output parameter.
-  OutputDataType const& OutputParameter() const {return outputParameter; }
+  OutputDataType const& OutputParameter() const { return outputParameter; }
   //! Modify the output parameter.
   OutputDataType& OutputParameter() { return outputParameter; }
 
   //! Get the delta.
-  OutputDataType const& Delta() const {return delta; }
+  OutputDataType const& Delta() const { return delta; }
   //! Modify the delta.
   OutputDataType& Delta() { return delta; }
+  
+  /**
+   * Serialize the layer.
+   */
+  template<typename Archive>
+  void Serialize(Archive& /* ar */, const unsigned int /* version */)
+  {
+    /* Nothing to do here */
+  }
 
  private:
   //! Locally-stored delta object.

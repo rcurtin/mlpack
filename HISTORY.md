@@ -1,5 +1,10 @@
 ### mlpack 2.0.2
 ###### 2016-??-??
+  * Handle zero-variance dimensions in DET (#515).
+
+  * Add MiniBatchSGD optimizer (src/mlpack/core/optimizers/minibatch_sgd/) and
+    allow its use in mlpack_logistic_regression and mlpack_nca programs.
+
   * Refactor HoeffdingTree to allow different types of splits; a template
     parameter is added, but the API is otherwise identical.
 
