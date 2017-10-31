@@ -50,11 +50,37 @@ DualTreeTraverser<RuleType>::Traverse(
     BinarySpaceTree<MetricType, StatisticType, MatType, BoundType, SplitType>&
         referenceNode)
 {
+  // Create traversal info, and start recursion.
+  #pragma omp parallel
+  {
+  #pragma omp single
+  {
+
+  typename RuleType::TraversalInfoType traversalInfo;
+  Traverse(queryNode, referenceNode, traversalInfo, 0);
+
+  }
+  }
+}
+
+template<typename MetricType,
+         typename StatisticType,
+         typename MatType,
+         template<typename BoundMetricType, typename...> class BoundType,
+         template<typename SplitBoundType, typename SplitMatType>
+             class SplitType>
+template<typename RuleType>
+void BinarySpaceTree<MetricType, StatisticType, MatType, BoundType, SplitType>::
+DualTreeTraverser<RuleType>::Traverse(
+    BinarySpaceTree<MetricType, StatisticType, MatType, BoundType, SplitType>&
+        queryNode,
+    BinarySpaceTree<MetricType, StatisticType, MatType, BoundType, SplitType>&
+        referenceNode,
+    typename RuleType::TraversalInfoType& traversalInfo,
+    const size_t level)
+{
   // Increment the visit counter.
   ++numVisited;
-
-  // Store the current traversal info.
-  traversalInfo = rule.TraversalInfo();
 
   // If both are leaves, we must evaluate the base case.
   if (queryNode.IsLeaf() && referenceNode.IsLeaf())
@@ -67,7 +93,6 @@ DualTreeTraverser<RuleType>::Traverse(
       // See if we need to investigate this point (this function should be
       // implemented for the single-tree recursion too).  Restore the traversal
       // information first.
-      rule.TraversalInfo() = traversalInfo;
       const double childScore = rule.Score(query, referenceNode);
 
       if (childScore == DBL_MAX)
@@ -85,21 +110,44 @@ DualTreeTraverser<RuleType>::Traverse(
   {
     // We have to recurse down the query node.  In this case the recursion order
     // does not matter.
-    const double leftScore = rule.Score(*queryNode.Left(), referenceNode);
+    typename RuleType::TraversalInfoType leftInfo = traversalInfo;
+    typename RuleType::TraversalInfoType rightInfo = traversalInfo;
+    const double leftScore = rule.Score(*queryNode.Left(), referenceNode,
+        leftInfo);
     ++numScores;
 
     if (leftScore != DBL_MAX)
-      Traverse(*queryNode.Left(), referenceNode);
+    {
+      if (level % 4 == 0)
+      {
+        #pragma omp task shared(queryNode, referenceNode)
+        Traverse(*queryNode.Left(), referenceNode, leftInfo, level + 1);
+      }
+      else
+      {
+        Traverse(*queryNode.Left(), referenceNode, leftInfo, level + 1);
+      }
+    }
     else
       ++numPrunes;
 
     // Before recursing, we have to set the traversal information correctly.
-    rule.TraversalInfo() = traversalInfo;
-    const double rightScore = rule.Score(*queryNode.Right(), referenceNode);
+    const double rightScore = rule.Score(*queryNode.Right(), referenceNode,
+        rightInfo);
     ++numScores;
 
     if (rightScore != DBL_MAX)
-      Traverse(*queryNode.Right(), referenceNode);
+    {
+      if (level % 4 == 0)
+      {
+        #pragma omp task shared(queryNode, referenceNode)
+        Traverse(*queryNode.Right(), referenceNode, rightInfo, level + 1);
+      }
+      else
+      {
+        Traverse(*queryNode.Right(), referenceNode, rightInfo, level + 1);
+      }
+    }
     else
       ++numPrunes;
   }
@@ -108,19 +156,17 @@ DualTreeTraverser<RuleType>::Traverse(
     // We have to recurse down the reference node.  In this case the recursion
     // order does matter.  Before recursing, though, we have to set the
     // traversal information correctly.
-    double leftScore = rule.Score(queryNode, *referenceNode.Left());
-    typename RuleType::TraversalInfoType leftInfo = rule.TraversalInfo();
-    rule.TraversalInfo() = traversalInfo;
-    double rightScore = rule.Score(queryNode, *referenceNode.Right());
+    typename RuleType::TraversalInfoType leftInfo = traversalInfo;
+    double leftScore = rule.Score(queryNode, *referenceNode.Left(), leftInfo);
+    double rightScore = rule.Score(queryNode, *referenceNode.Right(),
+        traversalInfo);
     numScores += 2;
 
     if (leftScore < rightScore)
     {
       // Recurse to the left.  Restore the left traversal info.  Store the right
       // traversal info.
-      traversalInfo = rule.TraversalInfo();
-      rule.TraversalInfo() = leftInfo;
-      Traverse(queryNode, *referenceNode.Left());
+      Traverse(queryNode, *referenceNode.Left(), leftInfo, level + 1);
 
       // Is it still valid to recurse to the right?
       rightScore = rule.Rescore(queryNode, *referenceNode.Right(), rightScore);
@@ -128,8 +174,7 @@ DualTreeTraverser<RuleType>::Traverse(
       if (rightScore != DBL_MAX)
       {
         // Restore the right traversal info.
-        rule.TraversalInfo() = traversalInfo;
-        Traverse(queryNode, *referenceNode.Right());
+        Traverse(queryNode, *referenceNode.Right(), traversalInfo, level + 1);
       }
       else
         ++numPrunes;
@@ -137,7 +182,7 @@ DualTreeTraverser<RuleType>::Traverse(
     else if (rightScore < leftScore)
     {
       // Recurse to the right.
-      Traverse(queryNode, *referenceNode.Right());
+      Traverse(queryNode, *referenceNode.Right(), traversalInfo, level + 1);
 
       // Is it still valid to recurse to the left?
       leftScore = rule.Rescore(queryNode, *referenceNode.Left(), leftScore);
@@ -145,8 +190,7 @@ DualTreeTraverser<RuleType>::Traverse(
       if (leftScore != DBL_MAX)
       {
         // Restore the left traversal info.
-        rule.TraversalInfo() = leftInfo;
-        Traverse(queryNode, *referenceNode.Left());
+        Traverse(queryNode, *referenceNode.Left(), leftInfo, level + 1);
       }
       else
         ++numPrunes;
@@ -161,9 +205,7 @@ DualTreeTraverser<RuleType>::Traverse(
       {
         // Choose the left first.  Restore the left traversal info.  Store the
         // right traversal info.
-        traversalInfo = rule.TraversalInfo();
-        rule.TraversalInfo() = leftInfo;
-        Traverse(queryNode, *referenceNode.Left());
+        Traverse(queryNode, *referenceNode.Left(), leftInfo, level + 1);
 
         rightScore = rule.Rescore(queryNode, *referenceNode.Right(),
             rightScore);
@@ -171,8 +213,7 @@ DualTreeTraverser<RuleType>::Traverse(
         if (rightScore != DBL_MAX)
         {
           // Restore the right traversal info.
-          rule.TraversalInfo() = traversalInfo;
-          Traverse(queryNode, *referenceNode.Right());
+          Traverse(queryNode, *referenceNode.Right(), traversalInfo, level + 1);
         }
         else
           ++numPrunes;
@@ -185,65 +226,24 @@ DualTreeTraverser<RuleType>::Traverse(
     // query descent order does not matter, we will go to the left query child
     // first.  Before recursing, we have to set the traversal information
     // correctly.
-    double leftScore = rule.Score(*queryNode.Left(), *referenceNode.Left());
-    typename RuleType::TraversalInfoType leftInfo = rule.TraversalInfo();
-    rule.TraversalInfo() = traversalInfo;
-    double rightScore = rule.Score(*queryNode.Left(), *referenceNode.Right());
-    typename RuleType::TraversalInfoType rightInfo;
+    typename RuleType::TraversalInfoType origInfo = traversalInfo;
+    typename RuleType::TraversalInfoType leftInfo = traversalInfo;
+    typename RuleType::TraversalInfoType rightInfo = traversalInfo;
+    double leftScore = rule.Score(*queryNode.Left(), *referenceNode.Left(),
+        leftInfo);
+    double rightScore = rule.Score(*queryNode.Left(), *referenceNode.Right(),
+        rightInfo);
     numScores += 2;
 
     if (leftScore < rightScore)
     {
       // Recurse to the left.  Restore the left traversal info.  Store the right
       // traversal info.
-      rightInfo = rule.TraversalInfo();
-      rule.TraversalInfo() = leftInfo;
-      Traverse(*queryNode.Left(), *referenceNode.Left());
-
-      // Is it still valid to recurse to the right?
-      rightScore = rule.Rescore(*queryNode.Left(), *referenceNode.Right(),
-          rightScore);
-
-      if (rightScore != DBL_MAX)
+      if (level % 4 == 0)
       {
-        // Restore the right traversal info.
-        rule.TraversalInfo() = rightInfo;
-        Traverse(*queryNode.Left(), *referenceNode.Right());
-      }
-      else
-        ++numPrunes;
-    }
-    else if (rightScore < leftScore)
-    {
-      // Recurse to the right.
-      Traverse(*queryNode.Left(), *referenceNode.Right());
-
-      // Is it still valid to recurse to the left?
-      leftScore = rule.Rescore(*queryNode.Left(), *referenceNode.Left(),
-          leftScore);
-
-      if (leftScore != DBL_MAX)
-      {
-        // Restore the left traversal info.
-        rule.TraversalInfo() = leftInfo;
-        Traverse(*queryNode.Left(), *referenceNode.Left());
-      }
-      else
-        ++numPrunes;
-    }
-    else
-    {
-      if (leftScore == DBL_MAX)
-      {
-        numPrunes += 2;
-      }
-      else
-      {
-        // Choose the left first.  Restore the left traversal info and store the
-        // right traversal info.
-        rightInfo = rule.TraversalInfo();
-        rule.TraversalInfo() = leftInfo;
-        Traverse(*queryNode.Left(), *referenceNode.Left());
+        #pragma omp task shared(queryNode, referenceNode)
+        {
+        Traverse(*queryNode.Left(), *referenceNode.Left(), leftInfo, level + 1);
 
         // Is it still valid to recurse to the right?
         rightScore = rule.Rescore(*queryNode.Left(), *referenceNode.Right(),
@@ -251,63 +251,75 @@ DualTreeTraverser<RuleType>::Traverse(
 
         if (rightScore != DBL_MAX)
         {
-          // Restore the right traversal information.
-          rule.TraversalInfo() = rightInfo;
-          Traverse(*queryNode.Left(), *referenceNode.Right());
+          // Restore the right traversal info.
+          Traverse(*queryNode.Left(), *referenceNode.Right(), rightInfo,
+              level + 1);
+        }
+        else
+          ++numPrunes;
+        }
+      }
+      else
+      {
+        Traverse(*queryNode.Left(), *referenceNode.Left(), leftInfo, level + 1);
+
+        // Is it still valid to recurse to the right?
+        rightScore = rule.Rescore(*queryNode.Left(), *referenceNode.Right(),
+            rightScore);
+
+        if (rightScore != DBL_MAX)
+        {
+          // Restore the right traversal info.
+          Traverse(*queryNode.Left(), *referenceNode.Right(), rightInfo,
+              level + 1);
         }
         else
           ++numPrunes;
       }
     }
-
-    // Restore the main traversal information.
-    rule.TraversalInfo() = traversalInfo;
-
-    // Now recurse down the right query node.
-    leftScore = rule.Score(*queryNode.Right(), *referenceNode.Left());
-    leftInfo = rule.TraversalInfo();
-    rule.TraversalInfo() = traversalInfo;
-    rightScore = rule.Score(*queryNode.Right(), *referenceNode.Right());
-    numScores += 2;
-
-    if (leftScore < rightScore)
-    {
-      // Recurse to the left.  Restore the left traversal info.  Store the right
-      // traversal info.
-      rightInfo = rule.TraversalInfo();
-      rule.TraversalInfo() = leftInfo;
-      Traverse(*queryNode.Right(), *referenceNode.Left());
-
-      // Is it still valid to recurse to the right?
-      rightScore = rule.Rescore(*queryNode.Right(), *referenceNode.Right(),
-          rightScore);
-
-      if (rightScore != DBL_MAX)
-      {
-        // Restore the right traversal info.
-        rule.TraversalInfo() = rightInfo;
-        Traverse(*queryNode.Right(), *referenceNode.Right());
-      }
-      else
-        ++numPrunes;
-    }
     else if (rightScore < leftScore)
     {
-      // Recurse to the right.
-      Traverse(*queryNode.Right(), *referenceNode.Right());
-
-      // Is it still valid to recurse to the left?
-      leftScore = rule.Rescore(*queryNode.Right(), *referenceNode.Left(),
-          leftScore);
-
-      if (leftScore != DBL_MAX)
+      if (level % 4 == 0)
       {
-        // Restore the left traversal info.
-        rule.TraversalInfo() = leftInfo;
-        Traverse(*queryNode.Right(), *referenceNode.Left());
+        #pragma omp task shared(queryNode, referenceNode)
+        {
+        // Recurse to the right.
+        Traverse(*queryNode.Left(), *referenceNode.Right(), rightInfo,
+            level + 1);
+
+        // Is it still valid to recurse to the left?
+        leftScore = rule.Rescore(*queryNode.Left(), *referenceNode.Left(),
+            leftScore);
+
+        if (leftScore != DBL_MAX)
+        {
+          // Restore the left traversal info.
+          Traverse(*queryNode.Left(), *referenceNode.Left(), leftInfo,
+              level + 1);
+        }
+        else
+          ++numPrunes;
+        }
       }
       else
-        ++numPrunes;
+      {
+        // Recurse to the right.
+        Traverse(*queryNode.Left(), *referenceNode.Right(), rightInfo,
+            level + 1);
+
+        // Is it still valid to recurse to the left?
+        leftScore = rule.Rescore(*queryNode.Left(), *referenceNode.Left(),
+            leftScore);
+
+        if (leftScore != DBL_MAX)
+        {
+          // Restore the left traversal info.
+          Traverse(*queryNode.Left(), *referenceNode.Left(), leftInfo,
+              level + 1);
+        }
+        else
+          ++numPrunes;
+      }
     }
     else
     {
@@ -317,11 +329,66 @@ DualTreeTraverser<RuleType>::Traverse(
       }
       else
       {
-        // Choose the left first.  Restore the left traversal info.  Store the
-        // right traversal info.
-        rightInfo = rule.TraversalInfo();
-        rule.TraversalInfo() = leftInfo;
-        Traverse(*queryNode.Right(), *referenceNode.Left());
+        if (level % 4 == 0)
+        {
+          #pragma omp task shared(queryNode, referenceNode)
+          {
+          // Choose the left first.  Restore the left traversal info and store the
+          // right traversal info.
+          Traverse(*queryNode.Left(), *referenceNode.Left(), leftInfo, level + 1);
+
+          // Is it still valid to recurse to the right?
+          rightScore = rule.Rescore(*queryNode.Left(), *referenceNode.Right(),
+              rightScore);
+
+          if (rightScore != DBL_MAX)
+          {
+            // Restore the right traversal information.
+            Traverse(*queryNode.Left(), *referenceNode.Right(), rightInfo,
+                level + 1);
+          }
+          else
+            ++numPrunes;
+          }
+        }
+        else
+        {
+          // Choose the left first.  Restore the left traversal info and store the
+          // right traversal info.
+          Traverse(*queryNode.Left(), *referenceNode.Left(), leftInfo, level + 1);
+
+          // Is it still valid to recurse to the right?
+          rightScore = rule.Rescore(*queryNode.Left(), *referenceNode.Right(),
+              rightScore);
+
+          if (rightScore != DBL_MAX)
+          {
+            // Restore the right traversal information.
+            Traverse(*queryNode.Left(), *referenceNode.Right(), rightInfo,
+                level + 1);
+          }
+          else
+            ++numPrunes;
+        }
+      }
+    }
+
+    // Now recurse down the right query node.
+    typename RuleType::TraversalInfoType rrInfo = origInfo;
+    leftScore = rule.Score(*queryNode.Right(), *referenceNode.Left(),
+        origInfo);
+    rightScore = rule.Score(*queryNode.Right(), *referenceNode.Right(), rrInfo);
+    numScores += 2;
+
+    if (leftScore < rightScore)
+    {
+      if (level % 4 == 0)
+      {
+        #pragma omp task shared(queryNode, referenceNode)
+        {
+        // Recurse to the left.  Restore the left traversal info.  Store the right
+        // traversal info.
+        Traverse(*queryNode.Right(), *referenceNode.Left(), origInfo, level + 1);
 
         // Is it still valid to recurse to the right?
         rightScore = rule.Rescore(*queryNode.Right(), *referenceNode.Right(),
@@ -330,11 +397,124 @@ DualTreeTraverser<RuleType>::Traverse(
         if (rightScore != DBL_MAX)
         {
           // Restore the right traversal info.
-          rule.TraversalInfo() = rightInfo;
-          Traverse(*queryNode.Right(), *referenceNode.Right());
+          Traverse(*queryNode.Right(), *referenceNode.Right(), rrInfo, level + 1);
         }
         else
           ++numPrunes;
+        }
+      }
+      else
+      {
+        // Recurse to the left.  Restore the left traversal info.  Store the right
+        // traversal info.
+        Traverse(*queryNode.Right(), *referenceNode.Left(), origInfo, level + 1);
+
+        // Is it still valid to recurse to the right?
+        rightScore = rule.Rescore(*queryNode.Right(), *referenceNode.Right(),
+            rightScore);
+
+        if (rightScore != DBL_MAX)
+        {
+          // Restore the right traversal info.
+          Traverse(*queryNode.Right(), *referenceNode.Right(), rrInfo, level + 1);
+        }
+        else
+          ++numPrunes;
+      }
+    }
+    else if (rightScore < leftScore)
+    {
+      if (level % 4 == 0)
+      {
+        #pragma omp task shared(queryNode, referenceNode)
+        {
+        // Recurse to the right.
+        Traverse(*queryNode.Right(), *referenceNode.Right(), rrInfo, level + 1);
+
+        // Is it still valid to recurse to the left?
+        leftScore = rule.Rescore(*queryNode.Right(), *referenceNode.Left(),
+            leftScore);
+
+        if (leftScore != DBL_MAX)
+        {
+          // Restore the left traversal info.
+          Traverse(*queryNode.Right(), *referenceNode.Left(), origInfo,
+              level + 1);
+        }
+        else
+          ++numPrunes;
+        }
+      }
+      else
+      {
+        // Recurse to the right.
+        Traverse(*queryNode.Right(), *referenceNode.Right(), rrInfo, level + 1);
+
+        // Is it still valid to recurse to the left?
+        leftScore = rule.Rescore(*queryNode.Right(), *referenceNode.Left(),
+            leftScore);
+
+        if (leftScore != DBL_MAX)
+        {
+          // Restore the left traversal info.
+          Traverse(*queryNode.Right(), *referenceNode.Left(), origInfo,
+              level + 1);
+        }
+        else
+          ++numPrunes;
+      }
+    }
+    else
+    {
+      if (leftScore == DBL_MAX)
+      {
+        numPrunes += 2;
+      }
+      else
+      {
+        if (level % 4 == 0)
+        {
+          #pragma omp task shared(queryNode, referenceNode)
+          {
+          // Choose the left first.  Restore the left traversal info.  Store the
+          // right traversal info.
+          Traverse(*queryNode.Right(), *referenceNode.Left(), origInfo,
+              level + 1);
+
+          // Is it still valid to recurse to the right?
+          rightScore = rule.Rescore(*queryNode.Right(), *referenceNode.Right(),
+              rightScore);
+
+          if (rightScore != DBL_MAX)
+          {
+            // Restore the right traversal info.
+            Traverse(*queryNode.Right(), *referenceNode.Right(), rrInfo,
+                level + 1);
+          }
+          else
+            ++numPrunes;
+          }
+        }
+        else
+        {
+          // Choose the left first.  Restore the left traversal info.  Store the
+          // right traversal info.
+          Traverse(*queryNode.Right(), *referenceNode.Left(), origInfo,
+              level + 1);
+
+          // Is it still valid to recurse to the right?
+          rightScore = rule.Rescore(*queryNode.Right(), *referenceNode.Right(),
+              rightScore);
+
+          if (rightScore != DBL_MAX)
+          {
+            // Restore the right traversal info.
+            Traverse(*queryNode.Right(), *referenceNode.Right(), rrInfo,
+                level + 1);
+          }
+          else
+            ++numPrunes;
+        }
       }
     }
   }

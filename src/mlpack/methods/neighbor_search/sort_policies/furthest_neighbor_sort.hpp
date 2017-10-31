@@ -194,6 +194,14 @@ class FurthestNeighborSort
   {
     return ConvertToScore(score);
   }
+
+  /**
+   * Return the better of the two inputs.
+   */
+  static inline double GetBetterOf(const double a, const double b)
+  {
+    return std::max(a, b);
+  }
 };
 
 } // namespace neighbor

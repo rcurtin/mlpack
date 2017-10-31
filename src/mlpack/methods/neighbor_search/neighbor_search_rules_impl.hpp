@@ -38,12 +38,6 @@ NeighborSearchRules<SortPolicy, MetricType, TreeType>::NeighborSearchRules(
     baseCases(0),
     scores(0)
 {
-  // We must set the traversal info last query and reference node pointers to
-  // something that is both invalid (i.e. not a tree node) and not NULL.  We'll
-  // use the this pointer.
-  traversalInfo.LastQueryNode() = (TreeType*) this;
-  traversalInfo.LastReferenceNode() = (TreeType*) this;
-
   // Let's build the list of candidate neighbors for each query point.
   // It will be initialized with k candidates: (WorstDistance, size_t() - 1)
   // The list of candidates will be updated when visiting new points with the
@@ -188,7 +182,8 @@ inline double NeighborSearchRules<SortPolicy, MetricType, TreeType>::Rescore(
 template<typename SortPolicy, typename MetricType, typename TreeType>
 inline double NeighborSearchRules<SortPolicy, MetricType, TreeType>::Score(
     TreeType& queryNode,
-    TreeType& referenceNode)
+    TreeType& referenceNode,
+    tree::TraversalInfo<TreeType>& traversalInfo)
 {
   ++scores; // Count number of Score() calls.
 
@@ -462,16 +457,15 @@ inline double NeighborSearchRules<SortPolicy, MetricType, TreeType>::
       bestDistance = queryNode.Parent()->Stat().SecondBound();
   }
 
-  // Could the existing bounds be better?
-  if (SortPolicy::IsBetter(queryNode.Stat().FirstBound(), worstDistance))
-    worstDistance = queryNode.Stat().FirstBound();
-  if (SortPolicy::IsBetter(queryNode.Stat().SecondBound(), bestDistance))
-    bestDistance = queryNode.Stat().SecondBound();
-
-  // Cache bounds for later.
-  queryNode.Stat().FirstBound() = worstDistance;
-  queryNode.Stat().SecondBound() = bestDistance;
-  queryNode.Stat().AuxBound() = auxDistance;
+  #pragma omp critical
+  {
+  queryNode.Stat().FirstBound() =
+      SortPolicy::GetBetterOf(queryNode.Stat().FirstBound(), worstDistance);
+  queryNode.Stat().SecondBound() =
+      SortPolicy::GetBetterOf(queryNode.Stat().SecondBound(), bestDistance);
+  queryNode.Stat().AuxBound() =
+      SortPolicy::GetBetterOf(queryNode.Stat().AuxBound(), auxDistance);
+  }
 
   worstDistance = SortPolicy::Relax(worstDistance, epsilon);
 
@@ -504,8 +498,14 @@ InsertNeighbor(
 
   if (CandidateCmp()(c, pqueue.top()))
   {
-    pqueue.pop();
-    pqueue.push(c);
+    #pragma omp critical
+    {
+    if (CandidateCmp()(c, pqueue.top()))
+    {
+      pqueue.pop();
+      pqueue.push(c);
+    }
+    }
   }
 }
 

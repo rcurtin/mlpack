@@ -122,7 +122,9 @@ class NeighborSearchRules
    * @param queryNode Candidate query node to recurse into.
    * @param referenceNode Candidate reference node to recurse into.
    */
-  double Score(TreeType& queryNode, TreeType& referenceNode);
+  double Score(TreeType& queryNode,
+               TreeType& referenceNode,
+               tree::TraversalInfo<TreeType>& traversalInfo);
 
   /**
    * Re-evaluate the score for recursion order.  A low score indicates priority
@@ -149,13 +151,8 @@ class NeighborSearchRules
   //! Modify the number of scores that have been performed.
   size_t& Scores() { return scores; }
 
-  //! Convenience typedef.
+  //! This may be used by the traverser.
   typedef typename tree::TraversalInfo<TreeType> TraversalInfoType;
-
-  //! Get the traversal info.
-  const TraversalInfoType& TraversalInfo() const { return traversalInfo; }
-  //! Modify the traversal info.
-  TraversalInfoType& TraversalInfo() { return traversalInfo; }
 
  protected:
   //! The reference set.
@@ -205,10 +202,6 @@ class NeighborSearchRules
   size_t baseCases;
   //! The number of scores that have been performed.
   size_t scores;
-
-  //! Traversal info for the parent combination; this is updated by the
-  //! traversal before each call to Score().
-  TraversalInfoType traversalInfo;
 
   /**
    * Recalculate the bound for a given query node.

@@ -193,6 +193,14 @@ class NearestNeighborSort
   {
     return score;
   }
+
+  /**
+   * Return the better of the two inputs.
+   */
+  static inline double GetBetterOf(const double a, const double b)
+  {
+    return std::min(a, b);
+  }
 };
 
 } // namespace neighbor
