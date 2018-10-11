@@ -20,6 +20,9 @@ using namespace mlpack::gmm;
 using namespace mlpack::util;
 
 PROGRAM_INFO("GMM Probability Calculator",
+    "A utility to compute the probability that points arose from a pre-trained "
+    "Gaussian mixture model.  Given a set of points and a GMM, the probability "
+    "of each point is computed.",
     "This program calculates the probability that given points came from a "
     "given GMM (that is, P(X | gmm)).  The GMM is specified with the " +
     PRINT_PARAM_STRING("input_model") + " parameter, and the points are "

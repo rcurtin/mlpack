@@ -20,6 +20,8 @@ using namespace mlpack::gmm;
 using namespace mlpack::util;
 
 PROGRAM_INFO("GMM Sample Generator",
+    "A utility to generate samples from a pre-trained Gaussian mixture model. "
+    "The number of samples can be specified.",
     "This program is able to generate samples from a pre-trained GMM (use "
     "gmm_train to train a GMM).  The pre-trained GMM must be specified with "
     "the " + PRINT_PARAM_STRING("input_model") + " parameter.  The number "

@@ -33,15 +33,20 @@ class ProgramDoc
    * will be returned.
    *
    * @param programName Short string representing the name of the program.
+   * @param shortDesc Two-sentence description: what is the program and what
+   *    does it do?
    * @param documentation Long string containing documentation on how to use the
    *     program and what it is.  No newline characters are necessary; this is
    *     taken care of by CLI later.
    */
   ProgramDoc(const std::string& programName,
+             const std::string& shortDesc,
              const std::function<std::string()>& documentation);
 
   //! The name of the program.
   std::string programName;
+  //! Short description of the program.
+  std::string shortDesc;
   //! Documentation for what the program does.
   std::function<std::string()> documentation;
 };

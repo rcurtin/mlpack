@@ -22,6 +22,9 @@ using namespace std;
 using namespace arma;
 
 PROGRAM_INFO("Decision Stump",
+    "An implementation of a single-level decision tree (a decision stump). "
+    "With labeled data, a decision stump can be trained and saved, and used to "
+    "predict the classes of new points.",
     "This program implements a decision stump, which is a single-level decision"
     " tree.  The decision stump will split on one dimension of the input data, "
     "and will split into multiple buckets.  The dimension and bins are selected"

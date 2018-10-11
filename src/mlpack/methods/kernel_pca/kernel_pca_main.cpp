@@ -41,6 +41,11 @@ using namespace std;
 using namespace arma;
 
 PROGRAM_INFO("Kernel Principal Components Analysis",
+    "An implementation of Kernel Principal Components Analysis (Kernel PCA), "
+    "a technique for nonlinear dimensionality reduction or embedding during "
+    "preprocessing.  Given a dataset and a kernel, this utility can map the "
+    "data into the principal components of kernel space, which can often be a "
+    "better representation.",
     "This program performs Kernel Principal Components Analysis (KPCA) on the "
     "specified dataset with the specified kernel.  This will transform the "
     "data onto the kernel principal components, and optionally reduce the "

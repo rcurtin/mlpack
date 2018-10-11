@@ -31,6 +31,9 @@
 #include "dtb.hpp"
 
 PROGRAM_INFO("Fast Euclidean Minimum Spanning Tree",
+    "An implementation of the dual-tree Boruvka algorithm for the fast "
+    "computation of Euclidean Minimum Spanning Trees.  Given a dataset, the "
+    "MST in Euclidean space is computed and output as an edge list.",
     "This program can compute the Euclidean minimum spanning tree of a set of "
     "input points using the dual-tree Boruvka algorithm."
     "\n\n"

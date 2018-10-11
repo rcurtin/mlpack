@@ -20,6 +20,10 @@ using namespace mlpack::util;
 using namespace std;
 
 PROGRAM_INFO("Random forests",
+    "An implementation of the standard random forest algorithm for "
+    "classification.  Given training data and labels, a random forest "
+    "can be trained and saved; a trained random forest can be used to "
+    "predict the classes of points in a new dataset.",
     "This program is an implementation of the standard random forest "
     "classification algorithm by Leo Breiman.  A random forest can be "
     "trained and saved for later use, or a random forest may be loaded "

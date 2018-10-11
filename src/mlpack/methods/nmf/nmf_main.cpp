@@ -28,10 +28,15 @@ using namespace mlpack::util;
 using namespace std;
 
 // Document program.
-PROGRAM_INFO("Non-negative Matrix Factorization", "This program performs "
-    "non-negative matrix factorization on the given dataset, storing the "
-    "resulting decomposed matrices in the specified files.  For an input "
-    "dataset V, NMF decomposes V into two matrices W and H such that "
+PROGRAM_INFO("Non-negative Matrix Factorization",
+    "An implementation of non-negative matrix factorization (NMF) with a "
+    "variety of available update rules.  This can take an input matrix and "
+    "decompose it into two low-rank components, W and H, which approximate the "
+    "input matrix when multiplied together.",
+    "This program performs non-negative matrix factorization on the given "
+    "dataset, storing the resulting decomposed matrices in the specified files."
+    " For an input dataset V, NMF decomposes V into two matrices W and H such "
+    "that "
     "\n\n"
     "V = W * H"
     "\n\n"

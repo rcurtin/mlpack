@@ -22,6 +22,9 @@ using namespace mlpack::util;
 using namespace std;
 
 PROGRAM_INFO("Approximate furthest neighbor search",
+    "Two algorithms for finding the furthest neighbors of a set.  Given input "
+    "data, this can find the furthest neighbors of a set of query points; "
+    "a trained model can be reused later.",
     "This program implements two strategies for furthest neighbor search. "
     "These strategies are:"
     "\n\n"

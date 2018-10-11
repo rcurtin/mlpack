@@ -36,6 +36,10 @@ typedef NSModel<NearestNeighborSort> KNNModel;
 
 // Information about the program itself.
 PROGRAM_INFO("k-Nearest-Neighbors Search",
+    "An efficient implementation of exact or approximate k-nearest-neighbor "
+    "search (kNN) with dual-tree algorithms. Given a dataset, a tree can be "
+    "built and saved; that tree (or an already built tree) can then be used to "
+    "find the k nearest neighbors of a set of query points.",
     "This program will calculate the k-nearest-neighbors of a set of "
     "points using kd-trees or cover trees (cover tree support is experimental "
     "and may be slow). You may specify a separate set of "

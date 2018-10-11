@@ -25,6 +25,11 @@ using namespace mlpack::metric;
 using namespace mlpack::util;
 
 PROGRAM_INFO("FastMKS (Fast Max-Kernel Search)",
+    "An implementation of a dual-tree algorithm for fast max-kernel search (a "
+    "generalization of maximum inner product search or MIPS).  Given input data"
+    " and a type of kernel, a tree is built (and optionally saved) and used to "
+    "efficiently find the points with maximum kernel evaluation to any given "
+    "query points.",
     "This program will find the k maximum kernels of a set of points, "
     "using a query set and a reference set (which can optionally be the same "
     "set). More specifically, for each point in the query set, the k points in"

@@ -29,8 +29,11 @@ using namespace mlpack::math;
 using namespace arma;
 using namespace std;
 
-PROGRAM_INFO("Hidden Markov Model (HMM) Sequence Generator", "This "
-    "utility takes an already-trained HMM, specified as the " +
+PROGRAM_INFO("Hidden Markov Model (HMM) Sequence Generator",
+    "A utility to generate observation sequences from a pre-trained Hidden "
+    "Markov Model (HMM).  The start state and number of observations may be "
+    "specified.",
+    "This utility takes an already-trained HMM, specified as the " +
     PRINT_PARAM_STRING("model") + " parameter, and generates a random "
     "observation sequence and hidden state sequence based on its parameters. "
     "The observation sequence may be saved with the " +

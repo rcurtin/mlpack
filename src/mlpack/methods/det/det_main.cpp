@@ -20,6 +20,10 @@ using namespace mlpack::util;
 using namespace std;
 
 PROGRAM_INFO("Density Estimation With Density Estimation Trees",
+    "An implementation of Density Estimation Trees for the purposing of "
+    "computing density estimates.  Given a dataset, a DET can be trained and "
+    "saved; then, given a query point (or many points), the expected density "
+    "at those locations can be computed using the DET.",
     "This program performs a number of functions related to Density Estimation "
     "Trees.  The optimal Density Estimation Tree (DET) can be trained on a set "
     "of data (specified by " + PRINT_PARAM_STRING("training") + ") using "

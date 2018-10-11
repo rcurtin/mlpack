@@ -27,8 +27,10 @@ using namespace mlpack::gmm;
 using namespace arma;
 using namespace std;
 
-PROGRAM_INFO("Hidden Markov Model (HMM) Viterbi State Prediction", "This "
-    "utility takes an already-trained HMM, specified as " +
+PROGRAM_INFO("Hidden Markov Model (HMM) Viterbi State Prediction",
+    "A utility to uses a pre-trained Hidden Markov Model to predict hidden "
+    "states given an observation sequence.",
+    "This utility takes an already-trained HMM, specified as " +
     PRINT_PARAM_STRING("input_model") + ", and evaluates the most probable "
     "hidden state sequence of a given sequence of observations (specified as "
     "'" + PRINT_PARAM_STRING("input") + ", using the Viterbi algorithm.  The "

@@ -23,8 +23,12 @@
 #include <mlpack/core/data/imputation_methods/custom_imputation.hpp>
 #include <mlpack/core/data/imputation_methods/listwise_deletion.hpp>
 
-PROGRAM_INFO("Impute Data", "This utility takes a dataset and converts user "
-    "defined missing variable to another to provide more meaningful analysis "
+PROGRAM_INFO("Impute Data",
+    "A utility for imputing missing values in a dataset.  If a dataset has "
+    "NULL values (or another specifiable value), a real value can be inferred "
+    "based on the other values in the dataset.",
+    "This utility takes a dataset and converts user defined missing variable to"
+    " another for preprocessing."
     "\n\n"
     "The program does not modify the original file, but instead makes a "
     "separate file to save the output data; You can save the output by "

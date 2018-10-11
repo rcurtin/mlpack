@@ -26,6 +26,9 @@ using namespace mlpack::data;
 using namespace mlpack::util;
 
 PROGRAM_INFO("Hoeffding trees",
+    "An implementation of a streaming decision tree (Hoeffding tree).  Given "
+    "labeled data, a tree can be trained and saved, and used to predict the "
+    "classes of new points.",
     "This program implements Hoeffding trees, a form of streaming decision tree"
     " suited best for large (or streaming) datasets.  This program supports "
     "both categorical and numeric data.  Given an input dataset, this program "

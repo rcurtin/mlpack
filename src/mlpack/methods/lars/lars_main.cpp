@@ -21,7 +21,11 @@ using namespace mlpack;
 using namespace mlpack::regression;
 using namespace mlpack::util;
 
-PROGRAM_INFO("LARS", "An implementation of LARS: Least Angle Regression "
+PROGRAM_INFO("LARS",
+    "An implementation of Least Angle Regression (LARS), LASSO, and Elastic "
+    "Net regression.  Given input data, a regression model can be built and "
+    "saved, and used to predict the values of new points.",
+    "An implementation of LARS: Least Angle Regression "
     "(Stagewise/laSso).  This is a stage-wise homotopy-based algorithm for "
     "L1-regularized linear regression (LASSO) and L1+L2-regularized linear "
     "regression (Elastic Net)."

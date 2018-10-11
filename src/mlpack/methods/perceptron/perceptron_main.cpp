@@ -26,6 +26,10 @@ using namespace std;
 using namespace arma;
 
 PROGRAM_INFO("Perceptron",
+    "An implementation of the simple perceptron classifier (which is a "
+    "single-level neural network).  A perceptron model can be trained with an "
+    "input dataset and labels, and then this model can be optionally used (and "
+    "reused) to predict the classes of the points in a different test dataset.",
     "This program implements a perceptron, which is a single level neural "
     "network. The perceptron makes its predictions based on a linear predictor "
     "function combining a set of weights with the feature vector.  The "

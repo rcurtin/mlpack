@@ -22,6 +22,9 @@
 
 // Define parameters.
 PROGRAM_INFO("Neighborhood Components Analysis (NCA)",
+    "An implementation of the Neighborhood Components Analysis (NCA) metric "
+    "learning technique.  Given a dataset and labels, a transformation matrix "
+    "can be learned and output.",
     "This program implements Neighborhood Components Analysis, both a linear "
     "dimensionality reduction technique and a distance learning technique.  The"
     " method seeks to improve k-nearest-neighbor classification on a dataset "

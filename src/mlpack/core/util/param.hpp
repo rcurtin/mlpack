@@ -41,13 +41,16 @@ using DatasetInfo = DatasetMapper<IncrementPolicy, std::string>;
  * PARAM_DOUBLE_OUT_REQ(), PARAM_VECTOR_OUT_REQ(), PARAM_STRING_OUT_REQ().
  *
  * @param NAME Short string representing the name of the program.
+ * @param SHORT Short two-sentence description of the program.  This should
+ *    describe in the first sentence what the program is and in the second
+ *    sentence what it does (or similar to this).
  * @param DESC Long string describing what the program does and possibly a
  *     simple usage example.  Newlines should not be used here; this is taken
  *     care of by CLI (however, you can explicitly specify newlines to denote
  *     new paragraphs).
  */
-#define PROGRAM_INFO(NAME, DESC) static mlpack::util::ProgramDoc \
-    cli_programdoc_dummy_object = mlpack::util::ProgramDoc(NAME, \
+#define PROGRAM_INFO(NAME, SHORT, DESC) static mlpack::util::ProgramDoc \
+    cli_programdoc_dummy_object = mlpack::util::ProgramDoc(NAME, SHORT, \
     []() { return DESC; })
 
 /**

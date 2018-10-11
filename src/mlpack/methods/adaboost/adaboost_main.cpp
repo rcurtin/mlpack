@@ -46,13 +46,16 @@ using namespace mlpack::decision_stump;
 using namespace mlpack::perceptron;
 using namespace mlpack::util;
 
-PROGRAM_INFO("AdaBoost", "This program implements the AdaBoost (or Adaptive "
-    "Boosting) algorithm. The variant of AdaBoost implemented here is "
-    "AdaBoost.MH. It uses a weak learner, either decision stumps or "
-    "perceptrons, and over many iterations, creates a strong learner that is a "
-    "weighted ensemble of weak learners. It runs these iterations until a "
-    "tolerance value is crossed for change in the value of the weighted "
-    "training error."
+PROGRAM_INFO("AdaBoost",
+    "An implementation of the adaptive boosting (AdaBoost) algorithm.  With "
+    "this a model can be trained with labeled data, and used to predict the "
+    "classes of new test points.",
+    "This program implements the AdaBoost (or Adaptive Boosting) algorithm. "
+    "The variant of AdaBoost implemented here is AdaBoost.MH. It uses a weak "
+    "learner, either decision stumps or perceptrons, and over many iterations, "
+    "creates a strong learner that is a weighted ensemble of weak learners. "
+    "It runs these iterations until a tolerance value is crossed for the change"
+    " in the value of the weighted training error."
     "\n\n"
     "For more information about the algorithm, see the paper \"Improved "
     "Boosting Algorithms Using Confidence-Rated Predictions\", by R.E. Schapire"

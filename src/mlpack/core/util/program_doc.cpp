@@ -24,14 +24,17 @@ using namespace std;
  * with CLI.  A fatal error will be thrown if more than one is constructed.
  *
  * @param programName Short string representing the name of the program.
+ * @param shortDesc Two-sentence description of the program: what is it and what
+ *    does it do?
  * @param documentation Long string containing documentation on how to use the
  *    program and what it is.  No newline characters are necessary; this is
  *    taken care of by CLI later.
- * @param defaultModule Name of the default module.
  */
 ProgramDoc::ProgramDoc(const std::string& programName,
+                       const std::string& shortDesc,
                        const std::function<std::string()>& documentation) :
     programName(programName),
+    shortDesc(shortDesc),
     documentation(documentation)
 {
   // Register this with CLI.

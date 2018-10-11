@@ -22,12 +22,14 @@ using namespace mlpack::util;
 using namespace std;
 using namespace boost;
 
-PROGRAM_INFO("Descriptive Statistics", "This utility takes a dataset and "
-    "prints out the descriptive statistics of the data. Descriptive statistics "
-    "is the discipline of quantitatively describing the main features of a "
-    "collection of information, or the quantitative description itself. The "
-    "program does not modify the original file, but instead prints out the "
-    "statistics to the console. The printed result will look like a table."
+PROGRAM_INFO("Descriptive Statistics",
+    "A utility for printing some descriptive statistics about a dataset.",
+    "This utility takes a dataset and prints out the descriptive statistics of "
+    "the data. Descriptive statistics is the discipline of quantitatively "
+    "describing the main features of a collection of information, or the "
+    "quantitative description itself. The program does not modify the original "
+    "data, but instead prints out the statistics to the console. The printed "
+    "result will look like a table."
     "\n\n"
     "Optionally, width and precision of the output can be adjusted by a user "
     "using the " + PRINT_PARAM_STRING("width") + " and " +

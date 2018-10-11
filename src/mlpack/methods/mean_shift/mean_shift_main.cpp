@@ -23,9 +23,13 @@ using namespace mlpack::util;
 using namespace std;
 
 // Define parameters for the executable.
-PROGRAM_INFO("Mean Shift Clustering", "This program performs mean shift "
-    "clustering on the given dataset, storing the learned cluster assignments "
-    "either as a column of labels in the input dataset or separately."
+PROGRAM_INFO("Mean Shift Clustering",
+    "An efficient implementation of mean-shift clustering using dual-tree "
+    "algorithms.  Given a dataset, this utility can run mean shift clustering "
+    "and return cluster centroids and each point's cluster assignments.",
+    "This program performs mean shift clustering on the given dataset, storing "
+    "the learned cluster assignments either as a column of labels in the input "
+    "dataset or separately."
     "\n\n"
     "The input dataset should be specified with the " +
     PRINT_PARAM_STRING("input") + " parameter, and the radius used for search"

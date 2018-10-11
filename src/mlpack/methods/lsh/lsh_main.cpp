@@ -25,6 +25,10 @@ using namespace mlpack::util;
 
 // Information about the program itself.
 PROGRAM_INFO("K-Approximate-Nearest-Neighbor Search with LSH",
+    "An implementation of locality-sensitive hashing (LSH) for approximate "
+    "k-nearest-neighbor search (KNN).  Given a reference set to search in, "
+    "this computes k approximate nearest neighbors of each given query "
+    "point; a trained LSH model can be reused for future queries.",
     "This program will calculate the k approximate-nearest-neighbors of a set "
     "of points using locality-sensitive hashing. You may specify a separate set"
     " of reference points and query points, or just a reference set which will "

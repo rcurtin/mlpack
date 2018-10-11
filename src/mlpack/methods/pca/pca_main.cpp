@@ -26,12 +26,17 @@ using namespace mlpack::util;
 using namespace std;
 
 // Document program.
-PROGRAM_INFO("Principal Components Analysis", "This program performs principal "
-    "components analysis on the given dataset using the exact, randomized, "
-    "randomized block Krylov, or QUIC SVD method. It will transform the data "
-    "onto its principal components, optionally performing dimensionality "
-    "reduction by ignoring the principal components with the smallest "
-    "eigenvalues."
+PROGRAM_INFO("Principal Components Analysis",
+    "A tool for dimensionality reduction or preprocessing via principal "
+    "components analysis (PCA), with a variety of algorithms available.  "
+    "An input dataset will be transformed onto a configurable number of its "
+    "principal components; a number of options are available to change the "
+    "specific behavior of the transformation.",
+    "This program performs principal components analysis on the given dataset "
+    "using the exact, randomized, randomized block Krylov, or QUIC SVD method. "
+    "It will transform the data onto its principal components, optionally "
+    "performing dimensionality reduction by ignoring the principal components "
+    "with the smallest eigenvalues."
     "\n\n"
     "Use the " + PRINT_PARAM_STRING("input") + " parameter to specify the "
     "dataset to perform PCA on.  A desired new dimensionality can be specified "

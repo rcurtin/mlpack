@@ -28,7 +28,13 @@ using namespace mlpack::util;
 using namespace std;
 
 // Define parameters for the executable.
-PROGRAM_INFO("K-Means Clustering", "This program performs K-Means clustering "
+PROGRAM_INFO("K-Means Clustering",
+    "An implementation of several accelerated variants of Lloyd's algorithm for"
+    " k-means clustering.  Given an input dataset, a number of clusters, and "
+    "some algorithm configuration parameters, this can compute a k-means "
+    "clustering of the data and return the centroids and cluster assignments of"
+    " each point.",
+    "This program performs K-Means clustering "
     "on the given dataset.  It can return the learned cluster assignments, and "
     "the centroids of the clusters.  Empty clusters are not allowed by default;"
     " when a cluster becomes empty, the point furthest from the centroid of the"

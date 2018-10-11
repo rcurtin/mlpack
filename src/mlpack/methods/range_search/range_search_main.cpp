@@ -29,6 +29,10 @@ using namespace mlpack::util;
 
 // Information about the program itself.
 PROGRAM_INFO("Range Search",
+    "An efficient implementation of range search with dual-tree algorithms. "
+    "Given a dataset, a tree can be built for fast range search queries; this "
+    "tree can be used to find all points within a given range of a new set of "
+    "query points.",
     "This program implements range search with a Euclidean distance metric. "
     "For a given query point, a given range, and a given set of reference "
     "points, the program will return all of the reference points with distance "
