@@ -27,7 +27,10 @@ matrix:
 
     - os: linux
       dist: xenial
-      env: CMAKE_OPTIONS="-DDEBUG=ON -DPROFILE=OFF -DBUILD_PYTHON_BINDINGS=OFF"
+      env:
+        global:
+          - secure: "YO9kOZQ2xxDeZs801ZBo22aRv5UXNGenp9O5imlMDQpz3kPosGuAqPOYAGuk1MjmodTpNIHrQIrF1ab6CaF0VcWI+C+XWBgu1hUSVMRArZTI13ezx5DDN4XUjWZQ4MWtdINXk4EVa38/HRwJBf7dO3wjYLzZHzp48uWrBhy6W4w="
+          - CMAKE_OPTIONS="-DDEBUG=ON -DPROFILE=OFF -DBUILD_PYTHON_BINDINGS=OFF"
       before_install:
         - sudo apt-get update
         - sudo apt-get install -y --allow-unauthenticated libopenblas-dev liblapack-dev g++ libboost-all-dev
