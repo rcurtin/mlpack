@@ -341,7 +341,7 @@ inline std::string PrintDefault(const std::string& paramName)
 
   if (d.required)
   {
-    oss << "**--**";
+    oss << "***required***";
   }
   else
   {
