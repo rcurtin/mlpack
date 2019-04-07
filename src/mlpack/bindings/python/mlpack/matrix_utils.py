@@ -44,7 +44,8 @@ def to_matrix(x, dtype=np.double, copy=False):
   # Make sure it's array-like at all.
   if not hasattr(x, '__len__') and \
       not hasattr(x, 'shape') and \
-      not hasattr(x, '__array__'):
+      not hasattr(x, '__array__') and \
+      not isinstance(x, str):
     raise TypeError("given argument is not array-like")
 
   if (isinstance(x, np.ndarray) and x.dtype == dtype and x.flags.c_contiguous):
@@ -76,7 +77,8 @@ def to_matrix_with_info(x, dtype, copy=False):
   # Make sure it's array-like at all.
   if not hasattr(x, '__len__') and \
       not hasattr(x, 'shape') and \
-      not hasattr(x, '__array__'):
+      not hasattr(x, '__array__') and \
+      not isinstance(x, str):
     raise TypeError("given argument is not array-like")
 
   if isinstance(x, np.ndarray):
