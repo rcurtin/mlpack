@@ -62,9 +62,11 @@ void PrintInputProcessing(
    *     CLI.SetPassed(<const string> 'param_name')
    *   else:
    *     raise TypeError("'param_name' must have type 'list'!")
+   *
+   * We actually need special handling for int so that bool is not detected as
+   * an int, since due to historical reasons Python bools are subclasses of
+   * ints.
    */
-
-
   std::cout << prefix << "# Detect if the parameter was passed; set if so."
       << std::endl;
   if (!d.required)
@@ -75,6 +77,14 @@ void PrintInputProcessing(
           << GetPrintableType<T>(d) << "):" << std::endl;
       std::cout << prefix << "  if " << name << " is not " << def << ":"
           << std::endl;
+    }
+    else if (GetPrintableType<T>(d) == "int")
+    {
+      std::cout << prefix << "if " << name << " is not " << def << ":"
+          << std::endl;
+      std::cout << prefix << "  if isinstance(" << name << ", "
+          << GetPrintableType<T>(d) << ") and not isinstance(" << name
+          << ", bool):" << std::endl;
     }
     else
     {
@@ -123,6 +133,14 @@ void PrintInputProcessing(
           << GetPrintableType<T>(d) << "):" << std::endl;
       std::cout << prefix << "  if " << name << " is not " << def << ":"
           << std::endl;
+    }
+    else if (GetPrintableType<T>(d) == "int")
+    {
+      std::cout << prefix << "if " << name << " is not " << def << ":"
+          << std::endl;
+      std::cout << prefix << "  if isinstance(" << name << ", "
+          << GetPrintableType<T>(d) << ") and not isinstance(" << name
+          << ", bool):" << std::endl;
     }
     else
     {
