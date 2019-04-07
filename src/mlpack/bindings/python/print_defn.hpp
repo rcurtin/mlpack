@@ -28,7 +28,8 @@ void PrintDefn(const util::ParamData& d,
                void* /* output */)
 {
   // Make sure that we don't use names that are Python keywords.
-  std::string name = (d.name == "lambda") ? "lambda_" : d.name;
+  std::string name = (d.name == "lambda" || d.name == "input") ?
+      d.name + "_" : d.name;
 
   std::cout << name;
   if (std::is_same<T, bool>::value)

@@ -113,7 +113,8 @@ std::string PrintInputOptions(const std::string& paramName,
     {
       // Print the input option.
       std::ostringstream oss;
-      if (paramName != "lambda") // Don't print Python keywords.
+      // Don't print Python keywords.
+      if (paramName != "lambda" && paramName != "input")
         oss << paramName << "=";
       else
         oss << paramName << "_=";
@@ -248,8 +249,8 @@ inline std::string ProgramCall(const std::string& programName)
     else
       first = false;
 
-    // Print the input option.
-    if (it->second.name != "lambda") // Don't print Python keywords.
+    // Print the input option, but don't print Python keywords.
+    if (it->second.name != "lambda" && it->second.name != "input")
       oss << it->second.name << "=";
     else
       oss << it->second.name << "_=";
@@ -315,7 +316,7 @@ inline std::string ParamString(const std::string& paramName)
   // For a Python binding we don't need to know the type.
 
   // Make sure that we don't print reserved keywords.
-  if (paramName == "lambda")
+  if (paramName == "lambda" || paramName == "input")
     return "'" + paramName + "_'";
   else
     return "'" + paramName + "'";
@@ -329,7 +330,8 @@ template<typename T>
 inline std::string ParamString(const std::string& paramName, const T& value)
 {
   std::ostringstream oss;
-  if (paramName == "lambda") // Don't print reserved keywords.
+  // Don't print reserved keywords.
+  if (paramName == "lambda" || paramName == "input")
     oss << paramName << "_=" << value;
   else
     oss << paramName << "=" << value;

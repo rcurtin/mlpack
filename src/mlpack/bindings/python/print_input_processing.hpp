@@ -49,7 +49,8 @@ void PrintInputProcessing(
     def = "False";
 
   // Make sure that we don't use names that are Python keywords.
-  std::string name = (d.name == "lambda") ? "lambda_" : d.name;
+  std::string name = (d.name == "lambda" || d.name == "input") ?
+      d.name + "_" : d.name;
 
   /**
    * This gives us code like:
