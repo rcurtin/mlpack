@@ -26,6 +26,7 @@ else ()
   option(BUILD_SHARED_LIBS
       "Compile shared libraries (if OFF, static libraries are compiled)." ON)
 endif()
+option(BUILD_GO_BINDINGS "Build Go bindings." ON)
 
 # Build Markdown bindings for documentation.  This is used as part of website
 # generation.

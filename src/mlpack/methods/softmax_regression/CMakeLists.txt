@@ -19,4 +19,5 @@ set(MLPACK_SRCS ${MLPACK_SRCS} ${DIR_SRCS} PARENT_SCOPE)
 
 add_cli_executable(softmax_regression)
 add_python_binding(softmax_regression)
-add_markdown_docs(softmax_regression "cli;python" "classification")
+add_go_binding(softmax_regression)
+add_markdown_docs(softmax_regression "cli;python;go" "classification")

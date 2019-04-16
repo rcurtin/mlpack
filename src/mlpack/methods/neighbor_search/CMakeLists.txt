@@ -29,8 +29,10 @@ set(MLPACK_SRCS ${MLPACK_SRCS} ${DIR_SRCS} PARENT_SCOPE)
 # Add mlpack_knn and mlpack_kfn executables.
 add_cli_executable(knn)
 add_python_binding(knn)
-add_markdown_docs(knn "cli;python" "geometry")
+add_go_binding(knn)
+add_markdown_docs(knn "cli;python;go" "geometry")
 
 add_cli_executable(kfn)
 add_python_binding(kfn)
-add_markdown_docs(kfn "cli;python" "geometry")
+add_go_binding(kfn)
+add_markdown_docs(kfn "cli;python;go" "geometry")

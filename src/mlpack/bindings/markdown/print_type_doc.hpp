@@ -12,6 +12,7 @@
 
 #include <mlpack/bindings/cli/print_type_doc.hpp>
 #include <mlpack/bindings/python/print_type_doc.hpp>
+#include <mlpack/bindings/go/print_type_doc.hpp>
 
 namespace mlpack {
 namespace bindings {
@@ -31,6 +32,10 @@ std::string PrintTypeDoc(const util::ParamData& data)
   else if (BindingInfo::Language() == "python")
   {
     return python::PrintTypeDoc<typename std::remove_pointer<T>::type>(data);
+  }
+  else if (BindingInfo::Language() == "go")
+  {
+    return go::PrintTypeDoc<typename std::remove_pointer<T>::type>(data);
   }
   else
   {

@@ -3,6 +3,7 @@ set(DIRS
   cli
   markdown
   python
+  go
   tests
 )
 

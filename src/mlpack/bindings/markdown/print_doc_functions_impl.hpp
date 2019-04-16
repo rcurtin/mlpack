@@ -20,6 +20,7 @@
 
 #include <mlpack/bindings/cli/print_doc_functions.hpp>
 #include <mlpack/bindings/python/print_doc_functions.hpp>
+#include <mlpack/bindings/go/print_doc_functions.hpp>
 
 namespace mlpack {
 namespace bindings {
@@ -38,6 +39,10 @@ inline std::string GetBindingName(const std::string& bindingName)
   else if (BindingInfo::Language() == "python")
   {
     return python::GetBindingName(bindingName);
+  }
+  else if (BindingInfo::Language() == "go")
+  {
+    return go::GetBindingName(bindingName);
   }
   else
   {
@@ -59,6 +64,11 @@ inline std::string PrintLanguage(const std::string& language)
   {
     return "Python";
   }
+
+  else if (language == "go")
+  {
+    return "Go";
+  }
   else
   {
     throw std::invalid_argument("PrintLanguage(): unknown "
@@ -79,6 +89,11 @@ inline std::string PrintImport(const std::string& bindingName)
   {
     return python::PrintImport(bindingName);
   }
+
+  else if (BindingInfo::Language() == "go")
+  {
+    return go::PrintImport();
+  }
   else
   {
     throw std::invalid_argument("PrintImport(): unknown "
@@ -98,6 +113,11 @@ inline std::string PrintOutputOptionInfo()
   else if (BindingInfo::Language() == "python")
   {
     return python::PrintOutputOptionInfo();
+  }
+
+  else if (BindingInfo::Language() == "go")
+  {
+    return go::PrintOutputOptionInfo();
   }
   else
   {
@@ -318,6 +338,10 @@ inline std::string PrintValue(const T& value, bool quotes)
   {
     result = python::PrintValue(value, quotes);
   }
+  else if (BindingInfo::Language() == "go")
+  {
+    result = go::PrintValue(value, quotes);
+  }
   else
   {
     throw std::invalid_argument("PrintValue(): unknown "
@@ -353,6 +377,10 @@ inline std::string PrintDefault(const std::string& paramName)
     {
       oss << python::PrintDefault(paramName);
     }
+    else if (BindingInfo::Language() == "go")
+    {
+      oss << go::PrintDefault(paramName);
+    }
     else
     {
       throw std::invalid_argument("PrintDefault: unknown "
@@ -377,6 +405,10 @@ inline std::string PrintDataset(const std::string& dataset)
   {
     result = python::PrintDataset(dataset);
   }
+  else if (BindingInfo::Language() == "go")
+  {
+    result = go::PrintDataset(dataset);
+  }
   else
   {
     throw std::invalid_argument("PrintDataset(): unknown "
@@ -399,6 +431,10 @@ inline std::string PrintModel(const std::string& model)
   else if (BindingInfo::Language() == "python")
   {
     result = python::PrintModel(model);
+  }
+  else if (BindingInfo::Language() == "go")
+  {
+    result = go::PrintModel(model);
   }
   else
   {
@@ -426,6 +462,12 @@ std::string ProgramCall(const std::string& programName, Args... args)
   {
     s += "python\n";
     s += python::ProgramCall(programName, args...);
+  }
+
+  else if (BindingInfo::Language() == "go")
+  {
+    s += "go\n";
+    s += go::ProgramCall(programName, args...);
   }
   else
   {
@@ -458,6 +500,14 @@ inline std::string ProgramCall(const std::string& programName)
       s += ">>> " + import + "\n";
     s += python::ProgramCall(programName);
   }
+  else if (BindingInfo::Language() == "go")
+  {
+    s += "go\n";
+    std::string import = PrintImport(GetBindingName(programName));
+    if (import.size() > 0)
+      s += import + "\n";
+    s += go::ProgramCall(programName);
+  }
   else
   {
     throw std::invalid_argument("ProgramCall(): unknown "
@@ -486,6 +536,10 @@ inline std::string ParamString(const std::string& paramName)
   else if (BindingInfo::Language() == "python")
   {
     s = python::ParamString(paramName);
+  }
+  else if (BindingInfo::Language() == "go")
+  {
+    s = go::ParamString(paramName);
   }
   else
   {
@@ -525,6 +579,10 @@ inline bool IgnoreCheck(const T& t)
   else if (BindingInfo::Language() == "python")
   {
     return python::IgnoreCheck(t);
+  }
+  else if (BindingInfo::Language() == "go")
+  {
+    return go::IgnoreCheck(t);
   }
   else
   {
