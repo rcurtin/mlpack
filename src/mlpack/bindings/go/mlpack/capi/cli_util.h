@@ -48,7 +48,29 @@ extern void mlpackSetParamString(const char *identifier, const char *value);
 /**
  * Set the parameter to the given value, given that the type is a pointer.
  */
-extern void mlpackSetParamPtr(const char *identifier, const double *ptr, const bool copy);
+extern void mlpackSetParamPtr(const char *identifier,
+                              const double *ptr,
+                              const bool copy);
+
+/**
+ * Set the int vector parameter to the given value.
+ */
+extern void mlpackSetParamVectorInt(const char* identifier,
+                                    int* ints,
+                                    const int length);
+
+/**
+ * Set the string vector parameter to the given value.
+ */
+extern void mlpackSetParamVectorStr(const char* identifier,
+                             const char* str,
+                             const int element);
+
+/**
+ * Call CLI::SetParam<std::vector<std::string>>() to set the length.
+ */
+extern void mlpackSetParamVectorStrLen(const char* identifier,
+                              const size_t length);
 
 /**
  * Check if CLI has a specified parameter.
@@ -83,7 +105,7 @@ extern void *mlpackGetVecIntPtr(const char *identifier);
 /**
  * Get the vector<string> parameter associated with specified identifier.
  */
-extern void *mlpackGetVecStringPtr(const char *identifier);
+extern char *mlpackGetVecStringPtr(const char *identifier, const int i);
 
 /**
  * Get the vector<int> parameter's size.

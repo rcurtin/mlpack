@@ -60,9 +60,49 @@ void mlpackSetParamString(const char *identifier, const char *value)
 }
 
 /**
+ * Set the int vector parameter to the given value.
+ */
+void mlpackSetParamVectorInt(const char* identifier,
+                             int* ints,
+                             const int length)
+{
+  // Create a std::vector<int> object; unfortunately this requires copying the
+  // vector elements.
+  std::vector<int> vec(length);
+  for (size_t i = 0; i < (size_t) length; ++i)
+    vec[i] = ints[i];
+  util::SetParam(identifier, vec);
+}
+
+/**
+ * Call CLI::SetParam<std::vector<std::string>>() to set the length.
+ */
+void mlpackSetParamVectorStrLen(const char* identifier,
+                              const size_t length)
+{
+  CLI::GetParam<std::vector<std::string>>(identifier).clear();
+  CLI::GetParam<std::vector<std::string>>(identifier).resize(length);
+  CLI::SetPassed(identifier);
+}
+
+/**
+ * Set the string vector parameter to the given value.
+ */
+void mlpackSetParamVectorStr(const char* identifier,
+                             const char* str,
+                             const int element)
+{
+
+  CLI::GetParam<std::vector<std::string>>(identifier)[element] =
+      std::string(str);
+}
+
+/**
  * Set the parameter to the given value, given that the type is a pointer.
  */
-void mlpackSetParamPtr(const char *identifier, const double *ptr, const bool copy)
+void mlpackSetParamPtr(const char *identifier,
+                       const double *ptr,
+                       const bool copy)
 {
   util::SetParamPtr(identifier, ptr, copy);
 }
@@ -117,17 +157,22 @@ bool mlpackGetParamBool(const char *identifier)
  */
 void *mlpackGetVecIntPtr(const char *identifier)
 {
-  // std::vector<int> vec = CLI::GetParam<std::vector<int>>(identifier);
-  // return vec.get_allocator();
+  const size_t size = mlpackVecIntSize(identifier);
+  int* ints = new int[size];
+
+  for (size_t i = 0; i < size; i++)
+    ints[i] = CLI::GetParam<std::vector<int>>(identifier)[i];
+
+  return ints;
 }
 
 /**
  * Get the vector<string> parameter associated with specified identifier.
  */
-void *mlpackGetVecStringPtr(const char *identifier)
+char *mlpackGetVecStringPtr(const char *identifier ,const int i)
 {
-  // std::vector<std::string> vec = CLI::GetParam<std::vector<std::string>>(identifier);
-  // return vec.get_allocator();
+  return const_cast<char*>(CLI::GetParam<std::vector<std::string>>(
+                           identifier)[i].c_str());
 }
 
 /**
@@ -135,8 +180,7 @@ void *mlpackGetVecStringPtr(const char *identifier)
  */
 int mlpackVecIntSize(const char *identifier)
 {
-  std::vector<int> output = CLI::GetParam<std::vector<int>>(identifier);
-  return output.size();
+  return CLI::GetParam<std::vector<int>>(identifier).size();
 }
 
 /**
@@ -144,8 +188,7 @@ int mlpackVecIntSize(const char *identifier)
  */
 int mlpackVecStringSize(const char *identifier)
 {
-  std::vector<std::string> output = CLI::GetParam<std::vector<std::string>>(identifier);
-  return output.size();
+  return CLI::GetParam<std::vector<std::string>>(identifier).size();
 }
 
 /**
