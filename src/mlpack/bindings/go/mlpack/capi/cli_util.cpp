@@ -92,7 +92,6 @@ void mlpackSetParamVectorStr(const char* identifier,
                              const char* str,
                              const int element)
 {
-
   CLI::GetParam<std::vector<std::string>>(identifier)[element] =
       std::string(str);
 }
@@ -169,7 +168,7 @@ void *mlpackGetVecIntPtr(const char *identifier)
 /**
  * Get the vector<string> parameter associated with specified identifier.
  */
-char *mlpackGetVecStringPtr(const char *identifier ,const int i)
+char *mlpackGetVecStringPtr(const char *identifier, const int i)
 {
   return const_cast<char*>(CLI::GetParam<std::vector<std::string>>(
                            identifier)[i].c_str());

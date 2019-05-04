@@ -142,7 +142,7 @@ void PrintInputProcessing(
   // Capitalize the first letter of parameter name so it is
   // of exported type in Go.
   std::string paramName = d.name;
-  std::string goParamName =paramName;
+  std::string goParamName = paramName;
   if (!paramName.empty())
   {
     goParamName[0] = std::toupper(goParamName[0]);
@@ -271,8 +271,8 @@ void PrintInputProcessing(const util::ParamData& d,
       *((size_t*) input));
 }
 
-} //paramNamespace go
-} //paramNamespace bindings
-} //paramNamespace mlpack
+} // namespace go
+} // namespace bindings
+} // namespace mlpack
 
 #endif

@@ -54,7 +54,8 @@ void PrintH(const util::ProgramDoc& programInfo,
   {
     const util::ParamData& d = it->second;
     if (d.input)
-      CLI::GetSingleton().functionMap[d.tname]["PrintModelUtilH"](d, NULL, NULL);
+      CLI::GetSingleton().functionMap[d.tname]["PrintModelUtilH"](d,
+                                                NULL, NULL);
   }
 
   // We generate the wrapper function for mlpackMain().

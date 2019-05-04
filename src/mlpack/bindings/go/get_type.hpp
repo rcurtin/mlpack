@@ -95,7 +95,7 @@ inline std::string GetType(
     const util::ParamData& d,
     const typename boost::enable_if<util::IsStdVector<T>>::type* = 0)
 {
-  return "Vec" + GetType<typename T::value_type>(d) ;
+  return "Vec" + GetType<typename T::value_type>(d);
 }
 
 template<typename T>

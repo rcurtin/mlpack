@@ -37,7 +37,6 @@ void ImportDecl(
   std::cout << prefix << "\"runtime\" " << std::endl;
   std::cout << prefix << "\"time\" " << std::endl;
   std::cout << prefix << "\"unsafe\" " << std::endl;
-
 }
 
 /**

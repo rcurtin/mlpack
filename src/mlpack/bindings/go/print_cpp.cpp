@@ -55,7 +55,8 @@ void PrintCPP(const ProgramDoc& programInfo,
   {
     const util::ParamData& d = it->second;
     if (d.input)
-      CLI::GetSingleton().functionMap[d.tname]["PrintModelUtilCPP"](d, NULL, NULL);
+      CLI::GetSingleton().functionMap[d.tname]["PrintModelUtilCPP"](d,
+                                                 NULL, NULL);
   }
 
   // Finally, we generate the wrapper function for mlpackMain().

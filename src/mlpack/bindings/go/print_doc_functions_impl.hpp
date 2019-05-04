@@ -296,7 +296,7 @@ std::string ProgramCall(const std::string& programName, Args... args)
     result = result + input + ", ";
   oss.str(""); // Reset it.
   if (param != "")
-   result = result + "param";
+    result = result + "param";
 
   result = result + ")";
   return result;

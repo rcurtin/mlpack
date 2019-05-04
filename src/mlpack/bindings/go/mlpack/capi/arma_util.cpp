@@ -23,7 +23,8 @@ extern "C" {
 /**
  * Pass Gonum Dense pointer and wrap an Armadillo mat around it.
  */
-void mlpackToArmaMat(const char *identifier, const double mat[], int row, int col)
+void mlpackToArmaMat(const char *identifier, const double mat[],
+                     int row, int col)
 {
   // Advanced constructor.
   arma::mat m(const_cast<double*>(mat), row, col, false, true);
@@ -35,13 +36,15 @@ void mlpackToArmaMat(const char *identifier, const double mat[], int row, int co
 /**
  * Pass Gonum Dense pointer and wrap an Armadillo mat around it.
  */
-void mlpackToArmaUmat(const char *identifier, const double mat[], int row, int col)
+void mlpackToArmaUmat(const char *identifier, const double mat[],
+                      int row, int col)
 {
   // Advanced constructor.
   arma::mat m(const_cast<double*>(mat), row, col, false, true);
-  
+
   // Advanced constructor
-  arma::Mat<size_t> matr(arma::conv_to<arma::Mat<size_t>>::from(m).memptr(),row,col,false,true);
+  arma::Mat<size_t> matr(arma::conv_to<arma::Mat<size_t>>::from(m).memptr(),
+                         row, col, false, true);
 
   // Set input parameter with corresponding matrix in CLI.
   SetParam(identifier, matr);
@@ -125,7 +128,7 @@ void *mlpackArmaPtrUmat(const char *identifier)
 
   // Advanced constructor.
   arma::Mat<double> output(arma::conv_to<arma::Mat<double>>::from(m).memptr(),
-                              m.n_rows,m.n_cols, false, true);
+                              m.n_rows, m.n_cols, false, true);
   if (output.is_empty())
   {
     return NULL;

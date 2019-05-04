@@ -123,7 +123,6 @@ void PrintGo(const util::ProgramDoc& programInfo,
     size_t indent = 4;
     CLI::GetSingleton().functionMap[d.tname]["PrintMethodInit"](d,
         (void*) &indent, NULL);
-
   }
   cout << "  " << "}" << endl;
   cout << "}" << endl;
@@ -134,7 +133,8 @@ void PrintGo(const util::ProgramDoc& programInfo,
   {
     const util::ParamData& d = it->second;
     if (d.input)
-      CLI::GetSingleton().functionMap[d.tname]["PrintModelUtilGo"](d, NULL, NULL);
+      CLI::GetSingleton().functionMap[d.tname]["PrintModelUtilGo"](d,
+                                                NULL, NULL);
   }
 
   // Print the comment describing the function and its parameters.
