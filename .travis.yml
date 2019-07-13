@@ -35,6 +35,16 @@ matrix:
         - cmake . && make && sudo make install && cd ..
         - sudo cp .travis/config.hpp /usr/include/armadillo_bits/config.hpp
 
+    - os: linux
+      dist: xenial
+      env: CMAKE_OPTIONS="-DDEBUG=OFF -DPROFILE=OFF -DBUILD_GO_BINDINGS=ON -DBUILD_PYTHON_BINDINGS=OFF"
+      before_install:
+        - sudo apt-get update
+        - sudo apt-get install -y --allow-unauthenticated libopenblas-dev liblapack-dev g++ libboost-all-dev
+        - curl https://ftp.fau.de/macports/distfiles/armadillo/armadillo-6.500.5.tar.gz | tar xvz && cd armadillo*
+        - cmake . && make && sudo make install && cd ..
+        - sudo cp .travis/config.hpp /usr/include/armadillo_bits/config.hpp
+
     - os: osx
       osx_image: xcode9.4 # Maybe we can try some different ones?
       env: CMAKE_OPTIONS="-DDEBUG=ON -DPROFILE=OFF -DBUILD_PYTHON_BINDINGS=OFF"

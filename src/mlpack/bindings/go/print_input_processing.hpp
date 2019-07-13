@@ -13,7 +13,6 @@
 #define MLPACK_BINDINGS_GO_PRINT_INPUT_PROCESSING_HPP
 
 #include <mlpack/prereqs.hpp>
-#include "get_arma_type.hpp"
 #include "get_type.hpp"
 #include "get_go_type.hpp"
 #include "strip_type.hpp"
