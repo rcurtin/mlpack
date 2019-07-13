@@ -1,6 +1,7 @@
 /**
  * @file print_doc_functions_impl.hpp
- * @author Ryan Curtin
+ * @author Yashwant Singh
+ * @author Yasmine Dumouchel
  *
  * This file contains functions useful for printing documentation strings
  * related to Go bindings.

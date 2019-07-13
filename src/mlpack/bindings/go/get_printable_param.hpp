@@ -1,6 +1,6 @@
 /**
  * @file get_printable_param.hpp
- * @author Ryan Curtin
+ * @author Yashwant Singh
  *
  * Get a printable version of parameters.
  *

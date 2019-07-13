@@ -122,7 +122,7 @@ func GetParamVecInt(identifier string) []int {
   runtime.GC()
   time.Sleep(time.Second)
 
-	// Convert pointer to slice of data, to then pass it to a gonum matrix.
+  // Convert pointer to slice of data, to then pass it to a gonum matrix.
   data := (*[1<<30 - 1]int)(v.mem)
   output := data[:e]
   if output != nil {

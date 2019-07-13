@@ -72,16 +72,6 @@ inline std::string GetGoType<std::string>(
 }
 
 template<>
-inline std::string GetGoType<size_t>(
-    const util::ParamData& /* d */,
-    const typename boost::disable_if<util::IsStdVector<size_t>>::type*,
-    const typename boost::disable_if<data::HasSerialize<size_t>>::type*,
-    const typename boost::disable_if<arma::is_arma_type<size_t>>::type*)
-{
-  return "u";
-}
-
-template<>
 inline std::string GetGoType<bool>(
     const util::ParamData& /* d */,
     const typename boost::disable_if<util::IsStdVector<bool>>::type*,

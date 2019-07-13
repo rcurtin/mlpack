@@ -1,6 +1,7 @@
 /**
  * @file print_doc.hpp
- * @author Ryan Curtin.
+ * @author Yashwant Singh
+ * @author Yasmine Dumouchel
  *
  * Print documentation for a Go binding parameter.
  *

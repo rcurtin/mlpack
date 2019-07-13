@@ -35,6 +35,8 @@ PARAM_COL_IN("col_in", "Input column.", "c");
 PARAM_UCOL_IN("ucol_in", "Input unsigned column.", "");
 PARAM_ROW_IN("row_in", "Input row.", "");
 PARAM_UROW_IN("urow_in", "Input unsigned row.", "");
+PARAM_VECTOR_IN(int, "vector_in", "Input vector of numbers.", "");
+PARAM_VECTOR_IN(string, "str_vector_in", "Input vector of strings.", "");
 PARAM_MODEL_IN(GaussianKernel, "model_in", "Input model.", "");
 PARAM_FLAG("build_model", "If true, a model will be returned.", "");
 
@@ -47,6 +49,8 @@ PARAM_COL_OUT("col_out", "Output column. 2x input column", "");
 PARAM_UCOL_OUT("ucol_out", "Output unsigned column. 2x input column.", "");
 PARAM_ROW_OUT("row_out", "Output row.  2x input row.", "");
 PARAM_UROW_OUT("urow_out", "Output unsigned row.  2x input row.", "");
+PARAM_VECTOR_OUT(int, "vector_out", "Output vector.", "");
+PARAM_VECTOR_OUT(string, "str_vector_out", "Output string vector.", "");
 PARAM_MODEL_OUT(GaussianKernel, "model_out", "Output model, with twice the "
     "bandwidth.", "");
 PARAM_DOUBLE_OUT("model_bw_out", "The bandwidth of the model.");
@@ -131,6 +135,23 @@ static void mlpackMain()
     out *= 2;
 
     CLI::GetParam<arma::Row<size_t>>("urow_out") = move(out);
+  }
+
+  // Vector arguments should have the last element removed.
+  if (CLI::HasParam("vector_in"))
+  {
+    vector<int> out = move(CLI::GetParam<vector<int>>("vector_in"));
+    out.pop_back();
+
+    CLI::GetParam<vector<int>>("vector_out") = move(out);
+  }
+
+  if (CLI::HasParam("str_vector_in"))
+  {
+    vector<string> out = move(CLI::GetParam<vector<string>>("str_vector_in"));
+    out.pop_back();
+
+    CLI::GetParam<vector<string>>("str_vector_out") = move(out);
   }
 
   // If we got a request to build a model, then build it.

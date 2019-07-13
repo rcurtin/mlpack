@@ -1,6 +1,6 @@
 /**
  * @file get_printable_type.hpp
- * @author Ryan Curtin
+ * @author Yashwant Singh
  *
  * Template metaprogramming to return the string representation of the Go
  * type for a given Go binding parameter.
@@ -54,15 +54,6 @@ inline std::string GetPrintableType<std::string>(
     const typename boost::disable_if<data::HasSerialize<std::string>>::type*,
     const typename boost::disable_if<arma::is_arma_type<std::string>>::type*,
     const typename boost::disable_if<std::is_same<std::string,
-        std::tuple<data::DatasetInfo, arma::mat>>>::type*);
-
-template<>
-inline std::string GetPrintableType<size_t>(
-    const util::ParamData& /* d */,
-    const typename boost::disable_if<util::IsStdVector<size_t>>::type*,
-    const typename boost::disable_if<data::HasSerialize<size_t>>::type*,
-    const typename boost::disable_if<arma::is_arma_type<size_t>>::type*,
-    const typename boost::disable_if<std::is_same<size_t,
         std::tuple<data::DatasetInfo, arma::mat>>>::type*);
 
 template<>

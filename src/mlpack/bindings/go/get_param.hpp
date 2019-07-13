@@ -1,6 +1,6 @@
 /**
  * @file get_param.hpp
- * @author Ryan Curtin
+ * @author Yashwant Singh
  *
  * Get a parameter for a Go binding.
  *
@@ -19,7 +19,7 @@ namespace bindings {
 namespace go {
 
 /**
- * All Python binding types are exactly what is held in the ParamData, so no
+ * All Go binding types are exactly what is held in the ParamData, so no
  * special handling is necessary.
  */
 template<typename T>

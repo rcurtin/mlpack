@@ -1,6 +1,6 @@
 /**
  * @file print_type_doc_impl.hpp
- * @author Ryan Curtin
+ * @author Yashwant Singh
  *
  * Print documentation for a given type.
  */

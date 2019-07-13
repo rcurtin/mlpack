@@ -110,7 +110,7 @@ func GonumToArmaUrow(identifier string, m *mat.VecDense) {
   // Get matrix dimension, underlying blas64General matrix, and data.
   e := m.Len()
   blas64 := m.RawVector()
-	data := blas64.Data
+  data := blas64.Data
 
   // Pass pointer of the underlying matrix to Mlpack.
   ptr := unsafe.Pointer(&data[0])
@@ -157,9 +157,6 @@ func (m *mlpackArma) ArmaToGonumMat(identifier string) *mat.Dense {
   array := (*[1<<30 - 1]float64)(m.mem)
   if array != nil {
     data := array[:e]
-
-    runtime.GC()
-    time.Sleep(time.Second)
 
     // Initialize result matrix.
     output := mat.NewDense(r, c, data)
@@ -208,9 +205,6 @@ func (m *mlpackArma) ArmaToGonumUmat(identifier string) *mat.Dense {
   if array != nil {
     data := array[:e]
 
-    runtime.GC()
-    time.Sleep(time.Second)
-
     // Initialize result matrix.
     output := mat.NewDense(r, c, data)
 
@@ -236,8 +230,6 @@ func (m *mlpackArma) ArmaToGonumRow(identifier string) *mat.VecDense {
   if array != nil {
     data := (*array)[:e]
 
-    runtime.GC()
-    time.Sleep(time.Second)
     // Initialize result matrix.
     output := mat.NewVecDense(e, data)
 
@@ -263,8 +255,6 @@ func (m *mlpackArma) ArmaToGonumUrow(identifier string) *mat.VecDense {
   if array != nil {
     data := array[:e]
 
-    runtime.GC()
-    time.Sleep(time.Second)
     // Initialize result matrix.
     output := mat.NewVecDense(e, data)
     // Return gonum vector.
@@ -287,9 +277,6 @@ func (m *mlpackArma) ArmaToGonumCol(identifier string) *mat.VecDense {
   array := (*[1<<30 - 1]float64)(m.mem)
   if array != nil {
     data := array[:e]
-
-    runtime.GC()
-    time.Sleep(time.Second)
 
     // Initialize result matrix.
     output := mat.NewVecDense(e, data)
@@ -314,9 +301,6 @@ func (m *mlpackArma) ArmaToGonumUcol(identifier string) *mat.VecDense {
   array := (*[1<<30 - 1]float64)(m.mem)
   if array != nil {
     data := array[:e]
-
-    runtime.GC()
-    time.Sleep(time.Second)
 
     // Initialize result matrix.
     output := mat.NewVecDense(e, data)
