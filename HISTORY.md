@@ -1,5 +1,48 @@
-### mlpack 3.1.0
+### mlpack 4.0.0
 ###### ????-??-??
+  * Add Multiple Pole Balancing Environment (#1901).
+
+  * Added functionality for scaling of data (#1876); see the command-line
+    binding `mlpack_preprocess_scale` or Python binding `preprocess_scale()`.
+
+  * Add new parameter `maximum_depth` to decision tree and random forest
+    bindings (#1916).
+
+  * Fix prediction output of softmax regression when test set accuracy is
+    calculated (#1922).
+
+  * Action struct in continuous RL environments now stores the action as a 
+    `double` instead of `double[1]` (#1941, #1931).
+
+  * Pendulum environment now checks for termination. All RL environments now
+    have an option to terminate after a set number of time steps (no limit
+    by default) (#1941).
+
+### mlpack 3.1.1
+###### 2019-05-26
+  * Fix random forest bug for numerical-only data (#1887).
+
+  * Significant speedups for random forest (#1887).
+
+  * Random forest now has `minimum_gain_split` and `subspace_dim` parameters
+    (#1887).
+
+  * Decision tree parameter `print_training_error` deprecated in favor of
+    `print_training_accuracy`.
+
+  * `output` option changed to `predictions` for adaboost and perceptron
+    binding. Old options are now deprecated and will be preserved until mlpack
+    4.0.0 (#1882).
+
+  * Concatenated ReLU layer (#1843).
+
+  * Accelerate NormalizeLabels function using hashing instead of linear search
+    (see `src/mlpack/core/data/normalize_labels_impl.hpp`) (#1780).
+
+  * Add `ConfusionMatrix()` function for checking performance of classifiers
+    (#1798).
+
+  * Install ensmallen headers when it is downloaded during build (#1900).
 
 ### mlpack 3.1.0
 ###### 2019-04-25
