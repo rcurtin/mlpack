@@ -27,7 +27,7 @@ matrix:
 
     - os: linux
       dist: xenial
-      env: CMAKE_OPTIONS="-DDEBUG=ON -DPROFILE=OFF -DBUILD_PYTHON_BINDINGS=OFF -DBUILD_CLI_EXECUTABLES=OFF"
+      env: CMAKE_OPTIONS="-DDEBUG=ON -DPROFILE=OFF -DBUILD_PYTHON_BINDINGS=OFF"
       before_install:
         - sudo apt-get update
         - sudo apt-get install -y --allow-unauthenticated libopenblas-dev liblapack-dev g++ libboost-all-dev
@@ -37,12 +37,13 @@ matrix:
 
     - os: linux
       dist: xenial
-      env: CMAKE_OPTIONS="-DDEBUG=OFF -DPROFILE=OFF -DBUILD_GO_BINDINGS=ON -DBUILD_PYTHON_BINDINGS=OFF"
+      env: CMAKE_OPTIONS="-DDEBUG=OFF -DPROFILE=OFF -DBUILD_GO_BINDINGS=ON -DBUILD_PYTHON_BINDINGS=OFF -DBUILD_CLI_EXECUTABLES=OFF"
       before_install:
         - sudo apt-get update
         - sudo apt-get install -y --allow-unauthenticated libopenblas-dev liblapack-dev g++ libboost-all-dev
         - curl https://ftp.fau.de/macports/distfiles/armadillo/armadillo-6.500.5.tar.gz | tar xvz && cd armadillo*
         - cmake . && make && sudo make install && cd ..
+        - go get gonum.org/v1/gonum/...
         - sudo cp .travis/config.hpp /usr/include/armadillo_bits/config.hpp
 
     - os: osx
