@@ -2,7 +2,7 @@ package mlpack
 
 /*
 #cgo CFLAGS: -I. -I/capi -g -Wall
-#cgo LDFLAGS: -L/usr/local/lib -lm -L/usr/local/lib/ -lmlpack -lgo_util
+#cgo LDFLAGS: -L. -lm -lmlpack -lgo_util
 #include <capi/cli_util.h>
 */
 import "C"

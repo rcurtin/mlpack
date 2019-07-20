@@ -1,7 +1,7 @@
 package main
 
 import (
-	"mlpack/build/src/mlpack/bindings/go/mlpack"
+	"mlpack/bindings/go/mlpack"
 	"testing"
 
 	"gonum.org/v1/gonum/mat"

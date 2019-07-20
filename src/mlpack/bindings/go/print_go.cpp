@@ -73,7 +73,7 @@ void PrintGo(const util::ProgramDoc& programInfo,
   // Now we must print the cgo's import libraries and files.
   cout << "/*" << endl;
   cout << "#cgo CFLAGS: -I./capi -Wall" << endl;
-  cout << "#cgo LDFLAGS: -L/usr/local/lib/ -lm "
+  cout << "#cgo LDFLAGS: -L. -lm "
       << "-lmlpack -L. -lmlpack_go_" << functionName << endl;
   cout << "#include <capi/" << functionName << ".h>" << endl;
   cout << "#include <stdlib.h>" << endl;

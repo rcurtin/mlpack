@@ -77,7 +77,15 @@ set(UTIL_SOURCES
 
 set(TEST_SOURCES
   tests/go_binding_test.go
+  tests/go.mod
+  tests/go.sum
 )
+set(SO_SOURCES
+  lib/libmlpack.so.3.1
+  lib/libmlpack.so.3
+  lib/libmlpack.so
+)
+
 add_custom_target(go ALL DEPENDS mlpack)
 add_custom_target(go_copy ALL DEPENDS mlpack)
 
@@ -102,6 +110,12 @@ add_custom_command(TARGET go_copy PRE_BUILD
         ${CMAKE_CURRENT_SOURCE_DIR}/${go_file}
         ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/mlpack/capi/)
 endforeach()
+foreach(so_file ${SO_SOURCES})
+add_custom_command(TARGET go_copy PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different
+        ${CMAKE_BINARY_DIR}/${so_file}
+        ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/mlpack/)
+endforeach ()
 foreach(cgo_file ${CGO_SOURCES})
 add_custom_command(TARGET go_copy PRE_BUILD
     COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different
