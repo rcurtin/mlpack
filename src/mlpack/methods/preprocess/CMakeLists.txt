@@ -38,5 +38,4 @@ add_markdown_docs(preprocess_imputer "cli;go" "preprocessing")
 
 add_cli_executable(preprocess_scale)
 add_python_binding(preprocess_scale)
-add_go_binding(preprocess_scale)
-add_markdown_docs(preprocess_scale "cli;python;go" "preprocessing")
+add_markdown_docs(preprocess_scale "cli;python" "preprocessing")
