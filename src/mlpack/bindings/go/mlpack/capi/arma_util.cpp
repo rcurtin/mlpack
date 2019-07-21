@@ -10,7 +10,7 @@
  * 3-clause BSD license along with mlpack.  If not, see
  * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#include "arma_util.h"
+#include "./arma_util.h"
 #include "arma_util.hpp"
 #include "cli_util.hpp"
 #include <mlpack/core/util/cli.hpp>

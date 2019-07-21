@@ -186,7 +186,8 @@ static const std::string testName = "";
 #include <mlpack/core/util/param.hpp>
 
 #undef PROGRAM_INFO
-#define PROGRAM_INFO(NAME, SHORT_DESC, DESC, ...) static mlpack::util::ProgramDoc \
+#define PROGRAM_INFO(NAME, SHORT_DESC, DESC, ...) \
+    static mlpack::util::ProgramDoc \
     cli_programdoc_dummy_object = mlpack::util::ProgramDoc(NAME, SHORT_DESC, \
     []() { return DESC; }, { __VA_ARGS__ }); \
     namespace mlpack { \

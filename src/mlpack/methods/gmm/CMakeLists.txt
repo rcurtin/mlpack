@@ -31,10 +31,10 @@ add_markdown_docs(gmm_train "cli;python;go" "clustering")
 
 add_cli_executable(gmm_generate)
 add_python_binding(gmm_generate)
-add_go_binding(gmm_generate)
+#add_go_binding(gmm_generate)
 add_markdown_docs(gmm_generate "cli;python;go" "clustering")
 
 add_cli_executable(gmm_probability)
 add_python_binding(gmm_probability)
-add_go_binding(gmm_probability)
+#add_go_binding(gmm_probability)
 add_markdown_docs(gmm_probability "cli;python;go" "clustering")

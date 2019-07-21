@@ -1,7 +1,7 @@
 package mlpack
 
 /*
-#cgo CFLAGS: -I. -I/capi -g -Wall
+#cgo CFLAGS: -I. -I/capi -g -Wall -Wno-unused-variable 
 #cgo LDFLAGS: -L. -lmlpack -lgo_util
 #include <stdlib.h>
 #include <stdio.h>
