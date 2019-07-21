@@ -74,7 +74,7 @@ void PrintGo(const util::ProgramDoc& programInfo,
   cout << "/*" << endl;
   cout << "#cgo CFLAGS: -I./capi -Wall" << endl;
   cout << "#cgo LDFLAGS: -L. -lm "
-      << "-lmlpack -L. -lmlpack_go_" << functionName << endl;
+      << "-lmlpack -lmlpack_go_" << functionName << endl;
   cout << "#include <capi/" << functionName << ".h>" << endl;
   cout << "#include <stdlib.h>" << endl;
   cout << "*/" << endl;
