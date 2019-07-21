@@ -247,7 +247,7 @@ macro (add_go_binding name)
   target_link_libraries(mlpack_go_${name} mlpack ${MLPACK_LIBRARIES})
   target_compile_definitions(mlpack_go_${name} PUBLIC "BINDING_TYPE=BINDING_TYPE_GO")
   set_target_properties(mlpack_go_${name} PROPERTIES
-      LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/mlpack)
+      LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/mlpack/)
 
   add_dependencies(mlpack_go_${name} build_go_${name})
   add_dependencies(mlpack_go_${name} go_util)
