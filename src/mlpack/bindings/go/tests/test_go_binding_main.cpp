@@ -1,8 +1,8 @@
 /**
  * @file python_binding_test.cpp
- * @author Ryan Curtin
+ * @author Yashwant Singh
  *
- * A binding test for Python.
+ * A binding test for Go.
  *
  * mlpack is free software; you may redistribute it and/or modify it under the
  * terms of the 3-clause BSD license.  You should have received a copy of the
@@ -18,9 +18,9 @@ using namespace std;
 using namespace mlpack;
 using namespace mlpack::kernel;
 
-PROGRAM_INFO("Python binding test",
-    "A simple program to test Python binding functionality.",
-    "A simple program to test Python binding functionality.  You can build "
+PROGRAM_INFO("Go binding test",
+    "A simple program to test Go binding functionality.",
+    "A simple program to test Go binding functionality.  You can build "
     "mlpack with the BUILD_TESTS option set to off, and this binding will "
     "no longer be built.");
 

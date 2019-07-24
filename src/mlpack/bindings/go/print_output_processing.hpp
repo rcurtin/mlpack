@@ -70,6 +70,30 @@ void PrintOutputProcessing(
 }
 
 /**
+ * Print output processing for a matrix with info type.
+ */
+template<typename T>
+void PrintOutputProcessing(
+    const util::ParamData& d,
+    const size_t indent,
+    const typename boost::enable_if<std::is_same<T,
+        std::tuple<data::DatasetInfo, arma::mat>>>::type* = 0)
+{
+  const std::string prefix(indent, ' ');
+
+  /**
+   * This gives us code like:
+   *
+   *  var <paramName>Ptr MLPACK_Arma
+   *  <paramName> := <paramName>Ptr.ArmaToGonumWithInfo<Type>("paramName")
+   *
+   */
+  std::cout << prefix << "var " << d.name << "Ptr mlpackArma" << std::endl;
+  std::cout << prefix << d.name << " := " << d.name << "Ptr.ArmaToGonumWithInfo"
+            << "(\""  << d.name << "\")" << std::endl;
+}
+
+/**
  * Print output processing for a serializable model.
  */
 template<typename T>

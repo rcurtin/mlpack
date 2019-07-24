@@ -1,5 +1,5 @@
 /**
- * @file armaUtil.cpp
+ * @file arma_util.cpp
  * @author Yasmine Dumouchel
  *
  * Utility function for Go to pass gonum object to an Armadillo Object and
@@ -294,6 +294,61 @@ int mlpackNumElemCol(const char *identifier)
 int mlpackNumElemUcol(const char *identifier)
 {
   return CLI::GetParam<arma::Col<size_t>>(identifier).n_elem;
+}
+
+/**
+ * Call CLI::SetParam<std::tuple<data::DatasetInfo, arma::mat>>().
+ */
+void mlpackToArmaMatWithInfo(const char* identifier,
+                             const bool* dimensions,
+                             const double memptr[],
+                             const size_t rows,
+                             const size_t cols)
+{
+  arma::mat m(const_cast<double*>(memptr), rows, cols, false, true);
+  SetParamWithInfo<arma::mat>(identifier, m, dimensions);
+}
+
+/**
+ * Get the number of element in a matrix with DatasetInfo parameter.
+ */
+int mlpackArmaMatWithInfoElements(const char* identifier)
+{
+  return GetParamWithInfo(identifier).n_elem;
+}
+
+/**
+ * Get the number of rows in a matrix with DatasetInfo parameter.
+ */
+int mlpackArmaMatWithInfoRows(const char* identifier)
+{
+  return GetParamWithInfo(identifier).n_rows;
+}
+
+/**
+ * Get the number of columns in a matrix with DatasetInfo parameter.
+ */
+int mlpackArmaMatWithInfoCols(const char* identifier)
+{
+  return GetParamWithInfo(identifier).n_cols;
+}
+
+/**
+ * Get a pointer to the memory of the matrix.  The calling function is expected
+ * to own the memory.
+ */
+void *mlpackArmaPtrMatWithInfoPtr(const char* identifier)
+{
+  arma::mat& m = GetParamWithInfo(identifier);
+  if (m.is_empty())
+  {
+    return NULL;
+  }
+  else
+  {
+  void *ptr = GetMemory(m);
+  return ptr;
+  }
 }
 
 } // extern "C"

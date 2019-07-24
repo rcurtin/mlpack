@@ -56,7 +56,7 @@ extern void mlpackSetParamPtr(const char *identifier,
  * Set the int vector parameter to the given value.
  */
 extern void mlpackSetParamVectorInt(const char* identifier,
-                                    int* ints,
+                                    const int* ints,
                                     const int length);
 
 /**

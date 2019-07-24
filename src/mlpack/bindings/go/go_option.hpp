@@ -9,11 +9,12 @@
  * 3-clause BSD license along with mlpack.  If not, see
  * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#ifndef MLPACK_BINDINGS_GO_GO_OPTION_HPP
-#define MLPACK_BINDINGS_GO_GO_OPTION_HPP
+#ifndef MLPACK_BINDINGS_GOLANG_GO_OPTION_HPP
+#define MLPACK_BINDINGS_GOLANG_GO_OPTION_HPP
 
 #include <mlpack/core/util/param_data.hpp>
 #include "get_param.hpp"
+#include "default_param.hpp"
 #include "get_printable_param.hpp"
 #include "print_defn_input.hpp"
 #include "print_defn_output.hpp"
@@ -85,6 +86,10 @@ class GoOption
     CLI::GetSingleton().functionMap[data.tname]["GetParam"] = &GetParam<T>;
     CLI::GetSingleton().functionMap[data.tname]["GetPrintableParam"] =
         &GetPrintableParam<T>;
+
+    CLI::GetSingleton().functionMap[data.tname]["DefaultParam"] =
+        &DefaultParam<T>;
+
     CLI::GetSingleton().functionMap[data.tname]["PrintModelUtilCPP"] =
         &PrintModelUtilCPP<T>;
     CLI::GetSingleton().functionMap[data.tname]["PrintModelUtilH"] =

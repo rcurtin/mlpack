@@ -107,7 +107,7 @@ T* GetParamPtr(const std::string& paramName)
 /**
  * Return the matrix part of a matrix + dataset info parameter.
  */
-template<typename T>
+template<typename T = arma::mat>
 T& GetParamWithInfo(const std::string& paramName)
 {
   // T will be the Armadillo type.

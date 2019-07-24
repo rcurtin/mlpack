@@ -55,6 +55,22 @@ void PrintDefnInput(
 }
 
 /**
+ * Print input in method definition for a matrix with info type.
+ */
+template<typename T>
+void PrintDefnInput(
+    const util::ParamData& d,
+    const typename boost::enable_if<std::is_same<T,
+        std::tuple<data::DatasetInfo, arma::mat>>>::type* = 0)
+{
+  if (d.required)
+  {
+    std::string name = d.name;
+    std::cout << name << " *" << GetGoType<T>(d);
+  }
+}
+
+/**
  * Print input in method definition for a  serializable model.
  */
 template<typename T>

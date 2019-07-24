@@ -190,6 +190,69 @@ void PrintInputProcessing(
 }
 
 /**
+ * Print input processing for a matrix with info type.
+ */
+template<typename T>
+void PrintInputProcessing(
+    const util::ParamData& d,
+    const size_t indent,
+    const typename boost::enable_if<std::is_same<T,
+        std::tuple<data::DatasetInfo, arma::mat>>>::type* = 0)
+{
+  const std::string prefix(indent, ' ');
+
+  // Capitalize the first letter of parameter name so it is
+  // of exported type in Go.
+  std::string paramName = d.name;
+  std::string goParamName = paramName;
+  if (!paramName.empty())
+  {
+    goParamName[0] = std::toupper(goParamName[0]);
+  }
+
+  /**
+   * This gives us code like:
+   *
+   *  // Detect if the parameter was passed; set if so.
+   *  if param.Name != nil {
+   *     GonumToArmaMatWithInfo<type>("paramName", param.Name)
+   *     SetPassed("paramName")
+   *  }
+   */
+  std::cout << prefix << "// Detect if the parameter was passed; set if so."
+            << std::endl;
+  if (!d.required)
+  {
+    std::cout << prefix << "if param." << goParamName
+              << " != nil {" << std::endl;
+
+    // Print function call to set the given parameter into the cli.
+    std::cout << prefix << prefix << "GonumToArmaMatWithInfo"
+              << "(\"" << d.name << "\", param." << goParamName
+              << ")" << std::endl;
+
+    // Print function call to set the given parameter as passed.
+    std::cout << prefix << prefix << "SetPassed(\"" << d.name << "\")"
+              << std::endl;
+    std::cout << prefix << "}" << std::endl; // Closing brace.
+  }
+  else
+  {
+    std::string lowercaseParamName = d.name;
+    lowercaseParamName[0]  = std::tolower(lowercaseParamName[0]);
+
+    // Print function call to set the given parameter into the cli.
+    std::cout << prefix << "GonumToArmaMatWithInfo"
+              << "(\"" << d.name << "\", " << lowercaseParamName
+              << ")" << std::endl;
+
+    // Print function call to set the given parameter as passed.
+    std::cout << prefix << "SetPassed(\"" << d.name << "\")" << std::endl;
+  }
+  std::cout << std::endl; // Extra line is to clear up the code a bit.
+}
+
+/**
  * Print input processing for a serializable type.
  */
 template<typename T>

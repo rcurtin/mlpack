@@ -47,6 +47,18 @@ void PrintDefnOutput(
 }
 
 /**
+ * Print output for a matrix with info type.
+ */
+template<typename T>
+void PrintDefnOutput(
+    const util::ParamData& d,
+    const typename boost::enable_if<std::is_same<T,
+        std::tuple<data::DatasetInfo, arma::mat>>>::type* = 0)
+{
+  std::cout << "*" << GetGoType<T>(d);
+}
+
+/**
  * Print output for a serializable model.
  */
 template<typename T>

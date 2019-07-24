@@ -1,5 +1,5 @@
 /**
- * @file armaUtil.h
+ * @file arma_util.h
  * @author Yasmine Dumouchl
  *
  * Header file for cgo to call C functions from go.
@@ -49,6 +49,16 @@ extern void mlpackToArmaCol(const char *identifier, const double colvec[], int e
  * Pass Gonum VecDense pointer and wrap an Armadillo colvec around it.
  */
 extern void mlpackToArmaUcol(const char *identifier, const double colvec[], int elem);
+
+/**
+ * Call CLI::SetParam<std::tuple<data::DatasetInfo, arma::mat>>().
+ */
+extern void mlpackToArmaMatWithInfo(const char* identifier,
+                                    const bool* dimensions,
+                                    const double memptr[],
+                                    const size_t rows,
+                                    const size_t cols);
+
 /**
  * Return the memory pointer of an Armadillo mat object.
  */
@@ -78,6 +88,27 @@ extern void *mlpackArmaPtrCol(const char *identifier);
  * Return the memory pointer of an Armadillo ucol object.
  */
 extern void *mlpackArmaPtrUcol(const char *identifier);
+
+/**
+ * Get the number of rows in a matrix with DatasetInfo parameter.
+ */
+extern int mlpackArmaMatWithInfoElements(const char *identifier);
+
+/**
+ * Get the number of rows in a matrix with DatasetInfo parameter.
+ */
+extern int mlpackArmaMatWithInfoRows(const char *identifier);
+
+/**
+ * Get the number of columns in a matrix with DatasetInfo parameter.
+ */
+extern int mlpackArmaMatWithInfoCols(const char *identifier);
+
+/**
+ * Get a pointer to the memory of the matrix.  The calling function is expected
+ * to own the memory.
+ */
+extern void *mlpackArmaPtrMatWithInfoPtr(const char *identifier);
 
 /**
  * Return the number of rows in a Armadillo mat.

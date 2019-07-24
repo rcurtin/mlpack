@@ -27,7 +27,9 @@ template<typename T>
 void PrintModelUtilCPP(
     const util::ParamData& /* d */,
     const typename boost::disable_if<arma::is_arma_type<T>>::type* = 0,
-    const typename boost::disable_if<data::HasSerialize<T>>::type* = 0)
+    const typename boost::disable_if<data::HasSerialize<T>>::type* = 0,
+    const typename boost::disable_if<std::is_same<T,
+        std::tuple<data::DatasetInfo, arma::mat>>>::type* = 0)
 {
   // Do nothing.
 }
@@ -39,6 +41,18 @@ template<typename T>
 void PrintModelUtilCPP(
     const util::ParamData& /* d */,
     const typename boost::enable_if<arma::is_arma_type<T>>::type* = 0)
+{
+  // Do nothing.
+}
+
+/**
+ * Matrices with Info don't require any special definitions, so this prints nothing.
+ */
+template<typename T>
+void PrintModelUtilCPP(
+    const util::ParamData& /* d */,
+    const typename boost::enable_if<std::is_same<T,
+        std::tuple<data::DatasetInfo, arma::mat>>>::type* = 0)
 {
   // Do nothing.
 }
@@ -129,7 +143,10 @@ template<typename T>
 void PrintModelUtilH(
     const util::ParamData& /* d */,
     const typename boost::disable_if<arma::is_arma_type<T>>::type* = 0,
-    const typename boost::disable_if<data::HasSerialize<T>>::type* = 0)
+    const typename boost::disable_if<data::HasSerialize<T>>::type* = 0,
+    const typename boost::disable_if<std::is_same<T,
+        std::tuple<data::DatasetInfo, arma::mat>>>::type* = 0)
+
 {
   // Do nothing.
 }
@@ -141,6 +158,18 @@ template<typename T>
 void PrintModelUtilH(
     const util::ParamData& /* d */,
     const typename boost::enable_if<arma::is_arma_type<T>>::type* = 0)
+{
+  // Do nothing.
+}
+
+/**
+ * Matrices with Info don't require any special definitions, so this prints nothing.
+ */
+template<typename T>
+void PrintModelUtilH(
+    const util::ParamData& /* d */,
+    const typename boost::enable_if<std::is_same<T,
+        std::tuple<data::DatasetInfo, arma::mat>>>::type* = 0)
 {
   // Do nothing.
 }
@@ -203,7 +232,10 @@ template<typename T>
 void PrintModelUtilGo(
     const util::ParamData& /* d */,
     const typename boost::disable_if<arma::is_arma_type<T>>::type* = 0,
-    const typename boost::disable_if<data::HasSerialize<T>>::type* = 0)
+    const typename boost::disable_if<data::HasSerialize<T>>::type* = 0,
+    const typename boost::disable_if<std::is_same<T,
+        std::tuple<data::DatasetInfo, arma::mat>>>::type* = 0)
+
 {
   // Do nothing.
 }
@@ -215,6 +247,18 @@ template<typename T>
 void PrintModelUtilGo(
     const util::ParamData& /* d */,
     const typename boost::enable_if<arma::is_arma_type<T>>::type* = 0)
+{
+  // Do nothing.
+}
+
+/**
+ * Matrices with Info don't require any special definitions, so this prints nothing.
+ */
+template<typename T>
+void PrintModelUtilGo(
+    const util::ParamData& /* d */,
+    const typename boost::enable_if<std::is_same<T,
+        std::tuple<data::DatasetInfo, arma::mat>>>::type* = 0)
 {
   // Do nothing.
 }

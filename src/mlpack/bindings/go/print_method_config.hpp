@@ -89,6 +89,39 @@ void PrintMethodConfig(
 }
 
 /**
+ * Print param in configuration struct for a matrix with info type.
+ */
+template<typename T>
+void PrintMethodConfig(
+    const util::ParamData& d,
+    const size_t indent,
+    const typename boost::enable_if<std::is_same<T,
+        std::tuple<data::DatasetInfo, arma::mat>>>::type* = 0)
+{
+  const std::string prefix(indent, ' ');
+
+  std::string def = "nil";
+  if (std::is_same<T, bool>::value)
+    def = "false";
+
+  // Capitalize the first letter of parameter name so it is
+  // of exported type in Go.
+  std::string name = d.name;
+  std::string goParamName = name;
+  if (!name.empty())
+  {
+    goParamName[0] = std::toupper(goParamName[0]);
+  }
+
+  // Only print param that are not required.
+  if (!d.required)
+  {
+    std::cout << prefix << goParamName << " *" << GetGoType<T>(d)
+              << std::endl;
+  }
+}
+
+/**
  *  Print param in method configuration struct for a serializable type.
  */
 template<typename T>
