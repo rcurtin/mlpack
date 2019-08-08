@@ -1,6 +1,7 @@
 /**
  * @file cli_util.hpp
  * @author Yasmine Dumouchel
+ * @author Yashwant Singh
  *
  * Utility function for Go to set and get parameters to and from the CLI.
  *
@@ -46,55 +47,6 @@ inline void SetParamPtr(const std::string& identifier,
 }
 
 /**
- * Set the parameter (which is a matrix/DatasetInfo tuple) to the given value.
- */
-template<typename T>
-inline void SetParamWithInfo(const std::string& identifier,
-                             T& matrix,
-                             const bool* dims)
-{
-  typedef typename std::tuple<data::DatasetInfo, T> TupleType;
-  typedef typename T::elem_type eT;
-
-  // The true type of the parameter is std::tuple<T, DatasetInfo>.
-  const size_t dimensions = matrix.n_rows;
-  std::get<1>(CLI::GetParam<TupleType>(identifier)) = std::move(matrix);
-  data::DatasetInfo& di = std::get<0>(CLI::GetParam<TupleType>(identifier));
-  di = data::DatasetInfo(dimensions);
-
-  bool hasCategoricals = false;
-  for (size_t i = 0; i < dimensions; ++i)
-  {
-    if (dims[i])
-    {
-      di.Type(i) = data::Datatype::categorical;
-      hasCategoricals = true;
-    }
-  }
-
-  // Do we need to find how many categories we have?
-  if (hasCategoricals)
-  {
-    arma::vec maxs = arma::max(
-        std::get<1>(CLI::GetParam<TupleType>(identifier)), 1);
-
-    for (size_t i = 0; i < dimensions; ++i)
-    {
-      if (dims[i])
-      {
-        // Map the right number of objects.
-        for (size_t j = 0; j < (size_t) maxs[i]; ++j)
-        {
-          std::ostringstream oss;
-          oss << j;
-          di.MapString<eT>(oss.str(), i);
-        }
-      }
-    }
-  }
-}
-
-/**
  * Return a pointer.  This function exists to work around Cython's seeming lack
  * of support for template pointer types.
  */
@@ -102,17 +54,6 @@ template<typename T>
 T* GetParamPtr(const std::string& paramName)
 {
   return CLI::GetParam<T*>(paramName);
-}
-
-/**
- * Return the matrix part of a matrix + dataset info parameter.
- */
-template<typename T = arma::mat>
-T& GetParamWithInfo(const std::string& paramName)
-{
-  // T will be the Armadillo type.
-  typedef std::tuple<data::DatasetInfo, T> TupleType;
-  return std::get<1>(CLI::GetParam<TupleType>(paramName));
 }
 
 /**

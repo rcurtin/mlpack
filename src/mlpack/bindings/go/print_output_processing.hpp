@@ -52,7 +52,9 @@ template<typename T>
 void PrintOutputProcessing(
     const util::ParamData& d,
     const size_t indent,
-    const typename boost::enable_if<arma::is_arma_type<T>>::type* = 0)
+    const typename boost::enable_if<arma::is_arma_type<T>>::type* = 0,
+    const typename std::enable_if<!std::is_same<T,
+        std::tuple<data::DatasetInfo, arma::mat>>::value>::type* = 0)
 {
   const std::string prefix(indent, ' ');
 
@@ -63,9 +65,9 @@ void PrintOutputProcessing(
    *  <paramName> := <paramName>Ptr.ArmaToGonum_<Type>("paramName")
    *
    */
-  std::cout << prefix << "var " << d.name << "Ptr mlpackArma" << std::endl;
+  std::cout << prefix << "var " << d.name << "_ptr mlpackArma" << std::endl;
   std::cout << prefix << d.name << " := " << d.name
-            << "Ptr.ArmaToGonum" << GetType<T>(d)
+            << "_ptr.ArmaToGonum" << GetType<T>(d)
             << "(\""  << d.name << "\")" << std::endl;
 }
 
@@ -88,8 +90,8 @@ void PrintOutputProcessing(
    *  <paramName> := <paramName>Ptr.ArmaToGonumWithInfo<Type>("paramName")
    *
    */
-  std::cout << prefix << "var " << d.name << "Ptr mlpackArma" << std::endl;
-  std::cout << prefix << d.name << " := " << d.name << "Ptr.ArmaToGonumWithInfo"
+  std::cout << prefix << "var " << d.name << "_ptr mlpackArma" << std::endl;
+  std::cout << prefix << d.name << " := " << d.name << "_ptr.ArmaToGonumWithInfo"
             << "(\""  << d.name << "\")" << std::endl;
 }
 

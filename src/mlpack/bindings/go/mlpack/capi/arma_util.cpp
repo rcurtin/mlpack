@@ -1,6 +1,7 @@
 /**
  * @file arma_util.cpp
  * @author Yasmine Dumouchel
+ * @author Yashwant Singh
  *
  * Utility function for Go to pass gonum object to an Armadillo Object and
  * vice versa.
@@ -10,7 +11,7 @@
  * 3-clause BSD license along with mlpack.  If not, see
  * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#include "./arma_util.h"
+#include <mlpack/bindings/go/mlpack/capi/arma_util.h>
 #include "arma_util.hpp"
 #include "cli_util.hpp"
 #include <mlpack/core/util/cli.hpp>
@@ -245,7 +246,7 @@ int mlpackNumElemMat(const char *identifier)
  */
 int mlpackNumRowUmat(const char *identifier)
 {
-  return CLI::GetParam<arma::Mat<size_t> >(identifier).n_rows;
+  return CLI::GetParam<arma::Mat<size_t>>(identifier).n_rows;
 }
 
 /**
@@ -253,7 +254,7 @@ int mlpackNumRowUmat(const char *identifier)
  */
 int mlpackNumColUmat(const char *identifier)
 {
-  return CLI::GetParam<arma::Mat<size_t> >(identifier).n_cols;
+  return CLI::GetParam<arma::Mat<size_t>>(identifier).n_cols;
 }
 
 /**
@@ -261,7 +262,7 @@ int mlpackNumColUmat(const char *identifier)
  */
 int mlpackNumElemUmat(const char *identifier)
 {
-  return CLI::GetParam<arma::Mat<size_t> >(identifier).n_elem;
+  return CLI::GetParam<arma::Mat<size_t>>(identifier).n_elem;
 }
 
 /**
@@ -305,8 +306,19 @@ void mlpackToArmaMatWithInfo(const char* identifier,
                              const size_t rows,
                              const size_t cols)
 {
+  data::DatasetInfo d(rows);
+  for (size_t i = 0; i < d.Dimensionality(); ++i)
+  {
+    d.Type(i) = (dimensions[i]) ? data::Datatype::categorical :
+        data::Datatype::numeric;
+  }
+
   arma::mat m(const_cast<double*>(memptr), rows, cols, false, true);
-  SetParamWithInfo<arma::mat>(identifier, m, dimensions);
+  std::get<0>(CLI::GetParam<std::tuple<data::DatasetInfo, arma::mat>>(
+      identifier)) = std::move(d);
+  std::get<1>(CLI::GetParam<std::tuple<data::DatasetInfo, arma::mat>>(
+      identifier)) = std::move(m);
+  CLI::SetPassed(identifier);
 }
 
 /**
@@ -314,7 +326,8 @@ void mlpackToArmaMatWithInfo(const char* identifier,
  */
 int mlpackArmaMatWithInfoElements(const char* identifier)
 {
-  return GetParamWithInfo(identifier).n_elem;
+  typedef std::tuple<data::DatasetInfo, arma::mat> TupleType;
+  return std::get<1>(CLI::GetParam<TupleType>(identifier)).n_elem;
 }
 
 /**
@@ -322,7 +335,8 @@ int mlpackArmaMatWithInfoElements(const char* identifier)
  */
 int mlpackArmaMatWithInfoRows(const char* identifier)
 {
-  return GetParamWithInfo(identifier).n_rows;
+  typedef std::tuple<data::DatasetInfo, arma::mat> TupleType;
+  return std::get<1>(CLI::GetParam<TupleType>(identifier)).n_rows;
 }
 
 /**
@@ -330,7 +344,8 @@ int mlpackArmaMatWithInfoRows(const char* identifier)
  */
 int mlpackArmaMatWithInfoCols(const char* identifier)
 {
-  return GetParamWithInfo(identifier).n_cols;
+  typedef std::tuple<data::DatasetInfo, arma::mat> TupleType;
+  return std::get<1>(CLI::GetParam<TupleType>(identifier)).n_cols;
 }
 
 /**
@@ -339,7 +354,8 @@ int mlpackArmaMatWithInfoCols(const char* identifier)
  */
 void *mlpackArmaPtrMatWithInfoPtr(const char* identifier)
 {
-  arma::mat& m = GetParamWithInfo(identifier);
+  typedef std::tuple<data::DatasetInfo, arma::mat> TupleType;
+  arma::mat& m = std::get<1>(CLI::GetParam<TupleType>(identifier));
   if (m.is_empty())
   {
     return NULL;

@@ -1,6 +1,7 @@
 /**
  * @file arma_util.h
  * @author Yasmine Dumouchl
+ * @author Yashwant Singh
  *
  * Header file for cgo to call C functions from go.
  *
@@ -23,32 +24,46 @@ extern "C" {
 /**
  * Pass Gonum Dense pointer and wrap an Armadillo mat around it.
  */
-extern void mlpackToArmaMat(const char *identifier, const double mat[], int row, int col);
+extern void mlpackToArmaMat(const char *identifier,
+                            const double mat[],
+                            int row,
+                            int col);
 
 /**
  * Pass Gonum Dense pointer and wrap an Armadillo mat around it.
  */
-extern void mlpackToArmaUmat(const char *identifier, const double mat[], int row, int col);
+extern void mlpackToArmaUmat(const char *identifier,
+                             const double mat[],
+                             int row,
+                             int col);
 
 /**
  * Pass Gonum VecDense pointer and wrap an Armadillo rowvec around it.
  */
-extern void mlpackToArmaRow(const char *identifier, const double rowvec[], int elem);
+extern void mlpackToArmaRow(const char *identifier,
+                            const double rowvec[],
+                            int elem);
 
 /**
  * Pass Gonum VecDense pointer and wrap an Armadillo rowvec around it.
  */
-extern void mlpackToArmaUrow(const char *identifier, const double rowvec[], int elem);
+extern void mlpackToArmaUrow(const char *identifier,
+                             const double rowvec[],
+                             int elem);
 
 /**
  * Pass Gonum VecDense pointer and wrap an Armadillo colvec around it.
  */
-extern void mlpackToArmaCol(const char *identifier, const double colvec[], int elem);
+extern void mlpackToArmaCol(const char *identifier,
+                            const double colvec[],
+                            int elem);
 
 /**
  * Pass Gonum VecDense pointer and wrap an Armadillo colvec around it.
  */
-extern void mlpackToArmaUcol(const char *identifier, const double colvec[], int elem);
+extern void mlpackToArmaUcol(const char *identifier,
+                             const double colvec[],
+                             int elem);
 
 /**
  * Call CLI::SetParam<std::tuple<data::DatasetInfo, arma::mat>>().

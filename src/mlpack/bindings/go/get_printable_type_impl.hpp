@@ -86,7 +86,7 @@ inline std::string GetPrintableType(
     const typename boost::disable_if<std::is_same<T,
         std::tuple<data::DatasetInfo, arma::mat>>>::type*)
 {
-  return "list of " + GetPrintableType<typename T::value_type>(d) + "s";
+  return "array of " + GetPrintableType<typename T::value_type>(d) + "s";
 }
 
 template<typename T>
@@ -118,7 +118,7 @@ inline std::string GetPrintableType(
     const typename boost::enable_if<std::is_same<T,
         std::tuple<data::DatasetInfo, arma::mat>>>::type*)
 {
-  return "categorical matrix";
+  return "DataWithInfo";
 }
 
 template<typename T>

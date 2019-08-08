@@ -1,6 +1,7 @@
 /**
  * @file cli_util.cpp
  * @author Yasmine Dumouchel
+ * @author Yashwant Singh
  *
  * Utility function for Go to set and get parameters to and from the CLI.
  *
@@ -9,7 +10,7 @@
  * 3-clause BSD license along with mlpack.  If not, see
  * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
-#include "./cli_util.h"
+#include <mlpack/bindings/go/mlpack/capi/cli_util.h>
 #include "cli_util.hpp"
 #include <mlpack/core/util/cli.hpp>
 

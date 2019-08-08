@@ -62,11 +62,11 @@ std::string PrintTypeDoc(
 {
   if (std::is_same<T, std::vector<int>>::value)
   {
-    return "A list of integers; i.e., []int{0, 1, 2}.";
+    return "A array of integers; i.e., []int{0, 1, 2}.";
   }
   else if (std::is_same<T, std::vector<std::string>>::value)
   {
-    return "A list of strings; i.e., []string{\"hello\", \"goodbye\"}.";
+    return "A array of strings; i.e., []string{\"hello\", \"goodbye\"}.";
   }
   else
   {
@@ -113,9 +113,9 @@ std::string PrintTypeDoc(
         std::tuple<data::DatasetInfo, arma::mat>>::value>::type*)
 {
   return "A 2-d arraylike containing data.  Like the regular 2-d matrices, this"
-      " can be a list of lists, a numpy ndarray, or a pandas DataFrame. "
-      "However, this type can also accept a pandas DataFrame that has columns "
-      "of type 'CategoricalDtype'.  These categorical values will be converted "
+      " will be a struct i.e. DataWithInfo. "
+      "However, this type can also accept a struct that has columns "
+      "of type boolean array as `DataWithInfo.Cat`. These boolean value will be converted "
       "to numeric indices before being passed to mlpack, and then inside mlpack"
       " they will be properly treated as categorical variables, so there is no "
       "need to do one-hot encoding for this matrix type.  If the dtype of the "

@@ -1,8 +1,8 @@
 /**
- * @file python_binding_test.cpp
+ * @file julia_binding_test.cpp
  * @author Yashwant Singh
  *
- * A binding test for Go.
+ * A binding test for Golang.
  *
  * mlpack is free software; you may redistribute it and/or modify it under the
  * terms of the 3-clause BSD license.  You should have received a copy of the
@@ -18,9 +18,9 @@ using namespace std;
 using namespace mlpack;
 using namespace mlpack::kernel;
 
-PROGRAM_INFO("Go binding test",
-    "A simple program to test Go binding functionality.",
-    "A simple program to test Go binding functionality.  You can build "
+PROGRAM_INFO("Golang binding test",
+    "A simple program to test Golang binding functionality.",
+    "A simple program to test Golang binding functionality.  You can build "
     "mlpack with the BUILD_TESTS option set to off, and this binding will "
     "no longer be built.");
 
@@ -35,6 +35,7 @@ PARAM_COL_IN("col_in", "Input column.", "c");
 PARAM_UCOL_IN("ucol_in", "Input unsigned column.", "");
 PARAM_ROW_IN("row_in", "Input row.", "");
 PARAM_UROW_IN("urow_in", "Input unsigned row.", "");
+PARAM_MATRIX_AND_INFO_IN("matrix_and_info_in", "Input matrix and info.", "");
 PARAM_VECTOR_IN(int, "vector_in", "Input vector of numbers.", "");
 PARAM_VECTOR_IN(string, "str_vector_in", "Input vector of strings.", "");
 PARAM_MODEL_IN(GaussianKernel, "model_in", "Input model.", "");
@@ -49,6 +50,8 @@ PARAM_COL_OUT("col_out", "Output column. 2x input column", "");
 PARAM_UCOL_OUT("ucol_out", "Output unsigned column. 2x input column.", "");
 PARAM_ROW_OUT("row_out", "Output row.  2x input row.", "");
 PARAM_UROW_OUT("urow_out", "Output unsigned row.  2x input row.", "");
+PARAM_MATRIX_OUT("matrix_and_info_out", "Output matrix and info; all numeric "
+    "elements multiplied by 3.", "");
 PARAM_VECTOR_OUT(int, "vector_out", "Output vector.", "");
 PARAM_VECTOR_OUT(string, "str_vector_out", "Output string vector.", "");
 PARAM_MODEL_OUT(GaussianKernel, "model_out", "Output model, with twice the "
@@ -152,6 +155,24 @@ static void mlpackMain()
     out.pop_back();
 
     CLI::GetParam<vector<string>>("str_vector_out") = move(out);
+  }
+
+  // All numeric elements should be multiplied by 3.
+  if (CLI::HasParam("matrix_and_info_in"))
+  {
+    typedef tuple<data::DatasetInfo, arma::mat> TupleType;
+    TupleType tuple = move(CLI::GetParam<TupleType>("matrix_and_info_in"));
+
+    const data::DatasetInfo& di = std::get<0>(tuple);
+    arma::mat& m = std::get<1>(tuple);
+
+    for (size_t i = 0; i < m.n_rows; ++i)
+    {
+      if (di.Type(i) == data::Datatype::numeric)
+        m.row(i) *= 2.0;
+    }
+
+    CLI::GetParam<arma::mat>("matrix_and_info_out") = move(m);
   }
 
   // If we got a request to build a model, then build it.

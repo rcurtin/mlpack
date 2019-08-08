@@ -1,6 +1,7 @@
 /**
  * @file get_go_type.hpp
  * @author Yasmine Dumouchel
+ * @author Yashwant Singh
  *
  * Template metaprogramming to return the string representation of the Go
  * type for a given Go binding parameter.

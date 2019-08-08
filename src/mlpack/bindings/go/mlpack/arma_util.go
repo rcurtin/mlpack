@@ -22,9 +22,17 @@ type mlpackArma struct {
   mem unsafe.Pointer
 }
 
+// Tuple used for matrix_with_info_in
 type DataWithInfo struct {
-  cat []bool
-  data *mat.Dense
+  Cat []bool
+  Data *mat.Dense
+}
+
+func DataAndInfo() *DataWithInfo{
+  return &DataWithInfo{
+  Cat: nil,
+  Data: nil,
+  }
 }
 
 // Function alloc allocates a C memory Pointer via cgo and registers the finalizer
@@ -71,6 +79,13 @@ func (m *mlpackArma) allocArmaPtrCol(identifier string) {
 // in order to free the C memory once the input has been registered in Go.
 func (m *mlpackArma) allocArmaPtrUcol(identifier string) {
   m.mem = C.mlpackArmaPtrUcol(C.CString(identifier))
+  runtime.KeepAlive(m)
+}
+
+// Function alloc allocates a C memory Pointer via cgo and registers the finalizer
+// in order to free the C memory once the input has been registered in Go.
+func (m *mlpackArma) allocArmaPtrMatWithInfo(identifier string) {
+  m.mem = C.mlpackArmaPtrMatWithInfoPtr(C.CString(identifier))
   runtime.KeepAlive(m)
 }
 
@@ -145,6 +160,22 @@ func GonumToArmaUcol(identifier string, m *mat.VecDense) {
   ptr := unsafe.Pointer(&data[0])
   C.mlpackToArmaUcol(C.CString(identifier), (*C.double)(ptr), C.int(e))
 }
+
+// GonumToArmaMatWithInfo passes a gonum matrix with info to C by 
+// using it's gonums underlying blas64.
+func GonumToArmaMatWithInfo(identifier string, m *DataWithInfo) {
+  // Get matrix dimension, underlying blas64General matrix, and data.
+  r, c := m.Data.Dims()
+  blas64General := m.Data.RawMatrix()
+  DataAndInfo := blas64General.Data
+  boolarray := m.Cat
+  // Pass pointer of the underlying matrix to Mlpack.
+  boolptr := unsafe.Pointer(&boolarray[0])
+  matptr := unsafe.Pointer(&DataAndInfo[0])
+  C.mlpackToArmaMatWithInfo(C.CString(identifier), (*C.bool)(boolptr),
+      (*C.double)(matptr), C.size_t(c), C.size_t(r))
+}
+
 // ArmaToGonum returns a gonum matrix based on the memory pointer
 // of an armadillo matrix.
 func (m *mlpackArma) ArmaToGonumMat(identifier string) *mat.Dense {
@@ -316,29 +347,13 @@ func (m *mlpackArma) ArmaToGonumUcol(identifier string) *mat.VecDense {
   return nil
 }
 
-func GonumToArmaMatWithInfo(identifier string, m *DataWithInfo) {
-  // Get matrix dimension, underlying blas64General matrix, and data.
-  r, c := m.data.Dims()
-  blas64General := m.data.RawMatrix()
-  DataAndInfo := blas64General.Data
-  boolarray := m.cat
-  // Pass pointer of the underlying matrix to Mlpack.
-  boolptr := unsafe.Pointer(&boolarray)
-  matptr := unsafe.Pointer(&DataAndInfo[0])
-  C.mlpackToArmaMatWithInfo(C.CString(identifier), (*C.bool)(boolptr),
-      (*C.double)(matptr), C.size_t(c), C.size_t(r))
-}
-
-func (m *mlpackArma) allocArmaPtrMatWithInfo(identifier string) {
-  m.mem = C.mlpackArmaPtrMatWithInfoPtr(C.CString(identifier))
-  runtime.KeepAlive(m)
-}
-
-func (m *mlpackArma) ArmaToGonumMatWithInfo(identifier string)(*mat.Dense){
-  // Armadillo row and col
+// GonumToArmaWithInfo passes a gonum matrix to C by using 
+// it's gonums underlying blas64.
+func (m *mlpackArma) ArmaToGonumMatWithInfo(identifier string) *mat.Dense {
+  // Armadillo row, col and element
   c := int(C.mlpackArmaMatWithInfoRows(C.CString(identifier)))
   r := int(C.mlpackArmaMatWithInfoCols(C.CString(identifier)))
-  mate := int(C.mlpackArmaMatWithInfoElements(C.CString(identifier)))
+  e := int(C.mlpackArmaMatWithInfoElements(C.CString(identifier)))
 
   // Allocate Go memory pointer to the armadillo matrix.
   m.allocArmaPtrMatWithInfo(identifier)
@@ -347,7 +362,7 @@ func (m *mlpackArma) ArmaToGonumMatWithInfo(identifier string)(*mat.Dense){
   matarray := (*[1<<30 - 1]float64)(m.mem)
 
   if matarray != nil {
-    data := matarray[:mate]
+    data := matarray[:e]
 
     // Initialize result matrix.
     output := mat.NewDense(r, c, data)
