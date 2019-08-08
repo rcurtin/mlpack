@@ -533,7 +533,6 @@ func TestGonumUColForceCopy(t *testing.T) {
   }
 }
 
-/*
 func TestRunIntVector(t *testing.T) {
   t.Log("Test a int vector input paramter.")
   param := mlpack.InitializeTest_go_binding()
@@ -560,7 +559,7 @@ func TestRunIntVector(t *testing.T) {
                val, expected)
     }
   }
-}*/
+}
 
 func TestRunStringVector(t *testing.T) {
   t.Log("Test a string vector input paramter.")

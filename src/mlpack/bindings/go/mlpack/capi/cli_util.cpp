@@ -64,7 +64,7 @@ void mlpackSetParamString(const char *identifier, const char *value)
  * Set the int vector parameter to the given value.
  */
 void mlpackSetParamVectorInt(const char* identifier,
-                             const int ints[],
+                             const int64_t* ints,
                              const int length)
 {
   // Create a std::vector<int> object; unfortunately this requires copying the
@@ -72,7 +72,9 @@ void mlpackSetParamVectorInt(const char* identifier,
   std::vector<int> vec(length);
   for (size_t i = 0; i < (size_t) length; ++i)
     vec[i] = ints[i];
-  util::SetParam(identifier, vec);
+
+  CLI::GetParam<std::vector<int>>(identifier) = std::move(vec);
+  CLI::SetPassed(identifier);
 }
 
 /**
@@ -157,8 +159,8 @@ bool mlpackGetParamBool(const char *identifier)
  */
 void *mlpackGetVecIntPtr(const char *identifier)
 {
-  const size_t size = (size_t)mlpackVecIntSize(identifier);
-  int* ints = new int[size];
+  const size_t size = mlpackVecIntSize(identifier);
+  int64_t* ints = new int64_t[size];
 
   for (size_t i = 0; i < size; i++)
     ints[i] = CLI::GetParam<std::vector<int>>(identifier)[i];
