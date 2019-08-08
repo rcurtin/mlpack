@@ -61,8 +61,8 @@ void PrintOutputProcessing(
   /**
    * This gives us code like:
    *
-   *  var <paramName>Ptr MLPACK_Arma
-   *  <paramName> := <paramName>Ptr.ArmaToGonum_<Type>("paramName")
+   *  var <paramName>_ptr mlpackArma
+   *  <paramName> := <paramName>_ptr.ArmaToGonum_<Type>("paramName")
    *
    */
   std::cout << prefix << "var " << d.name << "_ptr mlpackArma" << std::endl;
@@ -86,13 +86,13 @@ void PrintOutputProcessing(
   /**
    * This gives us code like:
    *
-   *  var <paramName>Ptr MLPACK_Arma
-   *  <paramName> := <paramName>Ptr.ArmaToGonumWithInfo<Type>("paramName")
+   *  var <paramName>_ptr mlpackArma
+   *  <paramName> := <paramName>_ptr.ArmaToGonumWithInfo<Type>("paramName")
    *
    */
   std::cout << prefix << "var " << d.name << "_ptr mlpackArma" << std::endl;
-  std::cout << prefix << d.name << " := " << d.name << "_ptr.ArmaToGonumWithInfo"
-            << "(\""  << d.name << "\")" << std::endl;
+  std::cout << prefix << d.name << " := " << d.name << "_ptr.ArmaToGonumWith"
+            << "Info(\""  << d.name << "\")" << std::endl;
 }
 
 /**

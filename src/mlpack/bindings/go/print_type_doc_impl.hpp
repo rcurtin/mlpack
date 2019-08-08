@@ -113,9 +113,9 @@ std::string PrintTypeDoc(
         std::tuple<data::DatasetInfo, arma::mat>>::value>::type*)
 {
   return "A 2-d arraylike containing data.  Like the regular 2-d matrices, this"
-      " will be a struct i.e. DataWithInfo. "
-      "However, this type can also accept a struct that has columns "
-      "of type boolean array as `DataWithInfo.Cat`. These boolean value will be converted "
+      " will be a struct i.e. DataWithInfo. However, this type can"
+      " also accept a struct that has columns of type boolean array"
+      " as `DataWithInfo.Cat`. These boolean value will be converted "
       "to numeric indices before being passed to mlpack, and then inside mlpack"
       " they will be properly treated as categorical variables, so there is no "
       "need to do one-hot encoding for this matrix type.  If the dtype of the "
