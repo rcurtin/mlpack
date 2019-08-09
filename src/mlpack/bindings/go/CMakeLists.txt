@@ -1,144 +1,135 @@
-macro (go_not_found_return message)
-  message(STATUS "${message}")
-  macro (add_go_binding name)
-    # Do nothing.
-  endmacro ()
+if (BUILD_GO_BINDINGS)
 
-  return()
-endmacro ()
+  find_package(Go 1.11.0)
+  if (NOT GO_FOUND)
+    # We can't build anything, so define the macro to do nothing.
+    macro (add_go_binding name)
+      # Do nothing.
+    endmacro ()
 
-# If we are not supposed to make Go bindings, define the macro so it does
-# nothing and leave this file.
-if (NOT BUILD_GO_BINDINGS)
-  go_not_found_return("Not building Go bindings.")
-endif ()
+    return ()
+  endif ()
 
-find_package(Go)
-if (NOT GO_FOUND)
-  go_not_found_return("Go not found; not building Go bindings.")
-else ()
-  message(STATUS "Found Go: ${GO_EXECUTABLE}")
-endif ()
+  # Nothing in this directory will be compiled into mlpack.
+  set(BINDING_SOURCES
+    get_type.hpp
+    get_param.hpp
+    get_printable_param.hpp
+    go_option.hpp
+    mlpack/arma_util.h
+    mlpack/arma_util.hpp
+    mlpack/cli_util.h
+    mlpack/cli_util.hpp
+    print_class_defn.hpp
+    print_cpp.cpp
+    print_cpp.hpp
+    print_defn_input.hpp
+    print_defn_output.hpp
+    print_doc.hpp
+    print_doc_functions.hpp
+    print_doc_functions_impl.hpp
+    print_go.hpp
+    print_go.cpp
+    print_h.hpp
+    print_h.cpp
+    print_import_decl.hpp
+    print_input_processing.hpp
+    print_method_config.hpp
+    print_method_init.hpp
+    print_output_processing.hpp
+    strip_type.hpp
+  )
 
-# Nothing in this directory will be compiled into mlpack.
-set(BINDING_SOURCES
-  get_type.hpp
-  get_param.hpp
-  get_printable_param.hpp
-  go_option.hpp
-  mlpack/arma_util.h
-  mlpack/arma_util.hpp
-  mlpack/cli_util.h
-  mlpack/cli_util.hpp
-  print_class_defn.hpp
-  print_cpp.cpp
-  print_cpp.hpp
-  print_defn_input.hpp
-  print_defn_output.hpp
-  print_doc.hpp
-  print_doc_functions.hpp
-  print_doc_functions_impl.hpp
-  print_go.hpp
-  print_go.cpp
-  print_h.hpp
-  print_h.cpp
-  print_import_decl.hpp
-  print_input_processing.hpp
-  print_method_config.hpp
-  print_method_init.hpp
-  print_output_processing.hpp
-  strip_type.hpp
-)
+  # These are all the files we need to compile Go bindings for mlpack that are
+  # not a part of mlpack itself.
+  set(CGO_SOURCES
+    mlpack/arma_util.go
+    mlpack/cli_util.go
+  )
 
-# These are all the files we need to compile Go bindings for mlpack that are
-# not a part of mlpack itself.
-set(CGO_SOURCES
-  mlpack/arma_util.go
-  mlpack/cli_util.go
-)
+  # These are all the files we need to compile Go bindings for mlpack that are
+  # not a part of mlpack itself.
+  set(CAPI_SOURCES
+    mlpack/capi/arma_util.cpp
+    mlpack/capi/arma_util.h
+    mlpack/capi/arma_util.hpp
+    mlpack/capi/cli_util.cpp
+    mlpack/capi/cli_util.h
+    mlpack/capi/cli_util.hpp
+  )
 
-# These are all the files we need to compile Go bindings for mlpack that are
-# not a part of mlpack itself.
-set(CAPI_SOURCES
-  mlpack/capi/arma_util.cpp
-  mlpack/capi/arma_util.h
-  mlpack/capi/arma_util.hpp
-  mlpack/capi/cli_util.cpp
-  mlpack/capi/cli_util.h
-  mlpack/capi/cli_util.hpp
-)
+  # These are all the files we need to compile Go bindings for mlpack that are
+  # not a part of mlpack itself.
+  set(UTIL_SOURCES
+    mlpack/capi/arma_util.cpp
+    mlpack/capi/cli_util.cpp
+  )
 
-# These are all the files we need to compile Go bindings for mlpack that are
-# not a part of mlpack itself.
-set(UTIL_SOURCES
-  mlpack/capi/arma_util.cpp
-  mlpack/capi/cli_util.cpp
-)
+  set(TEST_SOURCES
+    tests/go_binding_test.go
+    tests/go.mod
+    tests/go.sum
+  )
+  set(SO_SOURCES
+    lib/libmlpack.so.3.1
+    lib/libmlpack.so.3
+    lib/libmlpack.so
+  )
 
-set(TEST_SOURCES
-  tests/go_binding_test.go
-  tests/go.mod
-  tests/go.sum
-)
-set(SO_SOURCES
-  lib/libmlpack.so.3.1
-  lib/libmlpack.so.3
-  lib/libmlpack.so
-)
+  add_custom_target(go ALL DEPENDS mlpack)
+  add_custom_target(go_copy ALL DEPENDS mlpack)
 
-add_custom_target(go ALL DEPENDS mlpack)
-add_custom_target(go_copy ALL DEPENDS mlpack)
+  if (BUILD_TESTS)
+    foreach(test_file ${TEST_SOURCES})
+      add_custom_command(TARGET go_copy PRE_BUILD
+          COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different
+              ${CMAKE_CURRENT_SOURCE_DIR}/${test_file}
+              ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/tests/)
+    endforeach ()
+  endif ()
 
-if (BUILD_TESTS)
-  foreach(test_file ${TEST_SOURCES})
-    add_custom_command(TARGET go_copy PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different
-            ${CMAKE_CURRENT_SOURCE_DIR}/${test_file}
-            ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/tests/)
+  # Copy necessary files after making the mlpack/ directory.
+  add_custom_command(TARGET go_copy PRE_BUILD
+      COMMAND ${CMAKE_COMMAND} -E make_directory
+          ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/mlpack/
+      COMMAND ${CMAKE_COMMAND} -E make_directory
+          ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/mlpack/capi/)
+  foreach(go_file ${CAPI_SOURCES})
+  add_custom_command(TARGET go_copy PRE_BUILD
+      COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different
+          ${CMAKE_CURRENT_SOURCE_DIR}/${go_file}
+          ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/mlpack/capi/)
+  endforeach()
+  foreach(so_file ${SO_SOURCES})
+  add_custom_command(TARGET go_copy PRE_BUILD
+      COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different
+          ${CMAKE_BINARY_DIR}/${so_file}
+          ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/mlpack/)
   endforeach ()
-endif ()
+  foreach(cgo_file ${CGO_SOURCES})
+  add_custom_command(TARGET go_copy PRE_BUILD
+      COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different
+          ${CMAKE_CURRENT_SOURCE_DIR}/${cgo_file}
+          ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/mlpack/)
+  endforeach()
 
-# Copy necessary files after making the mlpack/ directory.
-add_custom_command(TARGET go_copy PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory
-        ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/mlpack/
-    COMMAND ${CMAKE_COMMAND} -E make_directory
-        ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/mlpack/capi/)
-foreach(go_file ${CAPI_SOURCES})
-add_custom_command(TARGET go_copy PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different
-        ${CMAKE_CURRENT_SOURCE_DIR}/${go_file}
-        ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/mlpack/capi/)
-endforeach()
-foreach(so_file ${SO_SOURCES})
-add_custom_command(TARGET go_copy PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different
-        ${CMAKE_BINARY_DIR}/${so_file}
-        ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/mlpack/)
-endforeach ()
-foreach(cgo_file ${CGO_SOURCES})
-add_custom_command(TARGET go_copy PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different
-        ${CMAKE_CURRENT_SOURCE_DIR}/${cgo_file}
-        ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/mlpack/)
-endforeach()
+  add_library(go_util SHARED
+          ${CMAKE_SOURCE_DIR}/src/mlpack/bindings/go/mlpack/capi/arma_util.cpp
+          ${CMAKE_SOURCE_DIR}/src/mlpack/bindings/go/mlpack/capi/cli_util.cpp)
+  target_link_libraries(go_util mlpack ${MLPACK_LIBRARIES})
+  target_compile_definitions(go_util PUBLIC "BINDING_TYPE=BINDING_TYPE_GO")
+  set_target_properties(go_util PROPERTIES
+     LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/mlpack/)
 
-add_library(go_util SHARED
-        ${CMAKE_SOURCE_DIR}/src/mlpack/bindings/go/mlpack/capi/arma_util.cpp
-        ${CMAKE_SOURCE_DIR}/src/mlpack/bindings/go/mlpack/capi/cli_util.cpp)
-target_link_libraries(go_util mlpack ${MLPACK_LIBRARIES})
-target_compile_definitions(go_util PUBLIC "BINDING_TYPE=BINDING_TYPE_GO")
-set_target_properties(go_util PROPERTIES
-   LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/mlpack/)
-
-# Set the include directories correctly.
-get_property(GO_INCLUDE_DIRECTORIES DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-   PROPERTY INCLUDE_DIRECTORIES)
-set (GO_INCLDIRS "${GO_INCLUDE_DIRECTORIES}")
+  # Set the include directories correctly.
+  get_property(GO_INCLUDE_DIRECTORIES DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+     PROPERTY INCLUDE_DIRECTORIES)
+  set (GO_INCLDIRS "${GO_INCLUDE_DIRECTORIES}")
+endif()
 
 # Add a macro to build a go binding.
 macro (add_go_binding name)
-  if (BUILD_GO_BINDINGS)
+if (BUILD_GO_BINDINGS)
   # Append sources (with directory name) to list of all mlpack sources (used at
   # the parent scope).
   set(MLPACK_SRCS ${MLPACK_SRCS} ${DIR_SRCS} PARENT_SCOPE)
@@ -248,6 +239,11 @@ macro (add_go_binding name)
   target_compile_definitions(mlpack_go_${name} PUBLIC "BINDING_TYPE=BINDING_TYPE_GO")
   set_target_properties(mlpack_go_${name} PROPERTIES
       LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/src/mlpack/bindings/go/mlpack/)
+
+  install(TARGETS mlpack_go_${name}
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
   add_dependencies(mlpack_go_${name} build_go_${name})
   add_dependencies(mlpack_go_${name} go_util)

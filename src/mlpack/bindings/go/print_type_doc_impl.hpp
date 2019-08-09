@@ -112,14 +112,12 @@ std::string PrintTypeDoc(
     const typename std::enable_if<std::is_same<T,
         std::tuple<data::DatasetInfo, arma::mat>>::value>::type*)
 {
-  return "A 2-d arraylike containing data.  Like the regular 2-d matrices, this"
-      " will be a struct i.e. DataWithInfo. However, this type can"
-      " also accept a struct that has columns of type boolean array"
-      " as `DataWithInfo.Cat`. These boolean value will be converted "
-      "to numeric indices before being passed to mlpack, and then inside mlpack"
-      " they will be properly treated as categorical variables, so there is no "
-      "need to do one-hot encoding for this matrix type.  If the dtype of the "
-      "given matrix is not already float64, it will be converted.";
+  return "A 2-d array containing `Float64` data along with a boolean array "
+      "indicating which dimensions are categorical (represented by `true`) and "
+      "which are numeric (represented by `false`).  The number of elements in "
+      "the boolean array should be the same as the dimensionality of the data "
+      "matrix.  It is expected that each row of the matrix corresponds to a "
+      "single data point when calling mlpack bindings.";
 }
 
 /**
