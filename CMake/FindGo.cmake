@@ -39,6 +39,5 @@ find_package_handle_standard_args(
     REQUIRED_VARS GO_EXECUTABLE
     VERSION_VAR GO_VERSION
     FAIL_MESSAGE "Go not found"
-
 )
 
