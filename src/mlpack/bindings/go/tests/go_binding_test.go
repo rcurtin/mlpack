@@ -10,7 +10,7 @@ import (
 func TestRunBindingNoFlag(t *testing.T) {
   t.Log("Test that when we run the binding correctly (with correct", 
         "input parameters), we get the expected output.")
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Copy_all_inputs = true
   d := 4.0
   i := 12
@@ -32,7 +32,7 @@ func TestRunBindingNoFlag(t *testing.T) {
 func TestRunBindingCorrectly(t *testing.T) {
   t.Log("Test that if we forget the mandatory flag, we should get wrong",
         "results.")
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Copy_all_inputs = true
   param.Flag1 = true
   d := 4.0
@@ -54,7 +54,7 @@ func TestRunBindingCorrectly(t *testing.T) {
 
 func TestRunBindingWrongString(t *testing.T) {
   t.Log("Test that if we give the wrong string, we should get wrong results.")
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Flag1 = true
   d := 4.0
   i := 12
@@ -69,7 +69,7 @@ func TestRunBindingWrongString(t *testing.T) {
 
 func TestRunBindingWrongInt(t *testing.T) {
   t.Log("Test that if we give the wrong int, we should get wrong results.")
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Flag1 = true
   d := 4.0
   i := 15
@@ -85,7 +85,7 @@ func TestRunBindingWrongInt(t *testing.T) {
 
 func TestRunBindingWrongDouble(t *testing.T) {
   t.Log("Test that if we give the wrong double, we should get wrong results.")
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Flag1 = true
   d := 2.0
   i := 12
@@ -100,7 +100,7 @@ func TestRunBindingWrongDouble(t *testing.T) {
 
 func TestRunBadFlag(t *testing.T) {
   t.Log("Testing that if we give a second flag, it should fail.")
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Flag1 = true
   param.Flag2 = true
   d := 2.0
@@ -135,7 +135,7 @@ func TestGonumMatrix(t *testing.T) {
     11, 12, 26, 14,
   })
 
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Copy_all_inputs = true
   param.Matrix_in = x
   d := 4.0
@@ -169,7 +169,7 @@ func TestGonumMatrixForceCopy(t *testing.T) {
     11, 12, 13, 14, 15,
   })
 
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Matrix_in = x
   d := 4.0
   i := 12
@@ -226,7 +226,7 @@ func TestGonumUMatrix(t *testing.T) {
     11, 12, 26, 14,
   })
 
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Copy_all_inputs = true
   param.Umatrix_in = x
   d := 4.0
@@ -260,7 +260,7 @@ func TestGonumUMatrixForceCopy(t *testing.T) {
     11, 12, 13, 14, 15,
   })
 
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Umatrix_in = x
   d := 4.0
   i := 12
@@ -309,7 +309,7 @@ func TestGonumRow(t *testing.T) {
   })
   y := mat.VecDenseCopyOf(x)
 
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Row_in = y
   d := 4.0
   i := 12
@@ -337,7 +337,7 @@ func TestGonumRowForceCopy(t *testing.T) {
     1, 2, 3, 4, 5, 6, 7, 8, 9,
   })
 
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Copy_all_inputs = true
   param.Row_in = x
   d := 4.0
@@ -367,7 +367,7 @@ func TestGonumURow(t *testing.T) {
   })
   y := mat.VecDenseCopyOf(x)
 
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Urow_in = y
   d := 4.0
   i := 12
@@ -395,7 +395,7 @@ func TestGonumURowForceCopy(t *testing.T) {
     1, 2, 3, 4, 5, 6, 7, 8, 9,
   })
 
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Copy_all_inputs = true
   param.Urow_in = x
   d := 4.0
@@ -425,7 +425,7 @@ func TestGonumCol(t *testing.T) {
   })
   y := mat.VecDenseCopyOf(x)
 
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Col_in = y
   d := 4.0
   i := 12
@@ -453,7 +453,7 @@ func TestGonumColForceCopy(t *testing.T) {
     1, 2, 3, 4, 5, 6, 7, 8, 9,
   })
 
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Copy_all_inputs = true
   param.Col_in = x
   d := 4.0
@@ -482,7 +482,7 @@ func TestGonumUCol(t *testing.T) {
   })
   y := mat.VecDenseCopyOf(x)
 
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Ucol_in = y
   d := 4.0
   i := 12
@@ -510,7 +510,7 @@ func TestGonumUColForceCopy(t *testing.T) {
     1, 2, 3, 4, 5, 6, 7, 8, 9,
   })
 
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Copy_all_inputs = true
   param.Ucol_in = x
   d := 4.0
@@ -535,7 +535,7 @@ func TestGonumUColForceCopy(t *testing.T) {
 
 func TestRunIntVector(t *testing.T) {
   t.Log("Test a int vector input paramter.")
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   x := []int{
     1, 2, 3, 4, 5, 6,
   }
@@ -563,7 +563,7 @@ func TestRunIntVector(t *testing.T) {
 
 func TestRunStringVector(t *testing.T) {
   t.Log("Test a string vector input paramter.")
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   x := []string{
     "1", "2", "3", "4", "5", "6",
   }
@@ -604,7 +604,7 @@ func TestGonumMatrixWithInfo(t *testing.T) {
            11, 12, 13, 14, 15,
   })
     
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Matrix_and_info_in = x
   d := 4.0
   i := 12
@@ -633,7 +633,7 @@ func TestModel(t *testing.T) {
   t.Log("First create a GaussianKernel object, then send it back and",
         "make sure we get the right double value.")
 
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Build_model = true
   d := 4.0
   i := 12
@@ -641,7 +641,7 @@ func TestModel(t *testing.T) {
   _, _, _, _, _, _, model_out, _, _, _, _, _, _, _ :=
       mlpack.Test_go_binding(d, i, s, param)
 
-  param2 := mlpack.InitializeTest_go_binding()
+  param2 := mlpack.Initialize_test_go_binding()
   param2.Model_in = &model_out
   _, _, _, _, _, model_bw_out, _, _, _, _, _, _, _, _ :=
       mlpack.Test_go_binding(d, i, s, param2)
@@ -655,7 +655,7 @@ func TestModelForceCopy(t *testing.T) {
   t.Log("First create a GaussianKernel object, then send it back and",
          "make sure we get the right double value.")
 
-  param := mlpack.InitializeTest_go_binding()
+  param := mlpack.Initialize_test_go_binding()
   param.Build_model = true
   d := 4.0
   i := 12
@@ -663,13 +663,13 @@ func TestModelForceCopy(t *testing.T) {
   _, _, _, _, _, _, model_out, _, _, _, _, _, _, _ :=
       mlpack.Test_go_binding(d, i, s, param)
 
-  param2 := mlpack.InitializeTest_go_binding()
+  param2 := mlpack.Initialize_test_go_binding()
   param2.Model_in = &model_out
   param2.Copy_all_inputs = true
   _, _, _, _, _, model_bw_out, _, _, _, _, _, _, _, _ :=
       mlpack.Test_go_binding(d, i, s, param2)
 
-  param3 := mlpack.InitializeTest_go_binding()
+  param3 := mlpack.Initialize_test_go_binding()
   param3.Model_in = &model_out
   _, _, _, _, _, model_bw_out2, _, _, _, _, _, _, _, _ :=
       mlpack.Test_go_binding(d, i, s, param3)

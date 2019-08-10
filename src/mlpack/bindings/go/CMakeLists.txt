@@ -45,6 +45,9 @@ if (BUILD_GO_BINDINGS)
   set(CGO_SOURCES
     mlpack/arma_util.go
     mlpack/cli_util.go
+    mlpack/go.mod
+    mlpack/go.sum
+    mlpack/doc.go
   )
 
   # These are all the files we need to compile Go bindings for mlpack that are
@@ -67,8 +70,6 @@ if (BUILD_GO_BINDINGS)
 
   set(TEST_SOURCES
     tests/go_binding_test.go
-    tests/go.mod
-    tests/go.sum
   )
   set(SO_SOURCES
     lib/libmlpack.so.3.1

@@ -100,7 +100,7 @@ void PrintGo(const util::ProgramDoc& programInfo,
   goFunctionName[0] = std::toupper(goFunctionName[0]);
 
   // Print Go method configuration struct
-  cout << "type " << goFunctionName << "OptionalParam struct {"
+  cout << "type " << functionName << "_optional_param struct {"
       << std::endl;
   for (size_t i = 0; i < inputOptions.size(); ++i)
   {
@@ -113,10 +113,10 @@ void PrintGo(const util::ProgramDoc& programInfo,
   cout << endl;
 
   // Print Go method configurate struct initialization
-  cout << "func Initialize" << goFunctionName << "() *"
-      << goFunctionName << "OptionalParam {"
+  cout << "func Initialize_" << functionName << "() *"
+      << functionName << "_optional_param {"
       << endl;
-  cout << "  " << "return &" << goFunctionName << "OptionalParam{" << endl;
+  cout << "  " << "return &" << functionName << "_optional_param{" << endl;
   for (size_t i = 0; i < inputOptions.size(); ++i)
   {
     const util::ParamData& d = parameters.at(inputOptions[i]);
@@ -191,11 +191,11 @@ void PrintGo(const util::ProgramDoc& programInfo,
   // Then we print the optional parameter struct input.
   if (counter == 0)
   {
-    cout << "param *" << goFunctionName << "OptionalParam) (";
+    cout << "param *" << functionName << "_optional_param) (";
   }
   else
   {
-    cout << ", param *" << goFunctionName << "OptionalParam) (";
+    cout << ", param *" << functionName << "_optional_param) (";
   }
 
   // We must then print the output options.

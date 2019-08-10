@@ -123,7 +123,7 @@ std::string PrintInputOptions(bool option,
 
       // Print the input option.
       std::ostringstream oss;
-      oss << "param." << goParamName << " = ";
+      oss << "  param." << goParamName << " = ";
       oss << PrintValue(value, d.tname == TYPENAME(std::string));
       oss << "\n";
       result = oss.str();
@@ -241,16 +241,28 @@ std::string PrintOutputOptions(Args... args)
     if (found)
     {
       // We have received this option, so print it.
-      if (i > 0)
+      if (i == 0)
+      {
+        oss << "  " << std::get<1>(passedOptions[index]);
+      }
+      else if (i > 0)
+      {
         oss << ", ";
-      oss << std::get<1>(passedOptions[index]);
+        oss << std::get<1>(passedOptions[index]);
+      }
     }
     else
     {
       // We don't care about this option.
-      if (i > 0)
+      if (i == 0)
+      {
+        oss << "  _";
+      }
+      else if (i > 0)
+      {
         oss << ", ";
-      oss << "_";
+        oss << "_";
+      }
     }
   }
 
@@ -270,7 +282,7 @@ std::string ProgramCall(const std::string& programName, Args... args)
 
   // Initialize the method parameter structure
   std::ostringstream oss;
-  oss << "param := Initialize" << goProgramName << "()\n";
+  oss << "  param := Initialize_" << programName << "()\n";
   result = oss.str();
   oss.str(""); // Reset it.
 
@@ -293,8 +305,10 @@ std::string ProgramCall(const std::string& programName, Args... args)
   // Now process each input required parameters.
   oss << PrintInputOptions(false, args...);
   std::string input = oss.str();
-  if (input != "")
+  if (input != "" && param != "")
     result = result + input + ", ";
+  else
+    result = result + input;
   oss.str(""); // Reset it.
   if (param != "")
     result = result + "param";
@@ -339,7 +353,7 @@ inline std::string ProgramCall(const std::string& programName)
   // Determine if we have any output options.
   const std::map<std::string, util::ParamData>& parameters = CLI::Parameters();
 
-  oss << "param := Initialize" << goProgramName << "()\n";
+  oss << "  param := Initialize_" << programName << "()\n";
 
   std::vector<std::string> outputOptions;
   for (auto it = CLI::Parameters().begin(); it != CLI::Parameters().end(); ++it)
@@ -357,7 +371,7 @@ inline std::string ProgramCall(const std::string& programName)
     if (it->second.input && !it->second.required && !it->second.persistent)
     {
       // Print the input option.
-      oss << "param." << it->second.name << " = ";
+      oss << "  param." << it->second.name << " = ";
       std::string value;
       CLI::GetSingleton().functionMap[it->second.tname]["DefaultParam"](
           it->second, NULL, (void*) &value);
@@ -390,23 +404,37 @@ inline std::string ProgramCall(const std::string& programName)
     {
       if (outputOptions[i] == it->second.name)
       {
-        if (i > 0)
+        if (i == 0)
+        {
+          oss << "  " << it->second.name;
+        }
+        else if (i > 0)
+        {
           oss << ", ";
-        oss << it->second.name;
+          oss << it->second.name;
+        }
       }
       else
       {
         // We don't care about this option.
-        if (i > 0)
+        if (i == 0)
+        {
+          oss << "  _";
+        }
+        else if (i > 0)
+        {
           oss << ", ";
-        oss << "_";
+          oss << "_";
+        }
       }
     }
     oss << " = " << goProgramName << "(";
     for (auto i = parameters.begin(); i != parameters.end(); ++i)
     {
-      if (i->second.input && i->second.required)
+      if (i->second.input && i->second.required && i != parameters.end())
         oss << i->second.name << ", ";
+      else if (i == parameters.end())
+        oss << i->second.name;
     }
     if (param != "")
       oss << "param";

@@ -1,5 +1,6 @@
 /**
  * @file print_doc_functions.hpp
+ * @author Yashwant Singh
  * @author Yasmine Dumouchel
  *
  * This file contains functions useful for printing documentation strings
