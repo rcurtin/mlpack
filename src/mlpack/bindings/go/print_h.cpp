@@ -59,7 +59,7 @@ void PrintH(const util::ProgramDoc& programInfo,
   }
 
   // We generate the wrapper function for mlpackMain().
-  cout << "extern void mlpack" << functionName << "();" << endl;
+  cout << "extern void mlpack_" << functionName << "();" << endl;
   cout << endl;
 
   // Finally we close print the closing bracket for extern C.

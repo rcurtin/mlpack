@@ -277,6 +277,11 @@ void PrintModelUtilGo(
   std::string strippedType, printedType, defaultsType;
   StripType(d.cppType, strippedType, printedType, defaultsType);
 
+  // Lower the first letter of parameter name so it is
+  // of exported type in Go.
+  std::string goStrippedType = strippedType;
+  goStrippedType[0] = std::tolower(goStrippedType[0]);
+
   /**
    * This gives us code like:
    *
@@ -285,7 +290,7 @@ void PrintModelUtilGo(
    *  }
    *
    */
-  std::cout << "type " << strippedType << " struct {" << std::endl;
+  std::cout << "type " << goStrippedType << " struct {" << std::endl;
   std::cout << " mem unsafe.Pointer" << std::endl;
   std::cout << "}" << std::endl;
   std::cout << std::endl;
@@ -299,7 +304,7 @@ void PrintModelUtilGo(
    *  }
    *
    */
-  std::cout << "func (m *" << strippedType << ") alloc"
+  std::cout << "func (m *" << goStrippedType << ") alloc"
             << strippedType << "(identifier string) {" << std::endl;
   std::cout << " m.mem = C.mlpackGet" << strippedType
             << "Ptr(C.CString(identifier))" << std::endl;
@@ -317,7 +322,7 @@ void PrintModelUtilGo(
    *  }
    *
    */
-  std::cout << "func (m *" << strippedType << ") get"
+  std::cout << "func (m *" << goStrippedType << ") get"
             << strippedType << "(identifier string) {" << std::endl;
   std::cout << " m.alloc" << strippedType << "(identifier)" << std::endl;
   std::cout << " time.Sleep(time.Second)" << std::endl;
@@ -328,7 +333,7 @@ void PrintModelUtilGo(
 
   // Print function to set specified mlpack parameter object ptr from Go.
   std::cout << "func set" << strippedType
-            << "(identifier string, ptr *" << strippedType << ") {"
+            << "(identifier string, ptr *" << goStrippedType << ") {"
             << std::endl;
   std::cout << " C.mlpackSet" << strippedType
             << "Ptr(C.CString(identifier), (unsafe.Pointer)(ptr.mem))"

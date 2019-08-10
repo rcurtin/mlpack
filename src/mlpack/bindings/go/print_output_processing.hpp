@@ -41,7 +41,7 @@ void PrintOutputProcessing(
    *  <paramName> := GetParam<Type>("paramName")
    *
    */
-  std::cout << prefix << d.name << " := GetParam" << GetType<T>(d)
+  std::cout << prefix << d.name << " := getParam" << GetType<T>(d)
             << "(\"" << d.name << "\")" << std::endl;
 }
 
@@ -67,10 +67,9 @@ void PrintOutputProcessing(
    */
   std::cout << prefix << "var " << d.name << "_ptr mlpackArma" << std::endl;
   std::cout << prefix << d.name << " := " << d.name
-            << "_ptr.ArmaToGonum" << GetType<T>(d)
+            << "_ptr.armaToGonum" << GetType<T>(d)
             << "(\""  << d.name << "\")" << std::endl;
 }
-
 /**
  * Print output processing for a matrix with info type.
  */
@@ -91,7 +90,7 @@ void PrintOutputProcessing(
    *
    */
   std::cout << prefix << "var " << d.name << "_ptr mlpackArma" << std::endl;
-  std::cout << prefix << d.name << " := " << d.name << "_ptr.ArmaToGonumWith"
+  std::cout << prefix << d.name << " := " << d.name << "_ptr.armaToGonumWith"
             << "Info(\""  << d.name << "\")" << std::endl;
 }
 
@@ -118,7 +117,10 @@ void PrintOutputProcessing(
    *  <paramName>.get<Type>("paramName")
    *
    */
-  std::cout << prefix << "var " << d.name << " " << strippedType << std::endl;
+
+  std::string goStrippedType = strippedType;
+  goStrippedType[0] = std::tolower(goStrippedType[0]);
+  std::cout << prefix << "var " << d.name << " " << goStrippedType << std::endl;
   std::cout << prefix << d.name << ".get" << strippedType
             << "(\"" << d.name << "\")" << std::endl;
 }

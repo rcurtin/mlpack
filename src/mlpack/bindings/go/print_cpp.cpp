@@ -60,14 +60,14 @@ void PrintCPP(const ProgramDoc& programInfo,
   }
 
   // Finally, we generate the wrapper function for mlpackMain().
-  cout << "static void " << functionName << "mlpackMain()" << endl;
+  cout << "static void " << functionName << "_mlpackMain()" << endl;
   cout << "{" << endl;
   cout << "  " << "mlpackMain();" << endl;
   cout << "}" << endl;
   cout << endl;
-  cout << "extern \"C\" void mlpack" << functionName << "()" << endl;
+  cout << "extern \"C\" void mlpack_" << functionName << "()" << endl;
   cout << "{" << endl;
-  cout << "  " << functionName << "mlpackMain();" << endl;
+  cout << "  " << functionName << "_mlpackMain();" << endl;
   cout << "}" << endl;
   cout << endl;
 }

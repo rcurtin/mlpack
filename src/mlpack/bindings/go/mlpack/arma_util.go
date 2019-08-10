@@ -90,7 +90,7 @@ func (m *mlpackArma) allocArmaPtrMatWithInfo(identifier string) {
 }
 
 // GonumToArma passes a gonum matrix to C by using it's gonums underlying blas64.
-func GonumToArmaMat(identifier string, m *mat.Dense) {
+func gonumToArmaMat(identifier string, m *mat.Dense) {
   // Get matrix dimension, underlying blas64General matrix, and data.
   r, c := m.Dims()
   blas64General := m.RawMatrix()
@@ -102,7 +102,7 @@ func GonumToArmaMat(identifier string, m *mat.Dense) {
 }
 
 // GonumToArma passes a gonum matrix to C by using it's gonums underlying blas64.
-func GonumToArmaUmat(identifier string, m *mat.Dense) {
+func gonumToArmaUmat(identifier string, m *mat.Dense) {
   // Get matrix dimension, underlying blas64General matrix, and data.
   r, c := m.Dims()
   blas64General := m.RawMatrix()
@@ -114,7 +114,7 @@ func GonumToArmaUmat(identifier string, m *mat.Dense) {
 }
 
 // GonumToArma passes a gonum matrix to C by using it's gonums underlying blas64.
-func GonumToArmaRow(identifier string, m *mat.VecDense) {
+func gonumToArmaRow(identifier string, m *mat.VecDense) {
   // Get matrix dimension, underlying blas64General matrix, and data.
   e := m.Len()
   blas64 := m.RawVector()
@@ -126,7 +126,7 @@ func GonumToArmaRow(identifier string, m *mat.VecDense) {
 }
 
 // GonumToArma passes a gonum matrix to C by using it's gonums underlying blas64.
-func GonumToArmaUrow(identifier string, m *mat.VecDense) {
+func gonumToArmaUrow(identifier string, m *mat.VecDense) {
   // Get matrix dimension, underlying blas64General matrix, and data.
   e := m.Len()
   blas64 := m.RawVector()
@@ -138,7 +138,7 @@ func GonumToArmaUrow(identifier string, m *mat.VecDense) {
 }
 
 // GonumToArma passes a gonum matrix to C by using it's gonums underlying blas64.
-func GonumToArmaCol(identifier string, m *mat.VecDense) {
+func gonumToArmaCol(identifier string, m *mat.VecDense) {
   // Get matrix dimension, underlying blas64General matrix, and data.
   e := m.Len()
   blas64General := m.RawVector()
@@ -150,7 +150,7 @@ func GonumToArmaCol(identifier string, m *mat.VecDense) {
 }
 
 // GonumToArma passes a gonum matrix to C by using it's gonums underlying blas64.
-func GonumToArmaUcol(identifier string, m *mat.VecDense) {
+func gonumToArmaUcol(identifier string, m *mat.VecDense) {
   // Get matrix dimension, underlying blas64General matrix, and data.
   e := m.Len()
   blas64General := m.RawVector()
@@ -163,7 +163,7 @@ func GonumToArmaUcol(identifier string, m *mat.VecDense) {
 
 // GonumToArmaMatWithInfo passes a gonum matrix with info to C by 
 // using it's gonums underlying blas64.
-func GonumToArmaMatWithInfo(identifier string, m *DataWithInfo) {
+func gonumToArmaMatWithInfo(identifier string, m *DataWithInfo) {
   // Get matrix dimension, underlying blas64General matrix, and data.
   r, c := m.Data.Dims()
   blas64General := m.Data.RawMatrix()
@@ -178,7 +178,7 @@ func GonumToArmaMatWithInfo(identifier string, m *DataWithInfo) {
 
 // ArmaToGonum returns a gonum matrix based on the memory pointer
 // of an armadillo matrix.
-func (m *mlpackArma) ArmaToGonumMat(identifier string) *mat.Dense {
+func (m *mlpackArma) armaToGonumMat(identifier string) *mat.Dense {
   // Armadillo row and col
   c := int(C.mlpackNumRowMat(C.CString(identifier)))
   r := int(C.mlpackNumColMat(C.CString(identifier)))
@@ -205,7 +205,7 @@ func (m *mlpackArma) ArmaToGonumMat(identifier string) *mat.Dense {
 
 // ArmaToGonum returns a gonum matrix based on the memory pointer
 // of an armadillo matrix.
-func (m *mlpackArma) ArmaToGonum_array(identifier string) (int, int, []float64) {
+func (m *mlpackArma) armaToGonum_array(identifier string) (int, int, []float64) {
   // Armadillo row and col
   c := int(C.mlpackNumRowMat(C.CString(identifier)))
   r := int(C.mlpackNumColMat(C.CString(identifier)))
@@ -225,7 +225,7 @@ func (m *mlpackArma) ArmaToGonum_array(identifier string) (int, int, []float64) 
 
 // ArmaToGonum returns a gonum matrix based on the memory pointer
 // of an armadillo matrix.
-func (m *mlpackArma) ArmaToGonumUmat(identifier string) *mat.Dense {
+func (m *mlpackArma) armaToGonumUmat(identifier string) *mat.Dense {
   // Armadillo row and col
   c := int(C.mlpackNumRowUmat(C.CString(identifier)))
   r := int(C.mlpackNumColUmat(C.CString(identifier)))
@@ -252,7 +252,7 @@ func (m *mlpackArma) ArmaToGonumUmat(identifier string) *mat.Dense {
 
 // ArmaRowToGonum returns a gonum vector based on the memory pointer
 // of the underlying armadillo object.
-func (m *mlpackArma) ArmaToGonumRow(identifier string) *mat.VecDense {
+func (m *mlpackArma) armaToGonumRow(identifier string) *mat.VecDense {
   // Armadillo row and col
   e := int(C.mlpackNumElemRow(C.CString(identifier)))
 
@@ -277,7 +277,7 @@ func (m *mlpackArma) ArmaToGonumRow(identifier string) *mat.VecDense {
 
 // ArmaRowToGonum returns a gonum vector based on the memory pointer
 // of the underlying armadillo object.
-func (m *mlpackArma) ArmaToGonumUrow(identifier string) *mat.VecDense {
+func (m *mlpackArma) armaToGonumUrow(identifier string) *mat.VecDense {
   // Armadillo row and col
   e := int(C.mlpackNumElemUrow(C.CString(identifier)))
 
@@ -300,7 +300,7 @@ func (m *mlpackArma) ArmaToGonumUrow(identifier string) *mat.VecDense {
 }
 
 // GonumToArma passes a gonum matrix to C by using it's gonums underlying blas64.
-func (m *mlpackArma) ArmaToGonumCol(identifier string) *mat.VecDense {
+func (m *mlpackArma) armaToGonumCol(identifier string) *mat.VecDense {
   // Get matrix dimension, underlying blas64General matrix, and data.
   e := int(C.mlpackNumElemCol(C.CString(identifier)))
 
@@ -324,7 +324,7 @@ func (m *mlpackArma) ArmaToGonumCol(identifier string) *mat.VecDense {
 }
 
 // GonumToArma passes a gonum matrix to C by using it's gonums underlying blas64.
-func (m *mlpackArma) ArmaToGonumUcol(identifier string) *mat.VecDense {
+func (m *mlpackArma) armaToGonumUcol(identifier string) *mat.VecDense {
   // Get matrix dimension, underlying blas64General matrix, and data.
   e := int(C.mlpackNumElemUcol(C.CString(identifier)))
 
@@ -349,7 +349,7 @@ func (m *mlpackArma) ArmaToGonumUcol(identifier string) *mat.VecDense {
 
 // GonumToArmaWithInfo passes a gonum matrix to C by using 
 // it's gonums underlying blas64.
-func (m *mlpackArma) ArmaToGonumMatWithInfo(identifier string) *mat.Dense {
+func (m *mlpackArma) armaToGonumMatWithInfo(identifier string) *mat.Dense {
   // Armadillo row, col and element
   c := int(C.mlpackArmaMatWithInfoRows(C.CString(identifier)))
   r := int(C.mlpackArmaMatWithInfoCols(C.CString(identifier)))

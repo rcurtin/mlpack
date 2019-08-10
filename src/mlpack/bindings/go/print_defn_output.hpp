@@ -70,8 +70,11 @@ void PrintDefnOutput(
   // Get the type names we need to use.
   std::string strippedType, printedType, defaultsType;
   StripType(d.cppType, strippedType, printedType, defaultsType);
-
-  std::cout << strippedType;
+  // Lower the first letter of parameter name so it is
+  // of exported type in Go.
+  std::string goStrippedType = strippedType;
+  goStrippedType[0] = std::tolower(goStrippedType[0]);
+  std::cout << goStrippedType;
 }
 
 /**

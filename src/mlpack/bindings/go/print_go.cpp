@@ -100,7 +100,7 @@ void PrintGo(const util::ProgramDoc& programInfo,
   goFunctionName[0] = std::toupper(goFunctionName[0]);
 
   // Print Go method configuration struct
-  cout << "type " << functionName << "_optional_param struct {"
+  cout << "type " << goFunctionName << "_optional_param struct {"
       << std::endl;
   for (size_t i = 0; i < inputOptions.size(); ++i)
   {
@@ -114,9 +114,9 @@ void PrintGo(const util::ProgramDoc& programInfo,
 
   // Print Go method configurate struct initialization
   cout << "func Initialize_" << functionName << "() *"
-      << functionName << "_optional_param {"
+      << goFunctionName << "_optional_param {"
       << endl;
-  cout << "  " << "return &" << functionName << "_optional_param{" << endl;
+  cout << "  " << "return &" << goFunctionName << "_optional_param{" << endl;
   for (size_t i = 0; i < inputOptions.size(); ++i)
   {
     const util::ParamData& d = parameters.at(inputOptions[i]);
@@ -191,11 +191,11 @@ void PrintGo(const util::ProgramDoc& programInfo,
   // Then we print the optional parameter struct input.
   if (counter == 0)
   {
-    cout << "param *" << functionName << "_optional_param) (";
+    cout << "param *" << goFunctionName << "_optional_param) (";
   }
   else
   {
-    cout << ", param *" << functionName << "_optional_param) (";
+    cout << ", param *" << goFunctionName << "_optional_param) (";
   }
 
   // We must then print the output options.
@@ -215,13 +215,13 @@ void PrintGo(const util::ProgramDoc& programInfo,
   cout << ") {" << endl;
 
   // Reset any timers and disable backtraces.
-  cout << "  " << "ResetTimers()" << endl;
-  cout << "  " << "EnableTimers()" << endl;
-  cout << "  " << "DisableBacktrace()" << endl;
-  cout << "  " << "DisableVerbose()" << endl;
+  cout << "  " << "resetTimers()" << endl;
+  cout << "  " << "enableTimers()" << endl;
+  cout << "  " << "disableBacktrace()" << endl;
+  cout << "  " << "disableVerbose()" << endl;
 
   // Restore the parameters.
-  cout << "  " << "RestoreSettings(\"" << programInfo.programName
+  cout << "  " << "restoreSettings(\"" << programInfo.programName
       << "\")" << endl;
   cout << endl;
 
@@ -229,8 +229,8 @@ void PrintGo(const util::ProgramDoc& programInfo,
   cout << "  " << "// Detect if the parameter was passed; set if so." << endl;
   cout << "  " << "if param.Copy_all_inputs == true {" << endl;
   cout << "  " << "  "
-      << "SetParamBool(\"copy_all_inputs\", param.Copy_all_inputs)" << endl;
-  cout << "  " << "  " << "SetPassed(\"copy_all_inputs\")" << endl;
+      << "setParamBool(\"copy_all_inputs\", param.Copy_all_inputs)" << endl;
+  cout << "  " << "  " << "setPassed(\"copy_all_inputs\")" << endl;
   cout << "  " << "}" << endl;
   cout << endl;
 
@@ -249,13 +249,13 @@ void PrintGo(const util::ProgramDoc& programInfo,
   for (size_t i = 0; i < outputOptions.size(); ++i)
   {
     const util::ParamData& d = parameters.at(outputOptions[i]);
-    cout << "  " << "SetPassed(\"" << d.name << "\")" << endl;
+    cout << "  " << "setPassed(\"" << d.name << "\")" << endl;
   }
   cout << endl;
 
   // Call the method.
   cout << "  " << "// Call the mlpack program." << endl;
-  cout << "  " << "C.mlpack" << functionName << "()" << endl;
+  cout << "  " << "C.mlpack_" << functionName << "()" << endl;
   cout << endl;
 
   // Do any output processing and return.
@@ -272,7 +272,7 @@ void PrintGo(const util::ProgramDoc& programInfo,
   // Clear the parameters.
   cout << endl;
   cout << "  " << "// Clear settings." << endl;
-  cout << "  " << "ClearSettings()" << endl;
+  cout << "  " << "clearSettings()" << endl;
   cout << endl;
 
   // Return output parameters.

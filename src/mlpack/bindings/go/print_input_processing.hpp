@@ -58,8 +58,8 @@ void PrintInputProcessing(
    *
    *  // Detect if the parameter was passed; set if so.
    *  if param.Name != nil {
-   *     SetParam<d.cppType>("paramName", param.Name)
-   *     SetPassed("paramName")
+   *     setParam<d.cppType>("paramName", param.Name)
+   *     setPassed("paramName")
    *  }
    */
   std::cout << prefix << "// Detect if the parameter was passed; set if so."
@@ -99,16 +99,16 @@ void PrintInputProcessing(
 
     // Print function call to set the given parameter into the cli.
     std::cout << " {" << std::endl;
-    std::cout << prefix << prefix << "SetParam" << GetType<T>(d) << "(\""
+    std::cout << prefix << prefix << "setParam" << GetType<T>(d) << "(\""
               << d.name << "\", param." << goParamName << ")" << std::endl;
 
     // Print function call to set the given parameter as passed.
-    std::cout << prefix << prefix << "SetPassed(\""
+    std::cout << prefix << prefix << "setPassed(\""
               << d.name << "\")" << std::endl;
 
     // If this parameter is "verbose", then enable verbose output.
     if (d.name == "verbose")
-      std::cout << prefix << prefix << "EnableVerbose()" << std::endl;
+      std::cout << prefix << prefix << "enableVerbose()" << std::endl;
 
     std::cout << prefix << "}" << std::endl; // Closing brace.
   }
@@ -118,11 +118,11 @@ void PrintInputProcessing(
     lowercaseParamName[0]  = std::tolower(lowercaseParamName[0]);
 
     // Print function call to set the given parameter into the cli.
-    std::cout << prefix << "SetParam" << GetType<T>(d) << "(\""
+    std::cout << prefix << "setParam" << GetType<T>(d) << "(\""
               << lowercaseParamName << "\", " << d.name << ")" << std::endl;
 
     // Print function call to set the given parameter as passed.
-    std::cout << prefix << "SetPassed(\"" << d.name << "\")" << std::endl;
+    std::cout << prefix << "setPassed(\"" << d.name << "\")" << std::endl;
   }
   std::cout << std::endl; // Extra line is to clear up the code a bit.
 }
@@ -152,8 +152,8 @@ void PrintInputProcessing(
    *
    *  // Detect if the parameter was passed; set if so.
    *  if param.Name != nil {
-   *     GonumToArma<type>("paramName", param.Name)
-   *     SetPassed("paramName")
+   *     gonumToArma<type>("paramName", param.Name)
+   *     setPassed("paramName")
    *  }
    */
   std::cout << prefix << "// Detect if the parameter was passed; set if so."
@@ -164,12 +164,12 @@ void PrintInputProcessing(
               << " != nil {" << std::endl;
 
     // Print function call to set the given parameter into the cli.
-    std::cout << prefix << prefix << "GonumToArma" << GetType<T>(d)
+    std::cout << prefix << prefix << "gonumToArma" << GetType<T>(d)
               << "(\"" << d.name << "\", param." << goParamName
               << ")" << std::endl;
 
     // Print function call to set the given parameter as passed.
-    std::cout << prefix << prefix << "SetPassed(\"" << d.name << "\")"
+    std::cout << prefix << prefix << "setPassed(\"" << d.name << "\")"
               << std::endl;
     std::cout << prefix << "}" << std::endl; // Closing brace.
   }
@@ -179,12 +179,12 @@ void PrintInputProcessing(
     lowercaseParamName[0]  = std::tolower(lowercaseParamName[0]);
 
     // Print function call to set the given parameter into the cli.
-    std::cout << prefix << "GonumToArma" << GetType<T>(d)
+    std::cout << prefix << "gonumToArma" << GetType<T>(d)
               << "(\"" << d.name << "\", " << lowercaseParamName
               << ")" << std::endl;
 
     // Print function call to set the given parameter as passed.
-    std::cout << prefix << "SetPassed(\"" << d.name << "\")" << std::endl;
+    std::cout << prefix << "setPassed(\"" << d.name << "\")" << std::endl;
   }
   std::cout << std::endl; // Extra line is to clear up the code a bit.
 }
@@ -215,8 +215,8 @@ void PrintInputProcessing(
    *
    *  // Detect if the parameter was passed; set if so.
    *  if param.Name != nil {
-   *     GonumToArmaMatWithInfo<type>("paramName", param.Name)
-   *     SetPassed("paramName")
+   *     gonumToArmaMatWithInfo<type>("paramName", param.Name)
+   *     setPassed("paramName")
    *  }
    */
   std::cout << prefix << "// Detect if the parameter was passed; set if so."
@@ -227,12 +227,12 @@ void PrintInputProcessing(
               << " != nil {" << std::endl;
 
     // Print function call to set the given parameter into the cli.
-    std::cout << prefix << prefix << "GonumToArmaMatWithInfo"
+    std::cout << prefix << prefix << "gonumToArmaMatWithInfo"
               << "(\"" << d.name << "\", param." << goParamName
               << ")" << std::endl;
 
     // Print function call to set the given parameter as passed.
-    std::cout << prefix << prefix << "SetPassed(\"" << d.name << "\")"
+    std::cout << prefix << prefix << "setPassed(\"" << d.name << "\")"
               << std::endl;
     std::cout << prefix << "}" << std::endl; // Closing brace.
   }
@@ -242,12 +242,12 @@ void PrintInputProcessing(
     lowercaseParamName[0]  = std::tolower(lowercaseParamName[0]);
 
     // Print function call to set the given parameter into the cli.
-    std::cout << prefix << "GonumToArmaMatWithInfo"
+    std::cout << prefix << "gonumToArmaMatWithInfo"
               << "(\"" << d.name << "\", " << lowercaseParamName
               << ")" << std::endl;
 
     // Print function call to set the given parameter as passed.
-    std::cout << prefix << "SetPassed(\"" << d.name << "\")" << std::endl;
+    std::cout << prefix << "setPassed(\"" << d.name << "\")" << std::endl;
   }
   std::cout << std::endl; // Extra line is to clear up the code a bit.
 }
@@ -283,7 +283,7 @@ void PrintInputProcessing(
    *  // Detect if the parameter was passed; set if so.
    *  if param.Name != nil {
    *     set<ModelType>("paramName", param.Name)
-   *     SetPassed("paramName")
+   *     setPassed("paramName")
    *  }
    */
   std::cout << prefix << "// Detect if the parameter was passed; set if so."
@@ -297,7 +297,7 @@ void PrintInputProcessing(
               << d.name << "\", param." << goParamName << ")" << std::endl;
 
     // Print function call to set the given parameter as passed.
-    std::cout << prefix << prefix << "SetPassed(\"" << d.name << "\")"
+    std::cout << prefix << prefix << "setPassed(\"" << d.name << "\")"
               << std::endl;
     std::cout << prefix << "}" << std::endl; // Closing brace.
   }
@@ -308,7 +308,7 @@ void PrintInputProcessing(
               << "\", " << paramName << ")" << std::endl;
 
     // Print function call to set the given parameter as passed.
-    std::cout << prefix << "SetPassed(\"" << d.name << "\")" << std::endl;
+    std::cout << prefix << "setPassed(\"" << d.name << "\")" << std::endl;
   }
   std::cout << std::endl; // Extra line is to clear up the code a bit.
 }
