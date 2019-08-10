@@ -22,12 +22,18 @@ type mlpackArma struct {
   mem unsafe.Pointer
 }
 
-// Tuple used for matrix_with_info_in
+// A Tuple containing `float64` data (Data) along with a boolean array (Cat) 
+// indicating which dimensions are categorical (represented by `true`) and 
+// which are numeric (represented by `false`).  The number of elements in 
+// the boolean array should be the same as the dimensionality of the data 
+// matrix.  It is expected that each row of the matrix corresponds to a 
+// single data point when calling mlpack bindings.
 type DataWithInfo struct {
   Cat []bool
   Data *mat.Dense
 }
 
+// A function used for initializing DataInfo Tuple
 func DataAndInfo() *DataWithInfo{
   return &DataWithInfo{
   Cat: nil,

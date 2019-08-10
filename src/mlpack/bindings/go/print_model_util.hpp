@@ -278,9 +278,10 @@ void PrintModelUtilGo(
   StripType(d.cppType, strippedType, printedType, defaultsType);
 
   // Lower the first letter of parameter name so it is
-  // of exported type in Go.
+  // of unexported type in GoDoc.
   std::string goStrippedType = strippedType;
-  goStrippedType[0] = std::tolower(goStrippedType[0]);
+  for (size_t i = 0; i < strippedType.size(); i++)
+    goStrippedType[i] = std::tolower(goStrippedType[i]);
 
   /**
    * This gives us code like:

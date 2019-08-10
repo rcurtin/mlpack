@@ -112,11 +112,11 @@ std::string PrintTypeDoc(
     const typename std::enable_if<std::is_same<T,
         std::tuple<data::DatasetInfo, arma::mat>>::value>::type*)
 {
-  return "A 2-d array containing `Float64` data along with a boolean array "
-      "indicating which dimensions are categorical (represented by `true`) and "
-      "which are numeric (represented by `false`).  The number of elements in "
-      "the boolean array should be the same as the dimensionality of the data "
-      "matrix.  It is expected that each row of the matrix corresponds to a "
+  return "A Tuple containing `float64` data (Data) along with a boolean array "
+      "(Cat) indicating which dimensions are categorical (represented by `true`)
+      " and which are numeric (represented by `false`).  The number of elements "
+      "in the boolean array should be the same as the dimensionality of the data"
+      " matrix.  It is expected that each row of the matrix corresponds to a "
       "single data point when calling mlpack bindings.";
 }
 

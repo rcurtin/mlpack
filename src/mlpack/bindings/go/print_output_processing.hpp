@@ -118,8 +118,12 @@ void PrintOutputProcessing(
    *
    */
 
+  // Lower the first letter of parameter name so it is
+  // of unexported type in GoDoc.
   std::string goStrippedType = strippedType;
-  goStrippedType[0] = std::tolower(goStrippedType[0]);
+  for (size_t i = 0; i < strippedType.size(); i++)
+    goStrippedType[i] = std::tolower(goStrippedType[i]);
+
   std::cout << prefix << "var " << d.name << " " << goStrippedType << std::endl;
   std::cout << prefix << d.name << ".get" << strippedType
             << "(\"" << d.name << "\")" << std::endl;
