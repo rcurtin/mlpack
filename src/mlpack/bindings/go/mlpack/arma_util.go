@@ -33,7 +33,7 @@ type DataWithInfo struct {
   Data *mat.Dense
 }
 
-// A function used for initializing DataInfo Tuple
+// A function used for initializing DataWithInfo Tuple.
 func DataAndInfo() *DataWithInfo{
   return &DataWithInfo{
   Cat: nil,
