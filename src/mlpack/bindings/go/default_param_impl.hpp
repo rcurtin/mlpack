@@ -112,12 +112,12 @@ std::string DefaultParamImpl(
   if (std::is_same<T, arma::rowvec>::value ||
       std::is_same<T, arma::vec>::value)
   {
-    return "mat.NewVecDense(1, nil)";
+    return "mat.NewDense(1, 1, nil)";
   }
   else if (std::is_same<T, arma::Col<size_t>>::value ||
            std::is_same<T, arma::Row<size_t>>::value)
   {
-    return "mat.NewVecDense(1, nil)";
+    return "mat.NewDense(1, 1, nil)";
   }
   else if (std::is_same<T, arma::Mat<size_t>>::value)
   {

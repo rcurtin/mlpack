@@ -282,7 +282,7 @@ std::string ProgramCall(const std::string& programName, Args... args)
 
   // Initialize the method parameter structure
   std::ostringstream oss;
-  oss << "  param := Initialize_" << programName << "()\n";
+  oss << "  param := mlpack.Initialize_" << programName << "()\n";
   result = oss.str();
   oss.str(""); // Reset it.
 
@@ -298,7 +298,7 @@ std::string ProgramCall(const std::string& programName, Args... args)
   result = result + util::HyphenateString(output, 0);
   oss.str(""); // Reset it.
 
-  oss << " := " << goProgramName << "(";
+  oss << " := mlpack." << goProgramName << "(";
   result = result + oss.str();
   oss.str(""); // Reset it.
 
@@ -353,7 +353,7 @@ inline std::string ProgramCall(const std::string& programName)
   // Determine if we have any output options.
   const std::map<std::string, util::ParamData>& parameters = CLI::Parameters();
 
-  oss << "  param := Initialize_" << programName << "()\n";
+  oss << "  param := mlpack.Initialize_" << programName << "()\n";
 
   std::vector<std::string> outputOptions;
   for (auto it = CLI::Parameters().begin(); it != CLI::Parameters().end(); ++it)
@@ -428,7 +428,7 @@ inline std::string ProgramCall(const std::string& programName)
         }
       }
     }
-    oss << " = " << goProgramName << "(";
+    oss << " := mlpack." << goProgramName << "(";
     for (auto i = parameters.begin(); i != parameters.end(); ++i)
     {
       if (i->second.input && i->second.required && i != parameters.end())

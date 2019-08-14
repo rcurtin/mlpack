@@ -10,9 +10,9 @@
  * http://www.opensource.org/licenses/BSD-3-Clause for more information.
  */
 #include <mlpack/prereqs.hpp>
+#include <mlpack/core/util/cli.hpp>
 #include <mlpack/core/util/mlpack_main.hpp>
 #include <mlpack/core/math/random.hpp>
-#include <mlpack/core/util/cli.hpp>
 #include <mlpack/core/data/split_data.hpp>
 
 PROGRAM_INFO("Split Data",
@@ -75,6 +75,7 @@ PARAM_DOUBLE_IN("test_ratio", "Ratio of test set; if not set,"
 PARAM_INT_IN("seed", "Random seed (0 for std::time(NULL)).", "s", 0);
 
 using namespace mlpack;
+using namespace mlpack::data;
 using namespace mlpack::util;
 using namespace arma;
 using namespace std;

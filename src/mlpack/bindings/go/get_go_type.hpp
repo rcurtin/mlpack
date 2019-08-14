@@ -109,13 +109,7 @@ inline std::string GetGoType(
         std::tuple<data::DatasetInfo, arma::mat>>>::type* = 0,
     const typename boost::enable_if<arma::is_arma_type<T>>::type* = 0)
 {
-  std::string type = "mat.Dense";
-  if (T::is_row)
-    type = "mat.VecDense";
-  else if (T::is_col)
-    type = "mat.VecDense";
-
-  return type;
+  return "mat.Dense";
 }
 
 template<typename T>

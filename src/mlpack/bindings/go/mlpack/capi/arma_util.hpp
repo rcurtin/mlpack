@@ -60,6 +60,7 @@ inline typename T::elem_type* GetMemory(T& m)
   }
   else
   {
+    arma::access::rw(m.mem_state) = 1;
     return m.memptr();
   }
 }

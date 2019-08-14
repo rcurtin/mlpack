@@ -304,10 +304,10 @@ func TestGonumUMatrixForceCopy(t *testing.T) {
 
 func TestGonumRow(t *testing.T) {
   t.Log("Test a row vector input parameter.")
-  x := mat.NewVecDense(9, []float64{
+  x := mat.NewDense(9, 1,  []float64{
     1, 2, 3, 4, 5, 6, 7, 8, 9,
   })
-  y := mat.VecDenseCopyOf(x)
+  y := mat.DenseCopyOf(x)
 
   param := mlpack.Initialize_test_go_binding()
   param.Row_in = y
@@ -322,9 +322,9 @@ func TestGonumRow(t *testing.T) {
     t.Errorf("Error. Wrong shape.")
   }
   for i := 0; i < rows; i++ {
-    if row_out.AtVec(i) != x.AtVec(i)*2 {
-      val := row_out.AtVec(i)
-      expected := x.AtVec(i) * 2
+    if row_out.At(i, 0) != x.At(i, 0)*2 {
+      val := row_out.At(i, 0)
+      expected := x.At(i, 0) * 2
       t.Errorf("Error. Value at [i] : %v. Expected value : %v",
                val, expected)
     }
@@ -333,7 +333,7 @@ func TestGonumRow(t *testing.T) {
 
 func TestGonumRowForceCopy(t *testing.T) {
   t.Log("Test a row vector input parameter.")
-  x := mat.NewVecDense(9, []float64{
+  x := mat.NewDense(9, 1, []float64{
     1, 2, 3, 4, 5, 6, 7, 8, 9,
   })
 
@@ -351,9 +351,9 @@ func TestGonumRowForceCopy(t *testing.T) {
     t.Errorf("Error. Wrong shape.")
   }
   for i := 0; i < rows; i++ {
-    if row_out.AtVec(i) != x.AtVec(i)*2 {
-      val := row_out.AtVec(i)
-      expected := x.AtVec(i) * 2
+    if row_out.At(i, 0) != x.At(i, 0)*2 {
+      val := row_out.At(i, 0)
+      expected := x.At(i, 0) * 2
       t.Errorf("Error. Value at [i] : %v. Expected value : %v",
                val, expected)
     }
@@ -362,10 +362,10 @@ func TestGonumRowForceCopy(t *testing.T) {
 
 func TestGonumURow(t *testing.T) {
   t.Log("Test a row vector input parameter.")
-  x := mat.NewVecDense(9, []float64{
+  x := mat.NewDense(9, 1, []float64{
     1, 2, 3, 4, 5, 6, 7, 8, 9,
   })
-  y := mat.VecDenseCopyOf(x)
+  y := mat.DenseCopyOf(x)
 
   param := mlpack.Initialize_test_go_binding()
   param.Urow_in = y
@@ -380,9 +380,9 @@ func TestGonumURow(t *testing.T) {
     t.Errorf("Error. Wrong shape.")
   }
   for i := 0; i < urows; i++ {
-    if urow_out.AtVec(i) != x.AtVec(i)*2 {
-      val := urow_out.AtVec(i)
-      expected := x.AtVec(i) * 2
+    if urow_out.At(i, 0) != x.At(i, 0)*2 {
+      val := urow_out.At(i, 0)
+      expected := x.At(i, 0) * 2
       t.Errorf("Error. Value at [i] : %v. Expected value : %v",
                val, expected)
     }
@@ -391,7 +391,7 @@ func TestGonumURow(t *testing.T) {
 
 func TestGonumURowForceCopy(t *testing.T) {
   t.Log("Test a row vector input parameter.")
-  x := mat.NewVecDense(9, []float64{
+  x := mat.NewDense(9, 1, []float64{
     1, 2, 3, 4, 5, 6, 7, 8, 9,
   })
 
@@ -409,10 +409,10 @@ func TestGonumURowForceCopy(t *testing.T) {
     t.Errorf("Error. Wrong shape.")
   }
   for i := 0; i < urows; i++ {
-    if urow_out.AtVec(i) != x.AtVec(i)*2 {
-      val := urow_out.AtVec(i)
-      expected := x.AtVec(i) * 2
-      t.Errorf("Error. Value at [i] : %v. Expected value : %v",
+    if urow_out.At(i, 0) != x.At(i, 0)*2 {
+      val := urow_out.At(i, 0)
+      expected := x.At(i, 0) * 2
+      t.Errorf("Error. Vlue at [i] : %v. Expected value : %v",
                val, expected)
     }
   }
@@ -420,10 +420,10 @@ func TestGonumURowForceCopy(t *testing.T) {
 
 func TestGonumCol(t *testing.T) {
   t.Log("Test a column vector input parameter.")
-  x := mat.NewVecDense(9, []float64{
+  x := mat.NewDense(1, 9, []float64{
     1, 2, 3, 4, 5, 6, 7, 8, 9,
   })
-  y := mat.VecDenseCopyOf(x)
+  y := mat.DenseCopyOf(x)
 
   param := mlpack.Initialize_test_go_binding()
   param.Col_in = y
@@ -433,14 +433,14 @@ func TestGonumCol(t *testing.T) {
   col_out, _, _, _, _, _, _, _, _, _, _, _, _, _ :=
       mlpack.Test_go_binding(d, i, s, param)
 
-  cols, _ := col_out.Dims()
+  _, cols := col_out.Dims()
   if cols != 9 {
     t.Errorf("Error. Wrong shape.")
   }
   for i := 0; i < cols; i++ {
-    if col_out.AtVec(i) != x.AtVec(i)*2 {
-      val := col_out.AtVec(i)
-      expected := x.AtVec(i) * 2
+    if col_out.At(0, i) != x.At(0, i)*2 {
+      val := col_out.At(0, i)
+      expected := x.At(0, i) * 2
       t.Errorf("Error. Value at [i] : %v. Expected value : %v",
                val, expected)
     }
@@ -449,7 +449,7 @@ func TestGonumCol(t *testing.T) {
 
 func TestGonumColForceCopy(t *testing.T) {
   t.Log("Test a column vector input parameter.")
-  x := mat.NewVecDense(9, []float64{
+  x := mat.NewDense(1, 9, []float64{
     1, 2, 3, 4, 5, 6, 7, 8, 9,
   })
 
@@ -462,14 +462,14 @@ func TestGonumColForceCopy(t *testing.T) {
   col_out, _, _, _, _, _, _, _, _, _, _, _, _, _ :=
       mlpack.Test_go_binding(d, i, s, param)
 
-  cols, _ := col_out.Dims()
+  _, cols := col_out.Dims()
   if cols != 9 {
     t.Errorf("Error. Wrong shape.")
   }
   for i := 0; i < cols; i++ {
-    if col_out.AtVec(i) != x.AtVec(i)*2 {
-      val := col_out.AtVec(i)
-      expected := x.AtVec(i) * 2
+    if col_out.At(0, i) != x.At(0, i)*2 {
+      val := col_out.At(0, i)
+      expected := x.At(0, i) * 2
       t.Errorf("Error. Value at [i] : %v. Expected value : %v",
                val, expected)
     }
@@ -477,10 +477,10 @@ func TestGonumColForceCopy(t *testing.T) {
 }
 func TestGonumUCol(t *testing.T) {
   t.Log("Test a column vector input parameter.")
-  x := mat.NewVecDense(9, []float64{
+  x := mat.NewDense(1, 9, []float64{
     1, 2, 3, 4, 5, 6, 7, 8, 9,
   })
-  y := mat.VecDenseCopyOf(x)
+  y := mat.DenseCopyOf(x)
 
   param := mlpack.Initialize_test_go_binding()
   param.Ucol_in = y
@@ -490,14 +490,14 @@ func TestGonumUCol(t *testing.T) {
   _, _, _, _, _, _, _, _, _, _, ucol_out, _, _, _:=
        mlpack.Test_go_binding(d, i, s, param)
 
-  ucols, _ := ucol_out.Dims()
+  _, ucols := ucol_out.Dims()
   if ucols != 9 {
     t.Errorf("Error. Wrong shape.")
   }
   for i := 0; i < ucols; i++ {
-    if ucol_out.AtVec(i) != x.AtVec(i)*2 {
-      val := ucol_out.AtVec(i)
-      expected := x.AtVec(i) * 2
+    if ucol_out.At(0, i) != x.At(0, i)*2 {
+      val := ucol_out.At(0, i)
+      expected := x.At(0, i) * 2
       t.Errorf("Error. Value at [i] : %v. Expected value : %v",
                val, expected)
     }
@@ -506,7 +506,7 @@ func TestGonumUCol(t *testing.T) {
 
 func TestGonumUColForceCopy(t *testing.T) {
   t.Log("Test a column vector input parameter.")
-  x := mat.NewVecDense(9, []float64{
+  x := mat.NewDense(1, 9, []float64{
     1, 2, 3, 4, 5, 6, 7, 8, 9,
   })
 
@@ -519,17 +519,74 @@ func TestGonumUColForceCopy(t *testing.T) {
   _, _, _, _, _, _, _, _, _, _, ucol_out, _, _, _:=
       mlpack.Test_go_binding(d, i, s, param)
 
-  ucols, _ := ucol_out.Dims()
+  _, ucols := ucol_out.Dims()
   if ucols != 9 {
     t.Errorf("Error. Wrong shape.")
   }
   for i := 0; i < ucols; i++ {
-    if ucol_out.AtVec(i) != x.AtVec(i)*2 {
-      val := ucol_out.AtVec(i)
-      expected := x.AtVec(i) * 2
+    if ucol_out.At(0, i) != x.At(0, i)*2 {
+      val := ucol_out.At(0, i)
+      expected := x.At(0, i) * 2
       t.Errorf("Error. Value at [i] : %v. Expected value : %v",
                val, expected)
     }
+  }
+}
+
+
+func TestGonumWrongRow(t *testing.T) {
+  t.Log("Test a wrong shape row vector input parameter.")
+  defer func() {
+    if r := recover(); r == nil {
+      t.Errorf("The code did not panic")
+    }
+  }()
+  x := mat.NewDense(3, 5, []float64{
+    1, 2, 3, 4, 5,
+    6, 7, 8, 9, 10,
+    11, 12, 13, 14, 15,
+  })
+  y := mat.DenseCopyOf(x)
+
+  param := mlpack.Initialize_test_go_binding()
+  param.Row_in = y
+  d := 4.0
+  i := 12
+  s := "hello"
+  _, _, _, _, _, _, _, row_out, _, _, _, _, _, _ :=
+      mlpack.Test_go_binding(d, i, s, param)
+
+  _, err := row_out.Dims()
+  if err == 1 {
+    t.Errorf("Error. Working.")
+  }
+}
+
+func TestGonumWrongCol(t *testing.T) {
+  t.Log("Test a wrong shape column vector input parameter.")
+  defer func() {
+    if r := recover(); r == nil {
+      t.Errorf("The code did not panic")
+    }
+  }()
+  x := mat.NewDense(3, 5, []float64{
+    1, 2, 3, 4, 5,
+    6, 7, 8, 9, 10,
+    11, 12, 13, 14, 15,
+  })
+  y := mat.DenseCopyOf(x)
+
+  param := mlpack.Initialize_test_go_binding()
+  param.Row_in = y
+  d := 4.0
+  i := 12
+  s := "hello"
+  col_out, _, _, _, _, _, _, _, _, _, _, _, _, _ :=
+      mlpack.Test_go_binding(d, i, s, param)
+
+  err, _ := col_out.Dims()
+  if err == 1 {
+    t.Errorf("Error. Working.")
   }
 }
 
