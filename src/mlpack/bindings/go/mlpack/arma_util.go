@@ -124,7 +124,7 @@ func gonumToArmaRow(identifier string, m *mat.Dense) {
   // Get matrix dimension, underlying blas64General matrix, and data.
   e, err := m.Dims()
   if err != 1 {
-  panic(err)
+  panic("Must have a single column")
   }
 
   blas64General := m.RawMatrix()
@@ -140,7 +140,7 @@ func gonumToArmaUrow(identifier string, m *mat.Dense) {
   // Get matrix dimension, underlying blas64General matrix, and data.
   e, err := m.Dims()
   if err != 1 {
-  panic(err)
+  panic("Must have a single column")
   }
 
   blas64General := m.RawMatrix()
@@ -156,7 +156,7 @@ func gonumToArmaCol(identifier string, m *mat.Dense) {
   // Get matrix dimension, underlying blas64General matrix, and data.
   err, e := m.Dims()
   if err != 1 {
-  panic(err)
+  panic("Must have a single row")
   }
 
   blas64General := m.RawMatrix()
@@ -172,7 +172,7 @@ func gonumToArmaUcol(identifier string, m *mat.Dense) {
   // Get matrix dimension, underlying blas64General matrix, and data.
   err, e := m.Dims()
   if err != 1 {
-  panic(err)
+  panic("Must have a single row")
   }
 
   blas64General := m.RawMatrix()

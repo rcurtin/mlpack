@@ -130,7 +130,7 @@ std::string DefaultParamImpl(
 }
 
 /**
- * Return the default value of a model option (always "None").
+ * Return the default value of a model option (always "nil").
  */
 template<typename T>
 std::string DefaultParamImpl(
@@ -138,7 +138,7 @@ std::string DefaultParamImpl(
     const typename boost::disable_if<arma::is_arma_type<T>>::type* /* junk */,
     const typename boost::enable_if<data::HasSerialize<T>>::type* /* junk */)
 {
-  return "None";
+  return "nil";
 }
 
 } // namespace go

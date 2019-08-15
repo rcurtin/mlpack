@@ -124,6 +124,9 @@ std::string PrintInputOptions(bool option,
       // Print the input option.
       std::ostringstream oss;
       oss << "  param." << goParamName << " = ";
+      // Want help how to identify whether the param is model or not. :(
+      if (goParamName == "Input_model")
+        oss << "&";
       oss << PrintValue(value, d.tname == TYPENAME(std::string));
       oss << "\n";
       result = oss.str();
@@ -132,6 +135,8 @@ std::string PrintInputOptions(bool option,
     {
       // Print the input option.
       std::ostringstream oss;
+      if (paramName == "input_model")
+        oss << "&";
       oss << PrintValue(value, d.tname == TYPENAME(std::string));
       result = oss.str();
     }
