@@ -26,6 +26,14 @@ else ()
   option(BUILD_SHARED_LIBS
       "Compile shared libraries (if OFF, static libraries are compiled)." ON)
 endif()
+
+# Detect whether the user passed BUILD_GO_BINDINGS in order to determine if
+# we should fail if Go isn't found.
+if (BUILD_GO_BINDINGS)
+  set(FORCE_BUILD_GO_BINDINGS ON)
+else()
+  set(FORCE_BUILD_GO_BINDINGS OFF)
+endif()
 option(BUILD_GO_BINDINGS "Build Go bindings." OFF)
 
 # Build Markdown bindings for documentation.  This is used as part of website

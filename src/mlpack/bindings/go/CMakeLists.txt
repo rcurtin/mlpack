@@ -1,6 +1,13 @@
 if (BUILD_GO_BINDINGS)
+  ## We need to check here if Go is even available.  Although actually
+  ## technically, I'm not sure if we even need to know!  For the tests though we
+  ## do.  So it's probably a good idea to check.
+  if (FORCE_BUILD_GO_BINDINGS)
+    find_package(Go 1.11.0 REQUIRED)
+  else ()
+    find_package(Go 1.11.0)
+  endif ()
 
-  find_package(Go 1.11.0)
   if (NOT GO_FOUND)
     # We can't build anything, so define the macro to do nothing.
     macro (add_go_binding name)
