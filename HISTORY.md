@@ -1,6 +1,12 @@
 ### mlpack 4.0.0
 ###### ????-??-??
-  * Add Multiple Pole Balancing Environment (#1901).
+  * Fix occasionally-failing RADICAL test (#1924).
+
+  * Fix gcc 9 OpenMP compilation issue (#1970).
+
+  * Added support for loading and saving of images (#1903).
+
+  * Add Multiple Pole Balancing Environment (#1901, #1951).
 
   * Added functionality for scaling of data (#1876); see the command-line
     binding `mlpack_preprocess_scale` or Python binding `preprocess_scale()`.
@@ -11,12 +17,26 @@
   * Fix prediction output of softmax regression when test set accuracy is
     calculated (#1922).
 
-  * Action struct in continuous RL environments now stores the action as a 
-    `double` instead of `double[1]` (#1941, #1931).
-
   * Pendulum environment now checks for termination. All RL environments now
     have an option to terminate after a set number of time steps (no limit
     by default) (#1941).
+
+  * Add support for probabilistic KDE (kernel density estimation) error bounds
+    when using the Gaussian kernel (#1934).
+
+  * Fix negative distances for cover tree computation (#1979).
+
+  * Fix cover tree building when all pairwise distances are 0 (#1986).
+
+  * Improve KDE pruning by reclaiming not used error tolerance (#1954, #1984).
+
+  * Optimizations for sparse matrix accesses in z-score normalization for CF
+    (#1989).
+
+  * Add `kmeans_max_iterations` option to GMM training binding `gmm_train_main`.
+
+  * Bump minimum Armadillo version to 8.400.0 due to ensmallen dependency
+    requirement (#2015).
 
 ### mlpack 3.1.1
 ###### 2019-05-26
@@ -626,3 +646,4 @@
   * Initial release.  See any resolved tickets numbered less than #196 or
     execute this query:
     http://www.mlpack.org/trac/query?status=closed&milestone=mlpack+1.0.0
+
