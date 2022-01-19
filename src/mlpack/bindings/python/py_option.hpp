@@ -22,6 +22,7 @@
 #include "print_input_processing.hpp"
 #include "print_output_processing.hpp"
 #include "import_decl.hpp"
+#include "is_serializable.hpp"
 
 namespace mlpack {
 namespace bindings {
@@ -63,7 +64,7 @@ class PyOption
     data.cppType = cppName;
 
     // Every parameter we'll get from Python will have the correct type.
-    data.value = boost::any(defaultValue);
+    data.value = ANY(defaultValue);
 
     // Set the function pointers that we'll need.  All of these function
     // pointers will be used by both the program that generates the pyx, and
@@ -82,6 +83,7 @@ class PyOption
     IO::AddFunction(data.tname, "PrintInputProcessing",
         &PrintInputProcessing<T>);
     IO::AddFunction(data.tname, "ImportDecl", &ImportDecl<T>);
+    IO::AddFunction(data.tname, "IsSerializable", &IsSerializable<T>);
 
     // Add the ParamData object to the IO class for the correct binding name.
     IO::AddParameter(bindingName, std::move(data));
