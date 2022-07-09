@@ -104,13 +104,11 @@ option(BUILD_MARKDOWN_BINDINGS "Build Markdown bindings for website documentatio
 
 option(MATHJAX
     "Use MathJax for HTML Doxygen output (disabled by default)." OFF)
-option(FORCE_CXX11
-    "Don't check that the compiler supports C++11, just assume it.  Make sure to specify any necessary flag to enable C++11 as part of CXXFLAGS." OFF)
 option(USE_OPENMP "If available, use OpenMP for parallelization." ON)
 enable_testing()
 
-# Set required standard to C++11.
-set(CMAKE_CXX_STANDARD 11)
+# Set required standard to C++14.
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Ensure that GCC is new enough, if the compiler is GCC.
