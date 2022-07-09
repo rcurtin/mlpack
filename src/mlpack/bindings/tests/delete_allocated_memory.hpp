@@ -32,8 +32,7 @@ void DeleteAllocatedMemoryImpl(
     util::ParamData& d,
     const typename std::enable_if<arma::is_arma_type<T>::value>::type* = 0)
 {
-  std::cout << "clearing matrix!\n";
-  (*ANY_CAST<T>(&d.value)).clear();
+  (*MLPACK_ANY_CAST<T>(&d.value)).clear();
 }
 
 template<typename T>
