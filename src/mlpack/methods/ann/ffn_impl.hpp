@@ -360,6 +360,7 @@ typename MatType::elem_type FFN<
 
   // Set networkOutput to the right size if needed, then perform the forward
   // pass.
+  networkOutput.set_size(network.OutputSize(), predictors.n_cols);
   network.Forward(predictors, networkOutput);
 
   return outputLayer.Forward(networkOutput, responses) + network.Loss();
