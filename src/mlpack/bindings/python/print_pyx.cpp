@@ -35,7 +35,7 @@ void PrintPYX(const util::BindingDetails& doc,
               const string& mainFilename,
               const string& bindingName)
 {
-  std::cout << "start PrintPYX() for binding " << bindingName << "\n";
+  std::cout << "# start PrintPYX() for binding " << bindingName << "\n";
   std::string functionName = bindingName;
 
   util::Params params = IO::Parameters(bindingName);
