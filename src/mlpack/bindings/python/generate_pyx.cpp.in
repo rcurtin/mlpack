@@ -39,6 +39,7 @@ using namespace mlpack::util;
 
 int main(int /* argc */, char** /* argv */)
 {
+  std::cout << "entered main()\n";
   PrintPYX(IO::Parameters(STRINGIFY(BINDING_NAME)).Doc(),
       "${PROGRAM_MAIN_FILE}", STRINGIFY(BINDING_NAME));
 }

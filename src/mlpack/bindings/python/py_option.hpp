@@ -49,6 +49,7 @@ class PyOption
            const bool noTranspose = false,
            const std::string& bindingName = "")
   {
+    std::cout << "create PyOption " << identifier << " for bindingName " << bindingName << "\n";
     // Create the ParamData object to give to IO.
     util::ParamData data;
 
@@ -87,6 +88,7 @@ class PyOption
 
     // Add the ParamData object to the IO class for the correct binding name.
     IO::AddParameter(bindingName, std::move(data));
+    std::cout << "PyOption " << identifier << " successfully added\n";
   }
 };
 
