@@ -175,6 +175,7 @@ inline void IO::AddSeeAlso(const std::string& bindingName,
 // Returns the sole instance of this class.
 inline IO& IO::GetSingleton()
 {
+  std::cout << "# called IO::GetSingleton()\n";
   static IO singleton;
   return singleton;
 }
