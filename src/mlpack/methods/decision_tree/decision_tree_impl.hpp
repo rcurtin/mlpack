@@ -741,17 +741,38 @@ double DecisionTree<FitnessFunction,
     size_t currentCol = begin;
     for (size_t i = 0; i < numChildren; ++i)
     {
-      size_t currentChildBegin = currentCol;
-      for (size_t j = currentChildBegin; j < begin + count; ++j)
+      // Iterate over the points and make sure that all points that belong to
+      // child i are in the correct range.  By the time we get to the last
+      // child, this step isn't necessary.
+      const size_t currentChildBegin = currentCol;
+      if (i != numChildren - 1)
       {
-        if (childAssignments[j - begin] == i)
+        const size_t currentChildEnd = currentCol + childCounts[i];
+        size_t otherChildrenCol = currentChildEnd;
+
+        while (true)
         {
-          childAssignments.swap_cols(currentCol - begin, j - begin);
-          data.swap_cols(currentCol, j);
-          labels.swap_cols(currentCol, j);
+          // Find the first point *not* labeled i in the range of points we will
+          // pass to the child.
+          while ((childAssignments[currentCol - begin] == i) &&
+                 (currentCol < currentChildEnd))
+            ++currentCol;
+
+          // Shortcut check: are all the points we care about labeled correctly?
+          if (currentCol >= currentChildEnd)
+            break;
+
+          // Find the first point labeled i in the rest of the points.
+          while ((childAssignments[otherChildrenCol - begin] != i) &&
+                 (otherChildrenCol < begin + count))
+            ++otherChildrenCol;
+
+          // Now swap the two points.
+          childAssignments.swap_cols(currentCol - begin, otherChildrenCol - begin);
+          data.swap_cols(currentCol, otherChildrenCol);
+          labels.swap_cols(currentCol, otherChildrenCol);
           if (UseWeights)
-            weights.swap_cols(currentCol, j);
-          ++currentCol;
+            weights.swap_cols(currentCol, otherChildrenCol);
         }
       }
 
@@ -759,17 +780,16 @@ double DecisionTree<FitnessFunction,
       DecisionTree* child = new DecisionTree();
       if (NoRecursion)
       {
-        child->Train<UseWeights>(data, currentChildBegin,
-            currentCol - currentChildBegin, datasetInfo, labels, numClasses,
-            weights, currentCol - currentChildBegin, minimumGainSplit,
-            maximumDepth - 1, dimensionSelector);
+        child->Train<UseWeights>(data, currentChildBegin, childCounts[i],
+            datasetInfo, labels, numClasses, weights, childCounts[i] + 1,
+            minimumGainSplit, maximumDepth - 1, dimensionSelector);
       }
       else
       {
         // During recursion entropy of child node may change.
         double childGain = child->Train<UseWeights>(data, currentChildBegin,
-            currentCol - currentChildBegin, datasetInfo, labels, numClasses,
-            weights, minimumLeafSize, minimumGainSplit, maximumDepth - 1,
+            childCounts[i], datasetInfo, labels, numClasses, weights,
+            minimumLeafSize, minimumGainSplit, maximumDepth - 1,
             dimensionSelector);
         bestGain += double(childCounts[i]) / double(count) * (-childGain);
       }
@@ -899,17 +919,38 @@ double DecisionTree<FitnessFunction,
     size_t currentCol = begin;
     for (size_t i = 0; i < numChildren; ++i)
     {
-      size_t currentChildBegin = currentCol;
-      for (size_t j = currentChildBegin; j < begin + count; ++j)
+      // Iterate over the points and make sure that all points that belong to
+      // child i are in the correct range.  By the time we get to the last
+      // child, this step isn't necessary.
+      const size_t currentChildBegin = currentCol;
+      if (i != numChildren - 1)
       {
-        if (childAssignments[j - begin] == i)
+        const size_t currentChildEnd = currentCol + childCounts[i];
+        size_t otherChildrenCol = currentChildEnd;
+
+        while (true)
         {
-          childAssignments.swap_cols(currentCol - begin, j - begin);
-          data.swap_cols(currentCol, j);
-          labels.swap_cols(currentCol, j);
+          // Find the first point *not* labeled i in the range of points we will
+          // pass to the child.
+          while ((childAssignments[currentCol - begin] == i) &&
+                 (currentCol < currentChildEnd))
+            ++currentCol;
+
+          // Shortcut check: are all the points we care about labeled correctly?
+          if (currentCol >= currentChildEnd)
+            break;
+
+          // Find the first point labeled i in the rest of the points.
+          while ((childAssignments[otherChildrenCol - begin] != i) &&
+                 (otherChildrenCol < begin + count))
+            ++otherChildrenCol;
+
+          // Now swap the two points.
+          childAssignments.swap_cols(currentCol - begin, otherChildrenCol - begin);
+          data.swap_cols(currentCol, otherChildrenCol);
+          labels.swap_cols(currentCol, otherChildrenCol);
           if (UseWeights)
-            weights.swap_cols(currentCol, j);
-          ++currentCol;
+            weights.swap_cols(currentCol, otherChildrenCol);
         }
       }
 
@@ -917,18 +958,16 @@ double DecisionTree<FitnessFunction,
       DecisionTree* child = new DecisionTree();
       if (NoRecursion)
       {
-        child->Train<UseWeights>(data, currentChildBegin,
-            currentCol - currentChildBegin, labels, numClasses, weights,
-            currentCol - currentChildBegin, minimumGainSplit, maximumDepth - 1,
-            dimensionSelector);
+        child->Train<UseWeights>(data, currentChildBegin, childCounts[i],
+            labels, numClasses, weights, childCounts[i] + 1, minimumGainSplit,
+            maximumDepth - 1, dimensionSelector);
       }
       else
       {
         // During recursion entropy of child node may change.
         double childGain = child->Train<UseWeights>(data, currentChildBegin,
-            currentCol - currentChildBegin, labels, numClasses, weights,
-            minimumLeafSize, minimumGainSplit, maximumDepth - 1,
-            dimensionSelector);
+            childCounts[i], labels, numClasses, weights, minimumLeafSize,
+            minimumGainSplit, maximumDepth - 1, dimensionSelector);
         bestGain += double(childCounts[i]) / double(count) * (-childGain);
       }
       children.push_back(child);
