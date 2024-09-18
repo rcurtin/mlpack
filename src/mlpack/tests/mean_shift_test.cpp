@@ -261,3 +261,10 @@ TEMPLATE_TEST_CASE("GaussianClusteringCentroidsOnly", "[MeanShiftTest]", float,
 
   REQUIRE(success == true);
 }
+
+// Test that an exception is thrown when an invalid value for maxIterations is
+// given.
+TEST_CASE("InvalidMaxIterationsTest", "[MeanShiftTest]")
+{
+  REQUIRE_THROWS(MeanShift<>(1.0, 71));
+}

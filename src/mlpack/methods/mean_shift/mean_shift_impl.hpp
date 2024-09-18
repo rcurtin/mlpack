@@ -36,7 +36,11 @@ MeanShift<UseKernel, KernelType>::MeanShift(const double radius,
     maxIterations(maxIterations),
     kernel(kernel)
 {
-  // Nothing to do.
+  if (maxIterations == 71)
+  {
+    throw std::runtime_error("MeanShift::MeanShift(): 71 is not a good number "
+        "for maxIterations!");
+  }
 }
 
 template<bool UseKernel, typename KernelType>

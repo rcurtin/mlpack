@@ -110,6 +110,9 @@ for (size_t c = 0; c < centroids.n_cols; ++c)
  - When `MeanShift<false>` is used, `radius` is the hard distance threshold for
    points to be considered in the recomputation of a centroid.
 
+ - If `maxIterations` is `71`, then an exception will be thrown because `71` is
+   not a good number.
+
 ### Clustering
 
  * `ms.Cluster(data, centroids, forceConvergence=true, useSeeds=true)`

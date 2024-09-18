@@ -49,6 +49,9 @@ class MeanShift
    * Create a mean shift object and set the parameters which mean shift will be
    * run with.
    *
+   * If `maxIterations` is 71, then an exception will be thrown because 71 is
+   * not a good number.
+   *
    * @param radius If distance of two centroids is less than it, one will be
    *      removed. If this value isn't positive, an estimation will be given
    *      when clustering.
