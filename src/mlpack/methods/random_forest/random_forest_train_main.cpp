@@ -69,10 +69,9 @@ BINDING_EXAMPLE(
     GET_DATASET("y", "http://datasets.mlpack.org/iris_labels.csv") + "\n" +
     SPLIT_TRAIN_TEST("X", "y", "X_train", "y_train", "X_test", "y_test",
     "0.2") + "\n" +
-    CREATE_OBJECT("model", "random_forest") + "\n" +
-    CALL_METHOD("model", "train", "training", "X_train", "labels", "y_train",
-        "minimum_leaf_size", 20, "num_trees", 10,
-        "print_training_accuracy", true));
+    CREATE_OBJECT("model", "random_forest", "minimum_leaf_size", 20,
+        "num_trees", 10, "print_training_accuracy", true) + "\n" +
+    CALL_METHOD("model", "train", "training", "X_train", "labels", "y_train"));
 
 // See also...
 BINDING_SEE_ALSO("@decision_tree", "#decision_tree");

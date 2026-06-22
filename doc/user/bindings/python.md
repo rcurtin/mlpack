@@ -1458,9 +1458,7 @@ To train a LARS/LASSO/Elastic Net model, the `input_` and `responses` parameters
 >>> y_train = y[d['training_labels']]
 >>> X_test = d['test']
 >>> y_test = y[d['test_labels']]
->>> model = Lars(check_input_matrices=False, copy_all_inputs=False, lambda1=0,
-  lambda2=0, no_intercept=False, no_normalize=False, use_cholesky=False,
-  verbose=False)
+>>> model = Lars(lambda1=1e-05, lambda2=1e-06)
 >>> output_model = model.fit(input_=X_train, responses=y_train)
 >>> predictions = model.predict(test=X_test)
 ```
@@ -1746,10 +1744,7 @@ This implementation of logistic regression does not support the general multi-cl
 >>> y_train = d['training_labels']
 >>> X_test = d['test']
 >>> y_test = d['test_labels']
->>> model = LogisticRegression(batch_size=64, check_input_matrices=False,
-  copy_all_inputs=False, lambda_=0, max_iterations=10000, optimizer='lbfgs',
-  print_training_accuracy=False, step_size=0.01, tolerance=1e-10,
-  verbose=False)
+>>> model = LogisticRegression(lambda_=0.1)
 >>> output_model = model.fit(training=X_train, labels=y_train)
 >>> predictions = model.predict(test=X_test)
 >>> probabilities = model.predict_proba(test=X_test)
@@ -2972,9 +2967,8 @@ The `minimum_leaf_size` parameter specifies the minimum number of training point
 >>> y_train = d['training_labels']
 >>> X_test = d['test']
 >>> y_test = d['test_labels']
->>> model = RandomForest(check_input_matrices=False, copy_all_inputs=False,
-  maximum_depth=0, minimum_gain_split=0, minimum_leaf_size=1, num_trees=10,
-  print_training_accuracy=False, seed=0, subspace_dim=0, verbose=False)
+>>> model = RandomForest(minimum_leaf_size=20, num_trees=10,
+  print_training_accuracy=True)
 >>> output_model = model.fit(training=X_train, labels=y_train)
 >>> predictions = model.predict(test=X_test)
 >>> probabilities = model.predict_proba(test=X_test)
@@ -3076,9 +3070,7 @@ The trained model is returned, and can then be used for prediction. The `minimum
 >>> y_train = d['training_labels']
 >>> X_test = d['test']
 >>> y_test = d['test_labels']
->>> model = DecisionTree(check_input_matrices=False, copy_all_inputs=False,
-  maximum_depth=0, minimum_gain_split=1e-07, minimum_leaf_size=20,
-  print_training_accuracy=False, verbose=False)
+>>> model = DecisionTree(minimum_leaf_size=20, minimum_gain_split=0.001)
 >>> output_model = model.fit(training=X_train, labels=y_train)
 >>> predictions = model.predict(test=X_test)
 >>> probabilities = model.predict_proba(test=X_test)
@@ -3174,8 +3166,7 @@ Implementation of a perceptron, which is a single level neural network. The perc
 >>> y_train = d['training_labels']
 >>> X_test = d['test']
 >>> y_test = d['test_labels']
->>> model = Perceptron(check_input_matrices=False, copy_all_inputs=False,
-  max_iterations=1000, verbose=False)
+>>> model = Perceptron(max_iterations=100)
 >>> output_model = model.fit(training=X_train, labels=y_train)
 >>> predictions = model.predict(test=X_test)
 ```
@@ -3268,10 +3259,7 @@ Margin of difference between correct class and other classes can be specified wi
 >>> y_train = d['training_labels']
 >>> X_test = d['test']
 >>> y_test = d['test_labels']
->>> model = LinearSvm(check_input_matrices=False, copy_all_inputs=False,
-  delta=1, epochs=50, lambda_=0.0001, max_iterations=10000, no_intercept=False,
-  num_classes=0, optimizer='lbfgs', seed=0, shuffle=False, step_size=0.01,
-  tolerance=1e-10, verbose=False)
+>>> model = LinearSvm(lambda_=0.1, delta=1, num_classes=3)
 >>> output_model = model.fit(training=X_train, labels=y_train)
 >>> predictions = model.predict(test=X_test)
 >>> scores = model.scores(test=X_test)
@@ -3582,7 +3570,7 @@ The `incremental_variance` parameter can be used to force the training to use an
 >>> y_train = d['training_labels']
 >>> X_test = d['test']
 >>> y_test = d['test_labels']
->>> model = NaiveBayesTrees(check_input_matrices=False, copy_all_inputs=False,
+>>> model = NaiveBayes(check_input_matrices=False, copy_all_inputs=False,
   incremental_variance=False, verbose=False)
 >>> output_model = model.fit(training=X_train, labels=y_train)
 >>> predictions = model.predict(test=X_test)
@@ -3683,9 +3671,7 @@ Training a softmax regression model is done by giving a file of training points 
 >>> y_train = d['training_labels']
 >>> X_test = d['test']
 >>> y_test = d['test_labels']
->>> model = SoftmaxRegression(check_input_matrices=False,
-  copy_all_inputs=False, lambda_=0.0001, max_iterations=400, no_intercept=False,
-  number_of_classes=0, verbose=False)
+>>> model = SoftmaxRegression(lambda_=0.1)
 >>> output_model = model.fit(training=X_train, labels=y_train)
 >>> predictions = model.predict(test=X_test)
 >>> probabilities = model.predict_proba(test=X_test)

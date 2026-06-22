@@ -63,7 +63,7 @@ BINDING_EXAMPLE(
     GET_DATASET("y", "http://datasets.mlpack.org/iris_labels.csv") + "\n" +
     SPLIT_TRAIN_TEST("X", "y", "X_train", "y_train", "X_test", "y_test",
     "0.2") + "\n" +
-    CREATE_OBJECT("model", "naive_bayes_trees") + "\n" +
+    CREATE_OBJECT("model", "naive_bayes") + "\n" +
     CALL_METHOD("model", "train", "training", "X_train", "labels", "y_train"));
 
 // See also...

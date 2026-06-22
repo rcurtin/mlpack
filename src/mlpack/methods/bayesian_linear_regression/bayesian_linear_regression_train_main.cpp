@@ -65,9 +65,7 @@ BINDING_EXAMPLE(
     SPLIT_TRAIN_TEST_REGRESSION("X", "y", "X_train", "y_train", "X_test",
         "y_test", "0.2") + "\n" +
     CREATE_OBJECT("model", "bayesian_linear_regression") + "\n" +
-    CALL_METHOD("model", "train", "input", "X_train", "responses", "y_train",
-      "center", 1, "scale", 0, "output_model",
-      "bayesian_linear_regression_model"));
+    CALL_METHOD("model", "train", "input", "X_train", "responses", "y_train"));
 
 // See also...
 BINDING_SEE_ALSO("Bayesian Interpolation",

@@ -93,9 +93,8 @@ BINDING_EXAMPLE(
     GET_DATASET("y", "http://datasets.mlpack.org/iris_labels.csv") + "\n" +
     SPLIT_TRAIN_TEST("X", "y", "X_train", "y_train", "X_test", "y_test",
     "0.2") + "\n" +
-    CREATE_OBJECT("model", "logistic_regression") + "\n" +
-    CALL_METHOD("model", "train", "training", "X_train", "labels", "y_train",
-                "lambda", 0.1, "output_model", "lr_model"));
+    CREATE_OBJECT("model", "logistic_regression", "lambda", 0.1) + "\n" +
+    CALL_METHOD("model", "train", "training", "X_train", "labels", "y_train"));
 
 // See also...
 BINDING_SEE_ALSO("@logistic_regression_classify",

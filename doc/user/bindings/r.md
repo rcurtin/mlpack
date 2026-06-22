@@ -1331,9 +1331,8 @@ X_test <- pp[["test"]]
 y_train <- y[as.integer(pp[["training_labels"]]), 1]
 y_test <- y[as.integer(pp[["test_labels"]]), 1]
 
-model <- bayesian_linear_regression_train(input=X_train, responses=y_train,
-  center=1, scale=0)
-  
+model <- bayesian_linear_regression_train(input=X_train, responses=y_train)
+
 pred <- predict(model, newdata=X_test) 
 ```
 
@@ -1432,9 +1431,8 @@ X_test <- pp[["test"]]
 y_train <- y[as.integer(pp[["training_labels"]]), 1]
 y_test <- y[as.integer(pp[["test_labels"]]), 1]
 
-model <- lars_train(input=X_train, responses=y_train, lambda1=1e-05,
-  lambda2=1e-06)
-  
+model <- lars_train(input=X_train, responses=y_train)
+
 pred <- predict(model, newdata=X_test) 
 ```
 
@@ -1717,9 +1715,8 @@ X_test <- pp[["test"]]
 y_train <- pp[["training_labels"]]
 y_test <- pp[["test_labels"]]
 
-model <- logistic_regression_train(training=X_train, labels=y_train,
-  lambda=0.1)
-  
+model <- logistic_regression_train(training=X_train, labels=y_train)
+
 pred <- predict(model, newdata=X_test) 
 prob <- predict(model, newdata=X_test, type="probabilities") 
 ```
@@ -2921,9 +2918,8 @@ X_test <- pp[["test"]]
 y_train <- pp[["training_labels"]]
 y_test <- pp[["test_labels"]]
 
-model <- random_forest_train(training=X_train, labels=y_train,
-  minimum_leaf_size=20, num_trees=10, print_training_accuracy=TRUE)
-  
+model <- random_forest_train(training=X_train, labels=y_train)
+
 pred <- predict(model, newdata=X_test) 
 prob <- predict(model, newdata=X_test, type="probabilities") 
 ```
@@ -3024,9 +3020,8 @@ X_test <- pp[["test"]]
 y_train <- pp[["training_labels"]]
 y_test <- pp[["test_labels"]]
 
-model <- decision_tree_train(training=X_train, labels=y_train,
-  minimum_leaf_size=20, minimum_gain_split=0.001)
-  
+model <- decision_tree_train(training=X_train, labels=y_train)
+
 pred <- predict(model, newdata=X_test) 
 prob <- predict(model, newdata=X_test, type="probabilities") 
 ```
@@ -3121,9 +3116,8 @@ X_test <- pp[["test"]]
 y_train <- pp[["training_labels"]]
 y_test <- pp[["test_labels"]]
 
-model <- perceptron_train(training=X_train, labels=y_train,
-  max_iterations=100)
-  
+model <- perceptron_train(training=X_train, labels=y_train)
+
 pred <- predict(model, newdata=X_test) 
 ```
 
@@ -3215,9 +3209,8 @@ X_test <- pp[["test"]]
 y_train <- pp[["training_labels"]]
 y_test <- pp[["test_labels"]]
 
-model <- linear_svm_train(training=X_train, labels=y_train, lambda=0.1,
-  delta=1, num_classes=0)
-  
+model <- linear_svm_train(training=X_train, labels=y_train)
+
 pred <- predict(model, newdata=X_test) 
 ) 
 ```
@@ -3621,9 +3614,8 @@ X_test <- pp[["test"]]
 y_train <- pp[["training_labels"]]
 y_test <- pp[["test_labels"]]
 
-model <- softmax_regression_train(training=X_train, labels=y_train,
-  lambda=0.1)
-  
+model <- softmax_regression_train(training=X_train, labels=y_train)
+
 pred <- predict(model, newdata=X_test) 
 prob <- predict(model, newdata=X_test, type="probabilities") 
 ```

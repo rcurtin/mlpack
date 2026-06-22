@@ -77,9 +77,9 @@ BINDING_EXAMPLE(
     GET_DATASET("y", "http://datasets.mlpack.org/iris_labels.csv") + "\n" +
     SPLIT_TRAIN_TEST("X", "y", "X_train", "y_train", "X_test", "y_test",
     "0.2") + "\n" +
-    CREATE_OBJECT("model", "linear_svm") + "\n" +
-    CALL_METHOD("model", "train", "training", "X_train", "labels", "y_train",
-        "lambda", 0.1, "delta", 1.0, "num_classes", 0));
+    CREATE_OBJECT("model", "linear_svm", "lambda", 0.1, "delta", 1.0,
+        "num_classes", 3) + "\n" +
+    CALL_METHOD("model", "train", "training", "X_train", "labels", "y_train"));
 
 // See also...
 BINDING_SEE_ALSO("@random_forest", "#random_forest");

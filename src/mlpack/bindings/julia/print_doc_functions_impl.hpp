@@ -315,7 +315,7 @@ inline std::string PrintInputOptions(util::Params& p,
       bool isSerializable;
       p.functionMap[d.tname]["IsSerializable"](d, NULL,
           (void*) &isSerializable);
-      const bool isArma = (d.cppType.find("arma") == std::string::npos);
+      const bool isArma = (d.cppType.find("arma") != std::string::npos);
       const bool isHyperparam = !isSerializable && !isArma;
 
       if (onlyHyperparams && isHyperparam)

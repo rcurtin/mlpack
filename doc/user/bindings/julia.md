@@ -1340,7 +1340,7 @@ y = CSV.read(download("http://datasets.mlpack.org/admission_predict.responses.cs
 y_train = y[y_train_indices[1:end], 1]
 y_test = y[y_test_indices[1:end], 1]
 model = BayesianLinearRegression(center=false, scale=false, verbose=false)
-fit!(model, X_train, y_train; center=1, scale=0)
+fit!(model, X_train, y_train)
 predictions = predict(model, X_test)
 ```
 
@@ -1436,9 +1436,8 @@ y = CSV.read(download("http://datasets.mlpack.org/admission_predict.responses.cs
 (X_test, y_test_indices, X_train, y_train_indices) = preprocess_split(X, input_labels=collect(1:size(y, 1)), test_ratio=0.2)
 y_train = y[y_train_indices[1:end], 1]
 y_test = y[y_test_indices[1:end], 1]
-model = Lars(lambda1=0.0, lambda2=0.0, no_intercept=false, no_normalize=false,
-  use_cholesky=false, verbose=false)
-fit!(model, X_train, y_train; lambda1=1e-05, lambda2=1e-06)
+model = Lars(lambda1=1e-05, lambda2=1e-06)
+fit!(model, X_train, y_train)
 predictions = predict(model, X_test)
 ```
 
@@ -1717,10 +1716,8 @@ using mlpack: LogisticRegression, fit!, predict, predict_proba
 X = CSV.read(download("http://datasets.mlpack.org/iris.csv"), DataFrame)
 y = CSV.read(download("http://datasets.mlpack.org/iris_labels.csv"), DataFrame)
 (X_test, y_test, X_train, y_train) = preprocess_split(X, input_labels=y, test_ratio=0.2)
-model = LogisticRegression(batch_size=64, lambda=0.0, max_iterations=10000,
-  optimizer="lbfgs", print_training_accuracy=false, step_size=0.01,
-  tolerance=1e-10, verbose=false)
-fit!(model, X_train; lambda=0.1)
+model = LogisticRegression(lambda=0.1)
+fit!(model, X_train; labels=y_train)
 predictions = predict(model, X_test)
 probabilities = predict_proba(model, X_test)
 ```
@@ -2908,11 +2905,9 @@ using mlpack: RandomForest, fit!, predict, predict_proba
 X = CSV.read(download("http://datasets.mlpack.org/iris.csv"), DataFrame)
 y = CSV.read(download("http://datasets.mlpack.org/iris_labels.csv"), DataFrame)
 (X_test, y_test, X_train, y_train) = preprocess_split(X, input_labels=y, test_ratio=0.2)
-model = RandomForest(maximum_depth=0, minimum_gain_split=0.0,
-  minimum_leaf_size=1, num_trees=10, print_training_accuracy=false, seed=0,
-  subspace_dim=0, verbose=false)
-fit!(model, y_train, X_train; minimum_leaf_size=20, num_trees=10,
+model = RandomForest(minimum_leaf_size=20, num_trees=10,
   print_training_accuracy=1)
+fit!(model, y_train, X_train)
 predictions = predict(model, X_test)
 probabilities = predict_proba(model, X_test)
 ```
@@ -3009,9 +3004,8 @@ using mlpack: DecisionTree, fit!, predict, predict_proba
 X = CSV.read(download("http://datasets.mlpack.org/iris.csv"), DataFrame)
 y = CSV.read(download("http://datasets.mlpack.org/iris_labels.csv"), DataFrame)
 (X_test, y_test, X_train, y_train) = preprocess_split(X, input_labels=y, test_ratio=0.2)
-model = DecisionTree(maximum_depth=0, minimum_gain_split=1e-07,
-  minimum_leaf_size=20, print_training_accuracy=false, verbose=false)
-fit!(model, X_train; minimum_gain_split=0.001, minimum_leaf_size=20)
+model = DecisionTree(minimum_gain_split=0.001, minimum_leaf_size=20)
+fit!(model, X_train; labels=y_train)
 predictions = predict(model, X_test)
 probabilities = predict_proba(model, X_test)
 ```
@@ -3102,8 +3096,8 @@ using mlpack: Perceptron, fit!, predict
 X = CSV.read(download("http://datasets.mlpack.org/iris.csv"), DataFrame)
 y = CSV.read(download("http://datasets.mlpack.org/iris_labels.csv"), DataFrame)
 (X_test, y_test, X_train, y_train) = preprocess_split(X, input_labels=y, test_ratio=0.2)
-model = Perceptron(max_iterations=1000, verbose=false)
-fit!(model, X_train; max_iterations=100)
+model = Perceptron(max_iterations=100)
+fit!(model, X_train; labels=y_train)
 predictions = predict(model, X_test)
 ```
 
@@ -3191,10 +3185,8 @@ using mlpack: LinearSvm, fit!, predict, scores
 X = CSV.read(download("http://datasets.mlpack.org/iris.csv"), DataFrame)
 y = CSV.read(download("http://datasets.mlpack.org/iris_labels.csv"), DataFrame)
 (X_test, y_test, X_train, y_train) = preprocess_split(X, input_labels=y, test_ratio=0.2)
-model = LinearSvm(delta=1.0, epochs=50, lambda=0.0001, max_iterations=10000,
-  no_intercept=false, num_classes=0, optimizer="lbfgs", seed=0, shuffle=false,
-  step_size=0.01, tolerance=1e-10, verbose=false)
-fit!(model, X_train; delta=1, lambda=0.1, num_classes=0)
+model = LinearSvm(delta=1, lambda=0.1, num_classes=3)
+fit!(model, X_train; labels=y_train)
 predictions = predict(model, X_test)
 scores = scores(model, X_test)
 ```
@@ -3290,7 +3282,7 @@ y = CSV.read(download("http://datasets.mlpack.org/iris_labels.csv"), DataFrame)
 (X_test, y_test, X_train, y_train) = preprocess_split(X, input_labels=y, test_ratio=0.2)
 model = Adaboost(iterations=1000, tolerance=1e-10, verbose=false,
   weak_learner="decision_stump")
-fit!(model, X_train)
+fit!(model, X_train; labels=y_train)
 predictions = predict(model, X_test)
 probabilities = predict_proba(model, X_test)
 ```
@@ -3394,7 +3386,7 @@ model = HoeffdingTrees(batch_mode=false, bins=10, confidence=0.95,
   info_gain=false, max_samples=5000, min_samples=100,
   numeric_split_strategy="binary", observations_before_binning=100, passes=1,
   verbose=false)
-fit!(model, X_train)
+fit!(model, X_train; labels=y_train)
 predictions = predict(model, X_test)
 probabilities = predict_proba(model, X_test)
 ```
@@ -3490,8 +3482,8 @@ using mlpack: NaiveBayes, fit!, predict, predict_proba
 X = CSV.read(download("http://datasets.mlpack.org/iris.csv"), DataFrame)
 y = CSV.read(download("http://datasets.mlpack.org/iris_labels.csv"), DataFrame)
 (X_test, y_test, X_train, y_train) = preprocess_split(X, input_labels=y, test_ratio=0.2)
-model = NaiveBayesTrees(incremental_variance=false, verbose=false)
-fit!(model, X_train)
+model = NaiveBayes(incremental_variance=false, verbose=false)
+fit!(model, X_train; labels=y_train)
 predictions = predict(model, X_test)
 probabilities = predict_proba(model, X_test)
 ```
@@ -3586,9 +3578,8 @@ using mlpack: SoftmaxRegression
 X = CSV.read(download("http://datasets.mlpack.org/iris.csv"), DataFrame)
 y = CSV.read(download("http://datasets.mlpack.org/iris_labels.csv"), DataFrame)
 (X_test, y_test, X_train, y_train) = preprocess_split(X, input_labels=y, test_ratio=0.2)
-model = SoftmaxRegression(lambda=0.0001, max_iterations=400,
-  no_intercept=false, number_of_classes=0, verbose=false)
-fit!(model, y_train, X_train; lambda=0.1)
+model = SoftmaxRegression(lambda=0.1)
+fit!(model, y_train, X_train)
 predictions = predict(model, X_test)
 probabilities = predict_proba(model, X_test)
 ```
@@ -3683,7 +3674,7 @@ y = CSV.read(download("https://datasets.mlpack.org/admission_predict.responses.c
 y_train = y[y_train_indices[1:end], 1]
 y_test = y[y_test_indices[1:end], 1]
 model = LinearRegression(lambda=0.0, verbose=false)
-fit!(model, X_train)
+fit!(model, X_train; training_responses=y_train)
 output_predictions = predict(model, X_test)
 ```
 
