@@ -47,7 +47,8 @@ inline void MockCategoricalData(arma::mat& d,
   for (size_t i = 0; i < n; ++i)
   {
     // One circle every (n/2) samples.  Plus some noise.
-    const double magnitude = 2.0 + (double(i) / (n / 20)) + 0.5 * mlpack::Random();
+    const double magnitude = 2.0 + (double(i) / (n / 20)) +
+        0.5 * mlpack::Random();
     const double angle = (i % (n / 20)) * (2 * M_PI) + mlpack::Random();
 
     const double x = magnitude * cos(angle);
