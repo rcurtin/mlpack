@@ -100,38 +100,40 @@ std::cout << " * " << arma::accu(assignments == SIZE_MAX) << " points "
 
 ---
 
-***Notes:***
-
- - 
-
----
-
 #### Constructor Parameters:
 
 | **name** | **type** | **description** | **default** |
 |----------|----------|-----------------|-------------|
-| `epsilon` | `double` |
-| `minPoints` | `size_t` |
-| `batchMode` | `bool` |
+| `epsilon` | `double` | Maximum distance between points that are a part of the same cluster. | `0.5` |
+| `minPoints` | `size_t` | Minimum number of points within distance `epsilon`
+for a point to be considered a 'core point'. | `5` |
+| `batchMode` | `bool` | Whether to use batch-mode range search to find neighbors of points. | `true` |
 | `rangeSearch` | [`RangeSearchType`](#advanced-functionality-template-parameters) |
 | `pointSelector` | [`PointSelectionPolicy`](#advanced-functionality-template-parameters) |
 
 ***Notes:***
 
- - A larger `radius` value will generally result in fewer clusters (e.g. a
-   coarser clustering); smaller `radius` values will generally result in more
-   clusters.
+ - Clustering results are very sensitive to the settings of `epsilon` and
+   `minPoints`!  The defaults for both of those are likely not correct for any
+   dataset; *manual tuning and experimentation is generally necessary*.
 
- - When `MeanShift<false>` is used, `radius` is the hard distance threshold for
-   points to be considered in the recomputation of a centroid.
+ - If `epsilon` is too small, then no points will be considered a part of the
+   same cluster and all points will be classified as noise.  If `epsilon` is too
+   large, then all points will be classified as one cluster.
+
+ - `minPoints` specifies the minimum number of neighboring points that a point
+   must have to be the root of a cluster (e.g. a 'core point').  As this
+   increases, the minimum number of points in a cluster also increases, but
+   fewer points can be 'core points' that are the root of clusters.
+
+ - Setting `batchMode` to `false` can keep memory usage lower, but at the
+   potential cost of runtime slowdown.
 
 ### Clustering
 
  * `dbscan.Cluster(data, centroids)`
  * `dbscan.Cluster(data, assignments)`
  * `dbscan.Cluster(data, assignments, centroids)`
-
- * `ms.Cluster(data, centroids, forceConvergence=true, useSeeds=true)`
    - Cluster the given data, storing the resulting cluster centroids in
      `centroids`.
    - `centroids` will be set to size `data.n_rows` x `numClusters`, where
