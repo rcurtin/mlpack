@@ -267,6 +267,17 @@ void DBSCAN<RangeSearchType, PointSelectionPolicy>::BatchCluster(
   }
 }
 
+// Serialize the DBSCAN object.
+template<typename Archive>
+void serialize(Archive& ar, const unsigned int /* version */)
+{
+  ar(CEREAL_NVP(epsilon));
+  ar(CEREAL_NVP(minPoints));
+  ar(CEREAL_NVP(batchMode));
+  ar(CEREAL_NVP(rangeSearch));
+  ar(CEREAL_NVP(pointSelector));
+}
+
 } // namespace mlpack
 
 #endif

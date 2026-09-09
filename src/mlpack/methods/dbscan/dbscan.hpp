@@ -111,6 +111,35 @@ class DBSCAN
                  arma::Row<size_t>& assignments,
                  MatType& centroids);
 
+  // Get the value of epsilon.
+  const ElemType Epsilon() const { return epsilon; }
+  // Modify the value of epsilon.
+  void Epsilon(const ElemType& epsilonIn) { epsilon = epsilonIn; }
+
+  // Get the minimum number of points for a point to be a core-point.
+  const size_t MinPoints() const { return minPoints; }
+  // Modify the minimum number of points for a point to be a core-point.
+  void MinPoints(const size_t minPointsIn) { minPoints = minPointsIn; }
+
+  // Get whether to perform the search in batch mode.
+  const bool BatchMode() const { return batchMode; }
+  // Modify whether the search is performed in batch mode.
+  void BatchMode(const bool batchModeIn) { batchMode = batchModeIn; }
+
+  // Get the object that will be used for range search.
+  const RangeSearchType& RangeSearch() const { return rangeSearch; }
+  // Modify the object that will be used for range search.
+  RangeSearchType& RangeSearch() { return rangeSearch; }
+
+  // Get the instantiated point selection policy.
+  const PointSelectionPolicy& PointSelector() const { return pointSelector; }
+  // Modify the instantiated point selection policy.
+  PointSelectionPolicy& PointSelector() { return pointSelector; }
+
+  // Serialize the DBSCAN object.
+  template<typename Archive>
+  void serialize(Archive& ar, const unsigned int /* version */);
+
  private:
   //! Maximum distance between two points to be part of same cluster.
   ElemType epsilon;
