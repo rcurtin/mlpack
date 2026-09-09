@@ -321,6 +321,15 @@ inline void MeanShift<UseKernel, KernelType>::Cluster(
   }
 }
 
+// Serialize the MeanShift object.
+template<typename Archive>
+void MeanShift::serialize(Archive& ar, const unsigned int /* version */)
+{
+  ar(CEREAL_NVP(radius));
+  ar(CEREAL_NVP(maxIterations));
+  ar(CEREAL_NVP(kernel));
+}
+
 } // namespace mlpack
 
 #endif
