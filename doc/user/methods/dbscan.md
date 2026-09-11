@@ -421,9 +421,8 @@ class CustomRangeSearchType
 };
 ```
 
-   - Note that it is generally easier to use a variant of mlpack's existing
-     `RangeSearch` class instead of implementing an entirely new one from
-     scratch!
+Note that it is generally easier to use a variant of mlpack's existing
+`RangeSearch` class instead of implementing an entirely new one from scratch!
 
 ---
 
