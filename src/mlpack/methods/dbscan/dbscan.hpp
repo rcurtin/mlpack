@@ -68,8 +68,8 @@ class DBSCAN
    * @param rangeSearch Optional instantiated RangeSearch object.
    * @param pointSelector OptionL instantiated PointSelectionPolicy object.
    */
-  DBSCAN(const ElemType epsilon,
-         const size_t minPoints,
+  DBSCAN(const ElemType epsilon = 0.5,
+         const size_t minPoints = 5,
          const bool batchMode = true,
          RangeSearchType rangeSearch = RangeSearchType(),
          PointSelectionPolicy pointSelector = PointSelectionPolicy());

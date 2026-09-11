@@ -278,8 +278,10 @@ void DBSCAN<RangeSearchType, PointSelectionPolicy>::BatchCluster(
 }
 
 // Serialize the DBSCAN object.
+template<typename RangeSearchType, typename PointSelectionPolicy>
 template<typename Archive>
-void serialize(Archive& ar, const unsigned int /* version */)
+void DBSCAN<RangeSearchType, PointSelectionPolicy>::serialize(
+    Archive& ar, const unsigned int /* version */)
 {
   ar(CEREAL_NVP(epsilon));
   ar(CEREAL_NVP(minPoints));

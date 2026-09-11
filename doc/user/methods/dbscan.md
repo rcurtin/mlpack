@@ -18,11 +18,11 @@ does not make any assumptions on the shape of the data.
 
 // Create random dataset with two separated 10-dimensional Gaussians.
 arma::mat dataset = arma::join_rows(
-    arma::randn<arma::mat>(10, 1000) + 3.0,  // 1000 points from N(-3, 1).
-    arma::randn<arma::mat>(10, 1000) - 3.0,  // 1000 points from N( 3, 1).
+    arma::randn<arma::mat>(10, 1000) - 3.0,  // 1000 points from N(-3, 1).
+    arma::randn<arma::mat>(10, 1000) + 3.0,  // 1000 points from N( 3, 1).
     arma::randn<arma::mat>(10, 1) + 20.0);   // One outlier "noise" point.
 
-mlpack::DBSCAN dbscan(0.5, 10);                  // Step 1: create object.
+mlpack::DBSCAN dbscan(5.0, 10);                  // Step 1: create object.
 arma::Row<size_t> assignments;
 arma::mat centroids;
 dbscan.Cluster(dataset, assignments, centroids); // Step 2: perform clustering.
@@ -209,8 +209,9 @@ noise point.
 arma::mat dataset;
 mlpack::Load("satellite.train.csv", dataset, mlpack::Fatal);
 
-// Create DBSCAN object with default parameters and perform clustering.
-mlpack::DBSCAN dbscan;
+// Create DBSCAN object with parameters tuned to the satellite dataset and
+// perform clustering.
+mlpack::DBSCAN dbscan(25.0, 10);
 arma::mat centroids;
 arma::Row<size_t> assignments;
 dbscan.Cluster(dataset, assignments, centroids);
@@ -223,7 +224,7 @@ std::cout << "DBSCAN computed " << centroids.n_cols << " clusters."
 double sumDist = 0.0;
 for (size_t i = 0; i < dataset.n_cols; ++i)
 {
-  if (assigments[i] != SIZE_MAX) // Filter out noise points.
+  if (assignments[i] != SIZE_MAX) // Filter out noise points.
   {
     sumDist += mlpack::EuclideanDistance::Evaluate(
         dataset.col(i), centroids.col(assignments[i]));
@@ -246,7 +247,7 @@ arma::mat dataset;
 mlpack::Load("wave_energy_farm_100.csv", dataset, mlpack::Fatal);
 
 // Create DBSCAN object and set parameters.
-mlpack::DBSCAN dbscan;
+mlpack::DBSCAN dbscan(10000.0, 10);
 
 // Perform the clustering.
 arma::mat centroids;
@@ -277,7 +278,7 @@ mlpack::Load("cloud.csv", dataset, mlpack::Fatal);
 // as the matrix type.
 using RangeSearchType = mlpack::RangeSearch<mlpack::EuclideanDistance,
                                             arma::fmat>;
-mlpack::DBSCAN<RangeSearchType> dbscan;
+mlpack::DBSCAN<RangeSearchType> dbscan(40.0, 10);
 
 // Perform clustering.
 arma::fmat centroids;
@@ -298,9 +299,9 @@ std::cout << " - " << arma::accu(assignments == SIZE_MAX) << " points were "
 
 ---
 
-Perform DBSCAN clustering on the cloud dataset, using mlpack's `RangeSearch`
-class with the [`CoverTree`](../core/trees/cover_tree.md) for range search
-operations.
+Perform DBSCAN clustering on the cloud dataset using the L1 (Manhattan)
+distance, using mlpack's `RangeSearch` class with the
+[`CoverTree`](../core/trees/cover_tree.md) for range search operations.
 
 ```c++
 // See https://datasets.mlpack.org/cloud.csv.
@@ -309,10 +310,10 @@ mlpack::Load("cloud.csv", dataset, mlpack::Fatal);
 
 // Create the DBSCAN object using a custom `RangeSearch` that uses `arma::fmat`
 // as the matrix type and `CoverTree` as the tree type.
-using RangeSearchType = mlpack::RangeSearch<mlpack::EuclideanDistance,
+using RangeSearchType = mlpack::RangeSearch<mlpack::ManhattanDistance,
                                             arma::fmat,
                                             mlpack::StandardCoverTree>;
-mlpack::DBSCAN<RangeSearchType> dbscan;
+mlpack::DBSCAN<RangeSearchType> dbscan(50.0, 10);
 
 // Perform clustering.
 arma::fmat centroids;
@@ -359,7 +360,7 @@ RangeSearch<DistanceType, MatType, TreeType>
 ```
 
      * `DistanceType` should be a valid [distance metric](../core/distances.md);
-       the default is [`EuclideanDistance`](TODO).
+       the default is [`EuclideanDistance`](../core/distances.md#lmetric).
      * `MatType` should be any matrix type implementing the Armadillo API; the
        default is [`arma::mat`](../core/matrices.md).  Other options include,
        e.g., `arma::fmat`, and `arma::hmat`.
