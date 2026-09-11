@@ -2,10 +2,10 @@
 
 The `DBSCAN` class implements DBSCAN ("Density Based Spatial Clustering of
 Applications with Noise"), a clustering technique.  DBSCAN iteratively finds
-localized high-density data regions, and groups connected high-density regions
-into clusters.  Clusters produced by DBSCAN may have arbitrary shapes, and
-points far away from any high-density region will be separately classified as
-noise.
+localized high-density data regions by using range searches.  Nearby points in
+connected high-density regions are grouped into clusters.  Clusters produced by
+DBSCAN may have arbitrary shapes, and points far away from any high-density
+region will be separately classified as noise.
 
 DBSCAN does not require the user to guess the number of clusters, and
 does not make any assumptions on the shape of the data.
@@ -76,6 +76,8 @@ std::cout << " * " << arma::accu(assignments == SIZE_MAX) << " points "
  * `dbscan = DBSCAN(epsilon, minPoints, batchMode, rangeSearch, pointSelector)`
    - Create a `DBSCAN` object with the specified parameters, giving
      pre-instantiated `RangeSearch` and `OrderedPointSelection` objects.
+   - This overload is generally only useful if you want to reuse a `RangeSearch`
+     object from elsewhere.
 
 ---
 
@@ -108,8 +110,8 @@ std::cout << " * " << arma::accu(assignments == SIZE_MAX) << " points "
 | `minPoints` | `size_t` | Minimum number of points within distance `epsilon`
 for a point to be considered a 'core point'. | `5` |
 | `batchMode` | `bool` | Whether to use batch-mode range search to find neighbors of points. | `true` |
-| `rangeSearch` | [`RangeSearchType`](#advanced-functionality-template-parameters) |
-| `pointSelector` | [`PointSelectionPolicy`](#advanced-functionality-template-parameters) |
+| `rangeSearch` | [`RangeSearchType`](#advanced-functionality-template-parameters) | Instantiated object to perform range searches with. | `RangeSearchType()` |
+| `pointSelector` | [`PointSelectionPolicy`](#advanced-functionality-template-parameters) | Instantiated object to select the next point to use as a candidate core point of a new cluster. | `PointSelectionPolicy()` |
 
 ***Notes:***
 
@@ -132,13 +134,34 @@ for a point to be considered a 'core point'. | `5` |
 ### Clustering
 
  * `dbscan.Cluster(data, centroids)`
- * `dbscan.Cluster(data, assignments)`
- * `dbscan.Cluster(data, assignments, centroids)`
    - Cluster the given data, storing the resulting cluster centroids in
      `centroids`.
    - `centroids` will be set to size `data.n_rows` x `numClusters`, where
-     `numClusters` is the number of clusters found by the mean shift algorithm.
+     `numClusters` is the number of clusters found by DBSCAN.
    - The `i`th cluster centroid can be obtained with `clusters.col(i)`.
+
+ * `dbscan.Cluster(data, assignments)`
+   - Cluster the given data, storing the resulting point assignments in
+     `assignments`.
+   - `assignments` will be set to size `data.n_cols`.
+   - The cluster assignment of the point `data.col(i)` can be obtained with
+     `assignments[i]`.
+   - If the point `data.col(i)` has been classified as noise, then
+     `assignments[i]` will be set to `SIZE_MAX`.  Otherwise, `assignments[i]`
+     will take values in the range `[0, numClusters - 1]`.
+
+ * `dbscan.Cluster(data, assignments, centroids)`
+   - Cluster the given data, storing the resulting cluster centroids in
+     `centroids` and the resulting point assignments in `assignments`.
+   - `centroids` will be set to size `data.n_rows` x `numClusters`, where
+     `numClusters` is the number of clusters found by DBSCAN.
+   - The `i`th cluster centroid can be obtained with `clusters.col(i)`.
+   - `assignments` will be set to size `data.n_cols`.
+   - The cluster assignment of the point `data.col(i)` can be obtained with
+     `assignments[i]`.
+   - If the point `data.col(i)` has been classified as noise, then
+     `assignments[i]` will be set to `SIZE_MAX`.  Otherwise, `assignments[i]`
+     will take values in the range `[0, numClusters - 1]`.
 
 ---
 
@@ -153,8 +176,8 @@ for a point to be considered a 'core point'. | `5` |
 ***Notes***:
 
  * Different types can be used for `data` and `centroids` (e.g., `arma::fmat` or
-   any dense matrix type implementing the Armadillo API).  The types of `data`
-   and `centroids` must be the same.
+   any dense matrix type implementing the Armadillo API) by specifying a custom
+   [`RangeSearchType`](#advanced-functionality-template-parameters).
 
 ### Other Functionality
 
@@ -190,18 +213,21 @@ mlpack::Load("satellite.train.csv", dataset, mlpack::Fatal);
 mlpack::DBSCAN dbscan;
 arma::mat centroids;
 arma::Row<size_t> assignments;
-ms.Cluster(dataset, assignments, centroids);
+dbscan.Cluster(dataset, assignments, centroids);
 
 // Print the number of clusters.
-std::cout << "MeanShift computed " << centroids.n_cols << " clusters."
+std::cout << "DBSCAN computed " << centroids.n_cols << " clusters."
     << std::endl;
 
 // Compute the average distance from each point to its assigned centroid.
 double sumDist = 0.0;
 for (size_t i = 0; i < dataset.n_cols; ++i)
 {
-  sumDist += mlpack::EuclideanDistance::Evaluate(
-      dataset.col(i), centroids.col(assignments[i]));
+  if (assigments[i] != SIZE_MAX) // Filter out noise points.
+  {
+    sumDist += mlpack::EuclideanDistance::Evaluate(
+        dataset.col(i), centroids.col(assignments[i]));
+  }
 }
 const double avgDist = sumDist / (double) dataset.n_cols;
 
@@ -239,15 +265,19 @@ mlpack::Save("wave_energy_centroids.csv", centroids);
 ---
 
 Perform DBSCAN clustering on the cloud dataset, using 32-bit floating point
-matrices to represent the data.
+matrices to represent the data via the
+[`RangeSearchType` template parameter](#advanced-functionality-template-parameters).
 
 ```c++
 // See https://datasets.mlpack.org/cloud.csv.
 arma::fmat dataset;
 mlpack::Load("cloud.csv", dataset, mlpack::Fatal);
 
-// Create the MeanShift object using a TriangularKernel.
-mlpack::DBSCAN dbscan();
+// Create the DBSCAN object using a custom `RangeSearch` that uses `arma::fmat`
+// as the matrix type.
+using RangeSearchType = mlpack::RangeSearch<mlpack::EuclideanDistance,
+                                            arma::fmat>;
+mlpack::DBSCAN<RangeSearchType> dbscan;
 
 // Perform clustering.
 arma::fmat centroids;
@@ -269,11 +299,36 @@ std::cout << " - " << arma::accu(assignments == SIZE_MAX) << " points were "
 ---
 
 Perform DBSCAN clustering on the cloud dataset, using mlpack's `RangeSearch`
-class with the [`CoverTree`](../core/trees/cover_tree.md_) for range search
+class with the [`CoverTree`](../core/trees/cover_tree.md) for range search
 operations.
 
 ```c++
+// See https://datasets.mlpack.org/cloud.csv.
+arma::fmat dataset;
+mlpack::Load("cloud.csv", dataset, mlpack::Fatal);
 
+// Create the DBSCAN object using a custom `RangeSearch` that uses `arma::fmat`
+// as the matrix type and `CoverTree` as the tree type.
+using RangeSearchType = mlpack::RangeSearch<mlpack::EuclideanDistance,
+                                            arma::fmat,
+                                            mlpack::StandardCoverTree>;
+mlpack::DBSCAN<RangeSearchType> dbscan;
+
+// Perform clustering.
+arma::fmat centroids;
+arma::Row<size_t> assignments;
+dbscan.Cluster(dataset, assignments, centroids);
+
+// Print the number of clusters and the number of points in each cluster.
+std::cout << "DBSCAN found " << centroids.n_cols << " clusters."
+    << std::endl;
+for (size_t i = 0; i < centroids.n_cols; ++i)
+{
+  std::cout << " - Cluster " << i << " has " << arma::accu(assignments == i)
+      << " points assigned to it." << std::endl;
+}
+std::cout << " - " << arma::accu(assignments == SIZE_MAX) << " points were "
+    << "classified as noise and not assigned to any cluster." << std::endl;
 ```
 
 ### Advanced Functionality: Template Parameters
@@ -282,11 +337,128 @@ The `DBSCAN` class has two template parameters that can be used for custom
 behavior.  The full signature of the class is:
 
 ```
-MeanShift<RangeSearchType, PointSelectionPolicy>
+DBSCAN<RangeSearchType, PointSelectionPolicy>
 ```
 
- * `RangeSearchType` (default ) ...
+---
 
- * `PointSelectionPolicy` (default ) ...
+<!-- TODO: elaborate here once RangeSearch is documented -->
+
+ * `RangeSearchType` specifies the algorithm to be used when performing range
+   searches.
+   - By default, the `RangeSearch` class is used, which uses an efficient
+     dual-tree [`KDTree`](../core/trees/kdtree.md)-based search.
+
+   - When `batchMode` is set to `false`, then single-tree search is used.
+
+   - The `RangeSearch` class is itself configurable with template parameters;
+     its full signature is:
+
+```
+RangeSearch<DistanceType, MatType, TreeType>
+```
+
+     * `DistanceType` should be a valid [distance metric](../core/distances.md);
+       the default is [`EuclideanDistance`](TODO).
+     * `MatType` should be any matrix type implementing the Armadillo API; the
+       default is [`arma::mat`](../core/matrices.md).  Other options include,
+       e.g., `arma::fmat`, and `arma::hmat`.
+       - The `MatType` used here will be the same type that is accepted by
+         [`Cluster()`](#clustering).
+     * `TreeType` is the [tree type](../core/trees.md) used for tree-based
+       searching.  By default, [`KDTree`](../core/trees/kdtree.md) is used.
+
+   - An entirely custom `RangeSearchType` must implement two typedefs and three
+     member functions:
+
+```c++
+class CustomRangeSearchType
+{
+  // This typedef is what DBSCAN uses as `MatType`.
+  using Mat = arma::mat; /* or any other Armadillo-compatible choice */
+  // This typedef defines the element type that the matrix holds.
+  using ElemType = typename Mat::elem_type;
+
+  /**
+   * Prepare for range search queries, using `referenceSet` as the set that is
+   * being searched in.
+   */
+  void Train(const Mat& referenceSet);
+
+  /**
+   * This will always be called after a call to `Train()`.
+   *
+   * For each point in `querySet`, find *all* points in `referenceSet` within a
+   * distance of `range.Lo()` and `range.Hi()`.  Store the indices of these
+   * points in `neighbors` and their distances in `distances`.
+   *
+   * After the function is done, `neighbors[i][j]` should contain the index of
+   * the `j`'th point in `referenceSet` that is within `range` of the point
+   * `querySet.col(i)`.
+   */
+  void Search(const Mat& querySet,
+              const RangeType<ElemType>& range,
+              std::vector<std::vector<size_t>>& neighbors,
+              std::vector<std::vector<ElemType>>& distances);
+
+  /**
+   * This will always be called after a call to `Train()`.
+   *
+   * For each point in `referenceSet` (which was passed to `Train()`), find all
+   * points within a distance of `range.Lo()` and `range.Hi()`.  Store the
+   * indices of these points in `neighbors` and their distances in `distances`.
+   *
+   * After the function is done, `neighbors[i][j]` should contain the index of
+   * the `j`'th point that is within `range` of the point `referenceSet.col(i)`.
+   *
+   * `neighbors[i]` should *not* contain `i`; that is, a point should not be
+   * returned in its own set of neighbors, even if `range.Lo() == 0`.
+   */
+  void Search(const Mat& querySet,
+              const RangeType<ElemType>& range,
+              std::vector<std::vector<size_t>>& neighbors,
+              std::vector<std::vector<ElemType>>& distances);
+};
+```
+
+   - Note that it is generally easier to use a variant of mlpack's existing
+     `RangeSearch` class instead of implementing an entirely new one from
+     scratch!
 
 ---
+
+ * `PointSelectionPolicy` specifies the order in which points are selected as
+   candidate roots of clusters.
+   - By default, the `OrderedPointSelection` class is used, and is generally
+     sufficient for all DBSCAN clustering tasks.
+
+   - DBSCAN point cluster assignment is greedy; a point is assigned to the first
+     cluster it is within a distance of `epsilon` of.  Therefore, to some
+     limited extent, clustering behavior can be controlled by
+     `PointSelectionPolicy`.
+
+   - A custom point selection strategy must implement one member function:
+
+```c++
+class CustomPointSelection
+{
+ public:
+  /**
+   * Select the next point to use as a candidate cluster root for DBSCAN.  This
+   * method should return the index of the point in `data` to use.
+   *
+   * MatType is the Armadillo-compatible matrix type used to store the data
+   * points.
+   *
+   * @param numVisited Number of points that have been visited so far.
+   * @param visited Bitset indicating which points have already been visited.
+   *      Note that more than `numVisited` points may have been visited, since
+   *      any point's neighbors are considered 'visited' at each iteration.
+   * @param data Matrix of data points.
+   */
+  template<typename MatType>
+  static size_t Select(const size_t numVisited,
+                       const std::vector<bool>& visited,
+                       const MatType& data);
+};
+```
