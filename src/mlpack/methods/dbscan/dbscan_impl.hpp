@@ -166,6 +166,7 @@ void DBSCAN<RangeSearchType, PointSelectionPolicy>::PointwiseCluster(
 
   std::vector<bool> visited(data.n_cols, false);
   std::vector<bool> nonCorePoints(data.n_cols, false);
+  std::vector<bool> everVisited(data.n_cols, false);
 
   for (size_t i = 0; i < data.n_cols; ++i)
   {
@@ -173,8 +174,9 @@ void DBSCAN<RangeSearchType, PointSelectionPolicy>::PointwiseCluster(
       Log::Info << "DBSCAN clustering on point " << i << "..." << std::endl;
 
     // Get the next index.
-    const size_t index = pointSelector.Select(i, data);
+    const size_t index = pointSelector.Select(i, everVisited, data);
     visited[index] = true;
+    everVisited[index] = true;
 
     // Do the range search for only this point.
     rangeSearch.Search(data.col(index),
@@ -188,6 +190,8 @@ void DBSCAN<RangeSearchType, PointSelectionPolicy>::PointwiseCluster(
     {
       for (size_t j = 0; j < neighbors[0].size(); ++j)
       {
+        everVisited[neighbors[0][j]] = true;
+
         // Union to all neighbors that either do not have a label, or are core
         // points of other clusters.  (When we union to another core point, we
         // are merging clusters.)
@@ -239,19 +243,25 @@ void DBSCAN<RangeSearchType, PointSelectionPolicy>::BatchCluster(
   // is the same here, but we have cached all range search results already.
   // That means we already have computed whether each point is or is not a core
   // point, just based on the size of its neighbors; so we don't need an
-  // auxiliary std::vector<bool> for that.
+  // auxiliary std::vector<bool> for that.  We do need a std::vector<bool> to
+  // track which points have ever been visited for the point selector, though.
+  std::vector<bool> visited(data.n_cols, false);
 
   // Now loop over all points.
   for (size_t i = 0; i < data.n_cols; ++i)
   {
     // Get the next index.
-    const size_t index = pointSelector.Select(i, data);
+    const size_t index = pointSelector.Select(i, visited, data);
+    visited[index] = true;
+
     // Monochromatic dual-tree range search does not return the point as its own
     // neighbor, so we are looking for `minPoints - 1` instead.
     if (neighbors[index].size() >= minPoints - 1)
     {
       for (size_t j = 0; j < neighbors[index].size(); ++j)
       {
+        visited[neighbors[index][j]] = true;
+
         if (uf.Find(neighbors[index][j]) == neighbors[index][j])
         {
           // This unions unlabeled points.
