@@ -449,7 +449,11 @@ Note that it is generally easier to use a variant of mlpack's existing
  * `PointSelectionPolicy` specifies the order in which points are selected as
    candidate roots of clusters.
    - By default, the `OrderedPointSelection` class is used, and is generally
-     sufficient for all DBSCAN clustering tasks.
+     sufficient for all DBSCAN clustering tasks.  This selects the lowest-index
+     unvisited point.
+
+   - The `RandomPointSelection` class is also available; this selects randomly
+     from the set of unvisited points.
 
    - DBSCAN point cluster assignment is greedy; a point is assigned to the first
      cluster it is within a distance of `radius` of.  Therefore, to some
