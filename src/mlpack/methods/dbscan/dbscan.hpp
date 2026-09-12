@@ -112,17 +112,17 @@ class DBSCAN
                  MatType& centroids);
 
   // Get the value of radius.
-  const ElemType Radius() const { return radius; }
+  ElemType Radius() const { return radius; }
   // Modify the value of radius.
   void Radius(const ElemType& radiusIn) { radius = radiusIn; }
 
   // Get the minimum number of points for a point to be a core-point.
-  const size_t MinPoints() const { return minPoints; }
+  size_t MinPoints() const { return minPoints; }
   // Modify the minimum number of points for a point to be a core-point.
   void MinPoints(const size_t minPointsIn) { minPoints = minPointsIn; }
 
   // Get whether to perform the search in batch mode.
-  const bool BatchMode() const { return batchMode; }
+  bool BatchMode() const { return batchMode; }
   // Modify whether the search is performed in batch mode.
   void BatchMode(const bool batchModeIn) { batchMode = batchModeIn; }
 
