@@ -58,17 +58,17 @@ class DBSCAN
   /**
    * Construct the DBSCAN object with the given parameters.  The batchMode
    * parameter should be set to false in the case where RAM issues will be
-   * encountered (i.e. if the dataset is very large or if epsilon is large).
+   * encountered (i.e. if the dataset is very large or if radius is large).
    * When batchMode is false, each point will be searched iteratively, which
    * could be slower but will use less memory.
    *
-   * @param epsilon Size of range query.
+   * @param radius Size of range query.
    * @param minPoints Minimum number of points for each cluster.
    * @param batchMode If true, all points are searched in batch.
    * @param rangeSearch Optional instantiated RangeSearch object.
    * @param pointSelector OptionL instantiated PointSelectionPolicy object.
    */
-  DBSCAN(const ElemType epsilon = 0.5,
+  DBSCAN(const ElemType radius = 0.5,
          const size_t minPoints = 5,
          const bool batchMode = true,
          RangeSearchType rangeSearch = RangeSearchType(),
@@ -111,10 +111,10 @@ class DBSCAN
                  arma::Row<size_t>& assignments,
                  MatType& centroids);
 
-  // Get the value of epsilon.
-  const ElemType Epsilon() const { return epsilon; }
-  // Modify the value of epsilon.
-  void Epsilon(const ElemType& epsilonIn) { epsilon = epsilonIn; }
+  // Get the value of radius.
+  const ElemType Radius() const { return radius; }
+  // Modify the value of radius.
+  void Radius(const ElemType& radiusIn) { radius = radiusIn; }
 
   // Get the minimum number of points for a point to be a core-point.
   const size_t MinPoints() const { return minPoints; }
@@ -142,9 +142,9 @@ class DBSCAN
 
  private:
   //! Maximum distance between two points to be part of same cluster.
-  ElemType epsilon;
+  ElemType radius;
 
-  //! Minimum number of points to be in the epsilon-neighborhood (including
+  //! Minimum number of points to be in the radius-neighborhood (including
   //! itself) for the point to be a core-point.
   size_t minPoints;
 

@@ -22,10 +22,13 @@ arma::mat dataset = arma::join_rows(
     arma::randn<arma::mat>(10, 1000) + 3.0,  // 1000 points from N( 3, 1).
     arma::randn<arma::mat>(10, 1) + 20.0);   // One outlier "noise" point.
 
-mlpack::DBSCAN dbscan(5.0, 10);                  // Step 1: create object.
+// Step 1: create object.
+mlpack::DBSCAN dbscan(5.0 /* radius */, 10 /* minPoints */);
+
+// Step 2: perform clustering.
 arma::Row<size_t> assignments;
 arma::mat centroids;
-dbscan.Cluster(dataset, assignments, centroids); // Step 2: perform clustering.
+dbscan.Cluster(dataset, assignments, centroids);
 
 // Print the number of clusters.
 std::cout << "Found " << centroids.n_cols << " centroids." << std::endl;
@@ -47,8 +50,8 @@ std::cout << " * " << arma::accu(assignments == SIZE_MAX) << " points "
 
  * [Constructors](#constructors): create `DBSCAN` objects.
  * [`Cluster()`](#clustering): perform clustering.
- * [Other functionality](#other-functionality) for loading, saving, inspecting,
-   and estimating the radius to use.
+ * [Other functionality](#other-functionality) for loading, saving and
+   inspecting.
  * [Examples](#simple-examples) of simple usage and links to detailed example
    projects.
  * [Template parameters](#advanced-functionality-template-parameters) for custom
@@ -62,42 +65,46 @@ std::cout << " * " << arma::accu(assignments == SIZE_MAX) << " points "
 
 ### Constructors
 
- * `dbscan = DBSCAN(epsilon=0.5, minPoints=5, batchMode=true)`
+ * `dbscan = DBSCAN(radius=0.5, minPoints=5, batchMode=true)`
    - Create a `DBSCAN` object with the specified parameters.
-   - Clustering results are highly sensitive to the values of `epsilon` and
+   - Clustering results are highly sensitive to the values of `radius` and
      `minPoints`; it is recommended to tune these parameters for your dataset!
      * See the notes below for more information on choosing these parameters.
    - mlpack's default [kd-tree](../core/trees/kdtree.md) dual-tree range search
-     functionality is used for range search operations.
+     functionality will be used during [clustering](#clustering) for range
+     search operations.
 
 ---
 
- * `dbscan = DBSCAN(epsilon, minPoints, batchMode, rangeSearch)`
- * `dbscan = DBSCAN(epsilon, minPoints, batchMode, rangeSearch, pointSelector)`
+ * `dbscan = DBSCAN(radius, minPoints, batchMode, rangeSearch)`
+ * `dbscan = DBSCAN(radius, minPoints, batchMode, rangeSearch, pointSelector)`
    - Create a `DBSCAN` object with the specified parameters, giving
-     pre-instantiated `RangeSearch` and `OrderedPointSelection` objects.
+     pre-instantiated
+     [`RangeSearch` and `OrderedPointSelection` objects](#advanced-functionality-template-parameters) that will be used during [clustering](#clustering).
    - This overload is generally only useful if you want to reuse a `RangeSearch`
      object from elsewhere.
 
 ---
 
- * `dbscan = DBSCAN<RangeSearchType>(epsilon=0.5, minPoints=5, batchMode=true)`
- * `dbscan = DBSCAN<RangeSearchType>(epsilon, minPoints, batchMode, rangeSearch)`
+ * `dbscan = DBSCAN<RangeSearchType>(radius=0.5, minPoints=5, batchMode=true)`
+ * `dbscan = DBSCAN<RangeSearchType>(radius, minPoints, batchMode, rangeSearch)`
    - Create a `DBSCAN` object with the specified parameters, giving a
-     pre-instantiated `RangeSearchType` object.
+     pre-instantiated `RangeSearchType` object that will be used during
+     [clustering](#clustering).
    - The `RangeSearchType` template parameter can be arbitrarily chosen and is
      described in the
      [advanced functionality section](#advanced-functionality-template-parameters).
 
 ---
 
- * `dbscan = DBSCAN<RangeSearchType, PointSelectionPolicy>(epsilon=0.5, minPoints=5, batchMode=true)`
- * `dbscan = DBSCAN<RangeSearchType, PointSelectionPolicy>(epsilon, minPoints, batchMode, rangeSearch)`
- * `dbscan = DBSCAN<RangeSearchType, PointSelectionPolicy>(epsilon, minPoints, batchMode, rangeSearch, pointSelector)`
+ * `dbscan = DBSCAN<RangeSearchType, PointSelectionPolicy>(radius=0.5, minPoints=5, batchMode=true)`
+ * `dbscan = DBSCAN<RangeSearchType, PointSelectionPolicy>(radius, minPoints, batchMode, rangeSearch)`
+ * `dbscan = DBSCAN<RangeSearchType, PointSelectionPolicy>(radius, minPoints, batchMode, rangeSearch, pointSelector)`
    - Create a `DBSCAN` object with the specified parameters, giving
-     pre-instantiated `RangeSearchType` and `PointSelectionPolicy` objects.
+     pre-instantiated `RangeSearchType` and `PointSelectionPolicy` objects that
+     will be used during [clustering](#clustering).
    - The `RangeSearchType` and `PointSelectionPolicy` template parameters can be
-     arbitrarily chosen and is described in the
+     arbitrarily chosen and are described in the
      [advanced functionality section](#advanced-functionality-template-parameters).
 
 ---
@@ -106,22 +113,25 @@ std::cout << " * " << arma::accu(assignments == SIZE_MAX) << " points "
 
 | **name** | **type** | **description** | **default** |
 |----------|----------|-----------------|-------------|
-| `epsilon` | `double` | Maximum distance between points that are a part of the same cluster. | `0.5` |
-| `minPoints` | `size_t` | Minimum number of points within distance `epsilon`
-for a point to be considered a 'core point'. | `5` |
+| `radius` | `double` | Maximum distance between points that are a part of the same cluster. | `0.5` |
+| `minPoints` | `size_t` | Minimum number of points within distance `radius` for a point to be considered a 'core point' (e.g. the root of a cluster). | `5` |
 | `batchMode` | `bool` | Whether to use batch-mode range search to find neighbors of points. | `true` |
 | `rangeSearch` | [`RangeSearchType`](#advanced-functionality-template-parameters) | Instantiated object to perform range searches with. | `RangeSearchType()` |
 | `pointSelector` | [`PointSelectionPolicy`](#advanced-functionality-template-parameters) | Instantiated object to select the next point to use as a candidate core point of a new cluster. | `PointSelectionPolicy()` |
 
 ***Notes:***
 
- - Clustering results are very sensitive to the settings of `epsilon` and
+ - Clustering results are ***very*** sensitive to the settings of `radius` and
    `minPoints`!  The defaults for both of those are likely not correct for any
-   dataset; *manual tuning and experimentation is generally necessary*.
+   dataset; ***manual tuning and experimentation is generally necessary***.
 
- - If `epsilon` is too small, then no points will be considered a part of the
-   same cluster and all points will be classified as noise.  If `epsilon` is too
+ - If `radius` is too small, then no points will be considered a part of the
+   same cluster and all points will be classified as noise.  If `radius` is too
    large, then all points will be classified as one cluster.
+   * One very simple way to find a starting point for the radius is to find the
+     nearest neighbor of a subset of points in `data` using [`KNN`](knn.md), and
+     then taking `2 * mean(distances)` as a starting point for `radius`.  (This
+     is just a heuristic to give a _starting point_ for tuning.)
 
  - `minPoints` specifies the minimum number of neighboring points that a point
    must have to be the root of a cluster (e.g. a 'core point').  As this
@@ -185,7 +195,7 @@ for a point to be considered a 'core point'. | `5` |
    [`Save()` and `Load()`](../load_save.md#mlpack-models-and-objects).
 
  * As an alternative to constructor parameters,
-   - epsilon can be set with `dbscan.Epsilon(newEpsilon)`,
+   - `radius` can be set with `dbscan.Radius(newRadius)`,
    - the minimum number of points for a core point can be set with
      `dbscan.MinPoints(newMinPoints)`, and
    - the batch mode setting can be set with `dbscan.BatchMode(newBatchMode)`.
@@ -200,9 +210,9 @@ for a point to be considered a 'core point'. | `5` |
 
 ### Simple Examples
 
-Perform DBSCAN clustering on the satellite dataset and print the average
-distance from each point to its assigned centroid, as well as the indices of any
-noise point.
+Perform DBSCAN clustering on the satellite dataset and print the indices of any
+noise point, as well as the average distance from each point to its assigned
+centroid.
 
 ```c++
 // See https://datasets.mlpack.org/satellite.train.csv.
@@ -211,7 +221,7 @@ mlpack::Load("satellite.train.csv", dataset, mlpack::Fatal);
 
 // Create DBSCAN object with parameters tuned to the satellite dataset and
 // perform clustering.
-mlpack::DBSCAN dbscan(25.0, 10);
+mlpack::DBSCAN dbscan(25.0 /* radius */, 10 /* minPoints */);
 arma::mat centroids;
 arma::Row<size_t> assignments;
 dbscan.Cluster(dataset, assignments, centroids);
@@ -228,6 +238,10 @@ for (size_t i = 0; i < dataset.n_cols; ++i)
   {
     sumDist += mlpack::EuclideanDistance::Evaluate(
         dataset.col(i), centroids.col(assignments[i]));
+  }
+  else
+  {
+    std::cout << " - Point " << i << " classified as noise." << std::endl;
   }
 }
 const double avgDist = sumDist / (double) dataset.n_cols;
@@ -247,7 +261,9 @@ arma::mat dataset;
 mlpack::Load("wave_energy_farm_100.csv", dataset, mlpack::Fatal);
 
 // Create DBSCAN object and set parameters.
-mlpack::DBSCAN dbscan(10000.0, 10);
+mlpack::DBSCAN dbscan(10000.0 /* radius */,
+                      10 /* minPoints */,
+                      false /* batchMode */);
 
 // Perform the clustering.
 arma::mat centroids;
@@ -278,7 +294,7 @@ mlpack::Load("cloud.csv", dataset, mlpack::Fatal);
 // as the matrix type.
 using RangeSearchType = mlpack::RangeSearch<mlpack::EuclideanDistance,
                                             arma::fmat>;
-mlpack::DBSCAN<RangeSearchType> dbscan(40.0, 10);
+mlpack::DBSCAN<RangeSearchType> dbscan(40.0 /* radius */, 10 /* minPoints */);
 
 // Perform clustering.
 arma::fmat centroids;
@@ -299,8 +315,9 @@ std::cout << " - " << arma::accu(assignments == SIZE_MAX) << " points were "
 
 ---
 
-Perform DBSCAN clustering on the cloud dataset using the L1 (Manhattan)
-distance, using mlpack's `RangeSearch` class with the
+Perform DBSCAN clustering on the cloud dataset using the
+[L1 (Manhattan) distance](../core/distances.md#lmetric),
+using mlpack's `RangeSearch` class with the
 [`CoverTree`](../core/trees/cover_tree.md) for range search operations.
 
 ```c++
@@ -313,7 +330,7 @@ mlpack::Load("cloud.csv", dataset, mlpack::Fatal);
 using RangeSearchType = mlpack::RangeSearch<mlpack::ManhattanDistance,
                                             arma::fmat,
                                             mlpack::StandardCoverTree>;
-mlpack::DBSCAN<RangeSearchType> dbscan(50.0, 10);
+mlpack::DBSCAN<RangeSearchType> dbscan(50.0 /* radius */, 10 /* minPoints */);
 
 // Perform clustering.
 arma::fmat centroids;
@@ -359,18 +376,20 @@ DBSCAN<RangeSearchType, PointSelectionPolicy>
 RangeSearch<DistanceType, MatType, TreeType>
 ```
 
-     * `DistanceType` should be a valid [distance metric](../core/distances.md);
-       the default is [`EuclideanDistance`](../core/distances.md#lmetric).
-     * `MatType` should be any matrix type implementing the Armadillo API; the
-       default is [`arma::mat`](../core/matrices.md).  Other options include,
-       e.g., `arma::fmat`, and `arma::hmat`.
-       - The `MatType` used here will be the same type that is accepted by
-         [`Cluster()`](#clustering).
-     * `TreeType` is the [tree type](../core/trees.md) used for tree-based
-       searching.  By default, [`KDTree`](../core/trees/kdtree.md) is used.
+ * When using mlpack's `RangeSearch` class as `RangeSearchType`, each of its
+   individual template parameters can be specified:
+   - `DistanceType` can be any valid [distance metric](../core/distances.md);
+     the default is [`EuclideanDistance`](../core/distances.md#lmetric).
+   - `MatType` should be any matrix type implementing the Armadillo API; the
+     default is [`arma::mat`](../matrices.md).  Other options include, e.g.,
+     `arma::fmat`, and `arma::hmat`.
+     * The `MatType` used here will be the same type that is accepted by
+       [`Cluster()`](#clustering).
+   - `TreeType` is the [tree type](../core/trees.md) used for tree-based
+     searching.  By default, [`KDTree`](../core/trees/kdtree.md) is used.
 
-   - An entirely custom `RangeSearchType` must implement two typedefs and three
-     member functions:
+ * An entirely custom `RangeSearchType` must implement two typedefs and three
+   member functions:
 
 ```c++
 class CustomRangeSearchType
@@ -433,7 +452,7 @@ Note that it is generally easier to use a variant of mlpack's existing
      sufficient for all DBSCAN clustering tasks.
 
    - DBSCAN point cluster assignment is greedy; a point is assigned to the first
-     cluster it is within a distance of `epsilon` of.  Therefore, to some
+     cluster it is within a distance of `radius` of.  Therefore, to some
      limited extent, clustering behavior can be controlled by
      `PointSelectionPolicy`.
 

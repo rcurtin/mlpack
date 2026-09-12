@@ -21,12 +21,12 @@ namespace mlpack {
  */
 template<typename RangeSearchType, typename PointSelectionPolicy>
 DBSCAN<RangeSearchType, PointSelectionPolicy>::DBSCAN(
-    const ElemType epsilon,
+    const ElemType radius,
     const size_t minPoints,
     const bool batchMode,
     RangeSearchType rangeSearch,
     PointSelectionPolicy pointSelector) :
-    epsilon(epsilon),
+    radius(radius),
     minPoints(minPoints),
     batchMode(batchMode),
     rangeSearch(rangeSearch),
@@ -180,7 +180,7 @@ void DBSCAN<RangeSearchType, PointSelectionPolicy>::PointwiseCluster(
 
     // Do the range search for only this point.
     rangeSearch.Search(data.col(index),
-        RangeType<ElemType>(ElemType(0.0), epsilon), neighbors, distances);
+        RangeType<ElemType>(ElemType(0.0), radius), neighbors, distances);
 
     // Union to all neighbors if the point is not noise.
     //
@@ -229,13 +229,13 @@ void DBSCAN<RangeSearchType, PointSelectionPolicy>::BatchCluster(
     const MatType& data,
     UnionFind& uf)
 {
-  // For each point, find the points in epsilon-neighborhood and their
+  // For each point, find the points in radius-neighborhood and their
   // distances.
   std::vector<std::vector<size_t>> neighbors;
   std::vector<std::vector<ElemType>> distances;
   Log::Info << "Performing range search." << std::endl;
   rangeSearch.Train(data);
-  rangeSearch.Search(RangeType<ElemType>(ElemType(0.0), epsilon), neighbors,
+  rangeSearch.Search(RangeType<ElemType>(ElemType(0.0), radius), neighbors,
       distances);
   Log::Info << "Range search complete." << std::endl;
 
@@ -283,7 +283,7 @@ template<typename Archive>
 void DBSCAN<RangeSearchType, PointSelectionPolicy>::serialize(
     Archive& ar, const unsigned int /* version */)
 {
-  ar(CEREAL_NVP(epsilon));
+  ar(CEREAL_NVP(radius));
   ar(CEREAL_NVP(minPoints));
   ar(CEREAL_NVP(batchMode));
   ar(CEREAL_NVP(rangeSearch));
