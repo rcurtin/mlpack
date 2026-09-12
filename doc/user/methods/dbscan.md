@@ -221,7 +221,7 @@ mlpack::Load("satellite.train.csv", dataset, mlpack::Fatal);
 
 // Create DBSCAN object with parameters tuned to the satellite dataset and
 // perform clustering.
-mlpack::DBSCAN dbscan(25.0 /* radius */, 10 /* minPoints */);
+mlpack::DBSCAN dbscan(55.0 /* radius */, 3 /* minPoints */);
 arma::mat centroids;
 arma::Row<size_t> assignments;
 dbscan.Cluster(dataset, assignments, centroids);
