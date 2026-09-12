@@ -80,7 +80,7 @@ PARAM_UROW_OUT("assignments", "Output matrix for assignments of each "
     "point.", "a");
 PARAM_MATRIX_OUT("centroids", "Matrix to save output centroids to.", "C");
 
-PARAM_DOUBLE_IN("epsilon", "Radius of each range search.", "e", 1.0);
+PARAM_DOUBLE_IN("epsilon", "Radius of each range search.", "e", 0.5);
 PARAM_INT_IN("min_size", "Minimum number of points for a cluster.", "m", 5);
 
 PARAM_STRING_IN("tree_type", "If using single-tree or dual-tree search, the "
