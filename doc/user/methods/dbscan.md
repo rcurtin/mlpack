@@ -1,11 +1,11 @@
 ## `DBSCAN`
 
-The `DBSCAN` class implements DBSCAN ("Density Based Spatial Clustering of
-Applications with Noise"), a clustering technique.  DBSCAN iteratively finds
-localized high-density data regions by using range searches.  Nearby points in
-connected high-density regions are grouped into clusters.  Clusters produced by
-DBSCAN may have arbitrary shapes, and points far away from any high-density
-region will be separately classified as noise.
+The `DBSCAN` class implements the clustering technique DBSCAN ("Density Based
+Spatial Clustering of Applications with Noise").  It iteratively finds localized
+high-density data regions by using range searches.  Nearby points in connected
+high-density regions are grouped into clusters.  Clusters produced by DBSCAN may
+have arbitrary shapes, and points far away from any high-density region will be
+separately classified as noise.
 
 DBSCAN does not require the user to guess the number of clusters, and
 does not make any assumptions on the shape of the data.
