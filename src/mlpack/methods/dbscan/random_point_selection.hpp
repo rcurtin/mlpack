@@ -31,7 +31,7 @@ class RandomPointSelection
   template<typename MatType>
   size_t Select(const size_t /* point */,
                 const std::vector<bool>& visited,
-                const MatType& data)
+                const MatType& /* data */)
   {
     // Count the unvisited points and generate nth index randomly.
     const size_t max = std::count(visited.begin(), visited.end(), false);
