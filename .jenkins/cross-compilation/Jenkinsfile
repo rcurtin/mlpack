@@ -149,6 +149,7 @@ pipeline
               SCP_OPTS = "${target_info[env.target]['scp_opts'] ?: ''}"
               BLAS_URL = "${target_info[env.target]['blas_url'] ?: ''}"
               EXTRA_CXXFLAGS = "${target_info[env.target]['extra_cxxflags'] ?: ''}"
+              EXTRA_CMAKE_OPTS = "${target_info[env.target]['extra_cmake_opts'] ?: '' }"
             }
 
             steps
