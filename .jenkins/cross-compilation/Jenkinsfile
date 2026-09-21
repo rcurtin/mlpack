@@ -59,7 +59,7 @@ target_info = [
       // Even the "tiny" LSTMReberGrammarTest is too much for the Milk-V Duo!
       'test_filters': '[tiny] ~LSTMReberGrammarTest',
       'openblas_extra_flags': 'USE_THREAD=0 NUM_THREADS=1 USE_OPENMP=0',
-      'openblas_patches': '.jenkins/cross/compilation-openblas-riscv64-low-memory.patch',
+      'openblas_patches': '.jenkins/cross-compilation/openblas-riscv64-low-memory.patch',
       'scp_opts': '-O',
       // We need a special patch to decrease the size of the internal buffers
       // that OpenBLAS uses, so that we don't exhaust the small amount of RAM
