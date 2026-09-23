@@ -57,7 +57,7 @@ target_info = [
       'arch_type': 'riscv64-lp64d-musl',
       'arch_name': 'C906',
       // Even the "tiny" LSTMReberGrammarTest is too much for the Milk-V Duo!
-      'test_filters': '[tiny] ~LSTMReberGrammarTest',
+      'test_filters': '[tiny] ~LSTMReberGrammarTest ~WeightedCategoricalLearningTest ~UnweightedCategoricalLearningTest',
       'openblas_extra_flags': 'USE_THREAD=0 NUM_THREADS=1 USE_OPENMP=0',
       'openblas_patches': '.jenkins/cross-compilation/openblas-riscv64-low-memory.patch',
       'scp_opts': '-O',
