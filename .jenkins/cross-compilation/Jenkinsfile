@@ -50,7 +50,8 @@ target_info = [
       'test_filters': '~[long]',
       // OpenBLAS doesn't compile and run successfully on SPARC64 so we manually
       // download a precompiled reference BLAS implementation.
-      'blas_url': 'https://files.mlpack.org/librefblas-sparc64.a'
+      'blas_url': 'https://files.mlpack.org/librefblas-sparc64.a',
+      'extra_cmake_opts': '-DMLPACK_SKIP_OPENBLAS_COMPILE=ON'
   ],
   'manaeesh': [
       'device_name': 'milkv-duo',
@@ -261,7 +262,6 @@ pipeline
                       lockfile -r-1 -l 7200 ~/mlpack_test.lock;
                       killall -9 mlpack_test;
                       mkdir -p reports;
-                      ./mlpack_test -r xml -d yes ${TEST_FILTERS};
                       ./mlpack_test -r junit -n mlpack_test.${target} -o reports/mlpack_test.junit.xml ${TEST_FILTERS};
                       rm -f ~/mlpack_test.lock;" \
                       || echo "Test failure or other problem.";

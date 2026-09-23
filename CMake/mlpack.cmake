@@ -755,7 +755,9 @@ endmacro()
 
 macro(fetch_mlpack COMPILE_OPENBLAS)
 
-  if (CMAKE_CROSSCOMPILING)
+  # MLPACK_SKIP_OPENBLAS_COMPILE is undocumented because it is only used by
+  # mlpack's Jenkins CI for architectures where OpenBLAS fails to compile.
+  if (CMAKE_CROSSCOMPILING AND NOT MLPACK_SKIP_OPENBLAS_COMPILE)
     # Set to cross compile openblas if the user forgot to do so.
     set(COMPILE_OPENBLAS ON)
   else()
