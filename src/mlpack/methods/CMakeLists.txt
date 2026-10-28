@@ -197,6 +197,9 @@ add_r_binding(random_forest random_forest "include")
 add_r_binding(random_forest random_forest_train "skip")
 add_r_binding(random_forest random_forest_classify "skip")
 add_r_binding(random_forest random_forest_probabilities "skip")
+add_duckdb_binding(random_forest random_forest_train)
+add_duckdb_binding(random_forest random_forest_classify)
+add_duckdb_binding(random_forest random_forest_probabilities)
 add_markdown_docs(random_forest random_forest "cli;python;julia;go;r"
     "python;r;julia")
 #

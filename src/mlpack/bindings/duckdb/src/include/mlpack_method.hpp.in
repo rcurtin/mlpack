@@ -1,0 +1,15 @@
+#pragma once
+
+#include <duckdb.hpp>
+#include <mlpack.hpp>
+#include <duckdb_utilities.hpp>
+#include <mlpack_model_data.hpp>
+
+namespace duckdb {
+
+// NOTE: I switched to lowercase snake_case because it was more expedient in
+// CMake.  Is that ok??  It could be switched back to the original camelcase
+// with just a little bit of extra processing from the CMake side.
+void mlpack_${PROGRAM_NAME}_table_function(ClientContext &context, TableFunctionInput &data_p, DataChunk &output);
+
+} // namespace duckdb

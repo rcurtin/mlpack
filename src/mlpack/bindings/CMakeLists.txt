@@ -23,6 +23,7 @@ set(DIRS
   python
   go
   R
+  duckdb
   tests
 )
 

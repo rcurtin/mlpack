@@ -24,6 +24,7 @@
 #define BINDING_TYPE_JL 3
 #define BINDING_TYPE_GO 4
 #define BINDING_TYPE_R 5
+#define BINDING_TYPE_DUCKDB 6
 #define BINDING_TYPE_MARKDOWN 128
 #define BINDING_TYPE_UNKNOWN -1
 
@@ -47,6 +48,8 @@
   #include <mlpack/bindings/go/mlpack_main.hpp>
 #elif (BINDING_TYPE == BINDING_TYPE_R) // This is an R binding.
   #include <mlpack/bindings/R/mlpack_main.hpp>
+#elif (BINDING_TYPE == BINDING_TYPE_DUCKDB) // This is a DuckDB binding.
+  #include <mlpack/bindings/duckdb/mlpack_main.hpp>
 #elif (BINDING_TYPE == BINDING_TYPE_MARKDOWN) // These are the Markdown docs.
   #include <mlpack/bindings/markdown/mlpack_main.hpp>
 #else

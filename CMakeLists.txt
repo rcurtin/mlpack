@@ -106,6 +106,9 @@ else()
   set(FORCE_BUILD_R_BINDINGS OFF)
 endif()
 option(BUILD_R_BINDINGS "Build R bindings." OFF)
+
+option(BUILD_DUCKDB_BINDINGS "Build DuckDB bindings." OFF)
+
 # Build Markdown bindings for documentation.  This is used as part of website
 # generation.
 option(BUILD_MARKDOWN_BINDINGS "Build Markdown bindings for website documentation." OFF)
